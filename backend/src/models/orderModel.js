@@ -25,19 +25,19 @@ const Order = sequelize.define('Order', {
 
   // Which city this order is in
   city: {
-    type: DataTypes.ENUM(...Object.values(CITY)),
+    type: DataTypes.STRING,
     allowNull: false,
   },
 
   // What kind of order
   category_type: {
-    type: DataTypes.ENUM(...Object.values(CATEGORY_TYPE)),
+    type: DataTypes.STRING,
     allowNull: false,
   },
 
   // Order lifecycle
   status: {
-    type: DataTypes.ENUM(...Object.values(ORDER_STATUS)),
+    type: DataTypes.STRING,
     defaultValue: ORDER_STATUS.PENDING,
   },
 
@@ -61,7 +61,7 @@ const Order = sequelize.define('Order', {
 
   // Vehicle assigned for this order
   vehicle_type: {
-    type: DataTypes.ENUM(...Object.values(VEHICLE_TYPE)),
+    type: DataTypes.STRING,
     allowNull: true, // set by dispatch service
   },
 
@@ -100,11 +100,11 @@ const Order = sequelize.define('Order', {
 
   // Payment
   payment_method: {
-    type: DataTypes.ENUM(...Object.values(PAYMENT_METHOD)),
+    type: DataTypes.STRING,
     allowNull: true, // set when customer checks out
   },
   payment_status: {
-    type: DataTypes.ENUM(...Object.values(PAYMENT_STATUS)),
+    type: DataTypes.STRING,
     defaultValue: PAYMENT_STATUS.PENDING,
   },
   payment_reference: {
@@ -112,7 +112,7 @@ const Order = sequelize.define('Order', {
     allowNull: true, // ContiPay reference ID
   },
   currency_paid: {
-    type: DataTypes.ENUM(...Object.values(CURRENCY)),
+    type: DataTypes.STRING,
     allowNull: true,
   },
 
