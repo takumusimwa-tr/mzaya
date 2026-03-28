@@ -5,18 +5,22 @@ require('dotenv').config({
 });
 
 const express = require('express');
-const cors = require('cors');
-const helmet = require('helmet');
+const cors    = require('cors');
+const helmet  = require('helmet');
 
-const { connectDB, sequelize } = require('./config/db');
-const { startCurrencySyncJob } = require('./jobs/currencySync.job');
+const { connectDB, sequelize }       = require('./config/db');
+const { startCurrencySyncJob }       = require('./jobs/currencySync.job');
 
 // Load all models + associations
 require('./models/associations');
 
 // Routes
-const authRoutes  = require('./routes/auth.routes');
-const orderRoutes = require('./routes/order.routes');
+const authRoutes    = require('./routes/auth.routes');
+const orderRoutes   = require('./routes/order.routes');
+const vendorRoutes  = require('./routes/vendor.routes');
+const riderRoutes   = require('./routes/rider.routes');
+const cityRoutes    = require('./routes/city.routes');
+const paymentRoutes = require('./routes/payment.routes');
 
 const app = express();
 
@@ -24,11 +28,28 @@ app.use(express.json());
 app.use(cors());
 app.use(helmet());
 
-app.use('/api/auth',   authRoutes);
-app.use('/api/orders', orderRoutes);
+// Mount routes
+app.use('/api/auth',     authRoutes);
+app.use('/api/orders',   orderRoutes);
+app.use('/api/vendors',  vendorRoutes);
+app.use('/api/riders',   riderRoutes);
+app.use('/api/cities',   cityRoutes);
+app.use('/api/payments', paymentRoutes);
 
 app.get('/', (req, res) => {
-  res.json({ status: 'ok', message: 'Mzaya API running' });
+  res.json({
+    status:  'ok',
+    message: 'Mzaya API running',
+    version: '1.0.0',
+    endpoints: [
+      '/api/auth',
+      '/api/orders',
+      '/api/vendors',
+      '/api/riders',
+      '/api/cities',
+      '/api/payments',
+    ],
+  });
 });
 
 // Global error handler
@@ -47,6 +68,7 @@ async function boot() {
   const PORT = process.env.PORT || 5000;
   app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);
+    console.log(`API ready at http://localhost:${PORT}`);
   });
 }
 
