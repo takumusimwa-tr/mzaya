@@ -1,23 +1,27 @@
 const path = require('path');
-const fs = require('fs');
 
-const envPath = path.resolve(__dirname, '../.env');
-
-// Load .env FIRST, before anything else
-require('dotenv').config({ path: envPath });
+require('dotenv').config({
+  path: path.resolve(__dirname, '../.env')
+});
 
 const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
 
 const { connectDB, sequelize } = require('./config/db');
-const User = require('./models/userModel');
+
+// Load all models + associations in one shot
+require('./models/associations');
+
+const authRoutes = require('./routes/auth.routes');
 
 const app = express();
 
 app.use(express.json());
 app.use(cors());
 app.use(helmet());
+
+app.use('/api/auth', authRoutes);
 
 app.get('/', (req, res) => {
   res.json({ status: 'ok', message: 'Mzaya API running' });
