@@ -1,0 +1,9 @@
+
+.env
+backend/.env
+ml-service/.env
+backend/node_modules/
+ml-service/venv/
+__pycache__/
+*.pyc
+*.pkl
