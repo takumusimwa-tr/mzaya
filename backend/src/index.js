@@ -11,16 +11,15 @@ const helmet  = require('helmet');
 const { connectDB, sequelize }       = require('./config/db');
 const { startCurrencySyncJob }       = require('./jobs/currencySync.job');
 
-// Load all models + associations
 require('./models/associations');
 
-// Routes
-const authRoutes    = require('./routes/auth.routes');
-const orderRoutes   = require('./routes/order.routes');
-const vendorRoutes  = require('./routes/vendor.routes');
-const riderRoutes   = require('./routes/rider.routes');
-const cityRoutes    = require('./routes/city.routes');
-const paymentRoutes = require('./routes/payment.routes');
+const authRoutes      = require('./routes/auth.routes');
+const orderRoutes     = require('./routes/order.routes');
+const vendorRoutes    = require('./routes/vendor.routes');
+const riderRoutes     = require('./routes/rider.routes');
+const cityRoutes      = require('./routes/city.routes');
+const paymentRoutes   = require('./routes/payment.routes');
+const analyticsRoutes = require('./routes/analytics.routes');
 
 const app = express();
 
@@ -28,31 +27,27 @@ app.use(express.json());
 app.use(cors());
 app.use(helmet());
 
-// Mount routes
-app.use('/api/auth',     authRoutes);
-app.use('/api/orders',   orderRoutes);
-app.use('/api/vendors',  vendorRoutes);
-app.use('/api/riders',   riderRoutes);
-app.use('/api/cities',   cityRoutes);
-app.use('/api/payments', paymentRoutes);
+app.use('/api/auth',      authRoutes);
+app.use('/api/orders',    orderRoutes);
+app.use('/api/vendors',   vendorRoutes);
+app.use('/api/riders',    riderRoutes);
+app.use('/api/cities',    cityRoutes);
+app.use('/api/payments',  paymentRoutes);
+app.use('/api/analytics', analyticsRoutes);
 
 app.get('/', (req, res) => {
   res.json({
-    status:  'ok',
-    message: 'Mzaya API running',
-    version: '1.0.0',
+    status:    'ok',
+    message:   'Mzaya API running',
+    version:   '1.0.0',
     endpoints: [
-      '/api/auth',
-      '/api/orders',
-      '/api/vendors',
-      '/api/riders',
-      '/api/cities',
-      '/api/payments',
+      '/api/auth', '/api/orders', '/api/vendors',
+      '/api/riders', '/api/cities', '/api/payments',
+      '/api/analytics',
     ],
   });
 });
 
-// Global error handler
 app.use((err, req, res, next) => {
   console.error('Unhandled error:', err.message);
   res.status(500).json({ error: 'Internal server error' });
@@ -68,7 +63,7 @@ async function boot() {
   const PORT = process.env.PORT || 5000;
   app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);
-    console.log(`API ready at http://localhost:${PORT}`);
+    console.log(`ML service expected at ${process.env.ML_SERVICE_URL || 'http://localhost:8000'}`);
   });
 }
 
