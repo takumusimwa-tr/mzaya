@@ -79,3 +79,89 @@ module.exports = {
   getAnomalies,
   trainModel,
 };
+
+// ─── Get demand forecast ──────────────────────────────────────────────────────
+async function getDemandForecast(city = 'harare', category = 'food', hoursAhead = 24) {
+  try {
+    const response = await axios.get(`${ML_URL}/forecast/predict`, {
+      params: { city, category, hours_ahead: hoursAhead }
+    });
+    return response.data;
+  } catch (err) {
+    console.error('[ML] Demand forecast failed:', err.message);
+    return null;
+  }
+}
+
+// ─── Get demand summary ───────────────────────────────────────────────────────
+async function getDemandSummary() {
+  try {
+    const response = await axios.get(`${ML_URL}/forecast/summary`);
+    return response.data;
+  } catch (err) {
+    console.error('[ML] Demand summary failed:', err.message);
+    return null;
+  }
+}
+
+module.exports = {
+  extractFeatures,
+  scoreOrder,
+  getModelMetrics,
+  getSpendingTrends,
+  getAnomalies,
+  trainModel,
+  getDemandForecast,
+  getDemandSummary,
+};
+
+// ─── Get rider performance scores ─────────────────────────────────────────────
+async function getRiderScores(city = null) {
+  try {
+    const params = city ? { city } : {};
+    const response = await axios.get(`${ML_URL}/performance/riders`, { params });
+    return response.data;
+  } catch (err) {
+    console.error('[ML] Rider scores failed:', err.message);
+    return null;
+  }
+}
+
+// ─── Get vendor performance scores ───────────────────────────────────────────
+async function getVendorScores(city = null, category = null) {
+  try {
+    const params = {};
+    if (city)     params.city     = city;
+    if (category) params.category = category;
+    const response = await axios.get(`${ML_URL}/performance/vendors`, { params });
+    return response.data;
+  } catch (err) {
+    console.error('[ML] Vendor scores failed:', err.message);
+    return null;
+  }
+}
+
+// ─── Get platform summary ─────────────────────────────────────────────────────
+async function getPlatformSummary() {
+  try {
+    const response = await axios.get(`${ML_URL}/performance/summary`);
+    return response.data;
+  } catch (err) {
+    console.error('[ML] Platform summary failed:', err.message);
+    return null;
+  }
+}
+
+module.exports = {
+  extractFeatures,
+  scoreOrder,
+  getModelMetrics,
+  getSpendingTrends,
+  getAnomalies,
+  trainModel,
+  getDemandForecast,
+  getDemandSummary,
+  getRiderScores,
+  getVendorScores,
+  getPlatformSummary,
+};

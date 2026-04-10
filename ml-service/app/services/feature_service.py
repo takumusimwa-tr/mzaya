@@ -116,7 +116,7 @@ async def bulk_extract_from_db(db: AsyncSession) -> int:
             SELECT o.*, 
                    EXTRACT(EPOCH FROM (o.delivered_at - o.accepted_at))/60 as delivery_minutes
             FROM orders o
-            WHERE o.id NOT IN (SELECT order_id FROM order_features)
+            WHERE o.id::text NOT IN (SELECT order_id FROM order_features)
             LIMIT 1000
         """)
     )

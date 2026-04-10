@@ -10,6 +10,8 @@ from app.db.database import init_db
 from app.db.redis_client import init_redis
 from app.routes import analytics, anomaly, features
 from app.routes.forecast import router as forecast_router
+from app.routes.performance import router as performance_router
+from app.routes.optimization import router as optimization_router
 from app.scheduler import start_scheduler, scheduler
 
 logging.basicConfig(level=logging.INFO)
@@ -38,10 +40,12 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-app.include_router(analytics.router,  prefix="/analytics", tags=["Analytics"])
-app.include_router(anomaly.router,    prefix="/anomaly",   tags=["Anomaly Detection"])
-app.include_router(features.router,   prefix="/features",  tags=["Features"])
-app.include_router(forecast_router,   prefix="/forecast",  tags=["Demand Forecasting"])
+app.include_router(analytics.router,      prefix="/analytics",     tags=["Analytics"])
+app.include_router(anomaly.router,        prefix="/anomaly",       tags=["Anomaly Detection"])
+app.include_router(features.router,       prefix="/features",      tags=["Features"])
+app.include_router(forecast_router,       prefix="/forecast",      tags=["Demand Forecasting"])
+app.include_router(performance_router,    prefix="/performance",   tags=["Performance Scoring"])
+app.include_router(optimization_router,   prefix="/optimization",  tags=["Spend Optimization"])
 
 @app.get("/")
 def health():
@@ -49,5 +53,12 @@ def health():
         "status":    "ok",
         "service":   "Mzaya ML",
         "version":   "1.0.0",
-        "endpoints": ["/analytics", "/anomaly", "/features", "/forecast"],
+        "endpoints": [
+            "/analytics",
+            "/anomaly",
+            "/features",
+            "/forecast",
+            "/performance",
+            "/optimization",
+        ],
     }
