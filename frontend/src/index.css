@@ -1,1 +1,14 @@
 @import "tailwindcss";
+
+/* Hide scrollbar for category tabs */
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+/* Smooth tap highlight removal on mobile */
+* { -webkit-tap-highlight-color: transparent; }
+
+/* Prevent text size adjustment on iOS */
+html { -webkit-text-size-adjust: 100%; }
+
+/* Active scale utility */
+.active\:scale-98:active { transform: scale(0.98); }

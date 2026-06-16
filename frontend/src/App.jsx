@@ -6,6 +6,7 @@ import LoginPage     from './pages/auth/LoginPage'
 import RegisterPage  from './pages/auth/RegisterPage'
 import HomePage      from './pages/home/HomePage'
 import VendorPage    from './pages/home/VendorPage'
+import ErrandPage    from './pages/home/ErrandPage'
 import CartPage      from './pages/order/CartPage'
 import CheckoutPage  from './pages/order/CheckoutPage'
 import OrdersPage    from './pages/order/OrdersPage'
@@ -42,6 +43,7 @@ export default function App() {
           {/* Protected routes */}
           <Route path="/"              element={<ProtectedRoute><HomePage /></ProtectedRoute>} />
           <Route path="/vendor/:id"    element={<ProtectedRoute><VendorPage /></ProtectedRoute>} />
+          <Route path="/errand"        element={<ProtectedRoute><ErrandPage /></ProtectedRoute>} />
           <Route path="/cart"          element={<ProtectedRoute><CartPage /></ProtectedRoute>} />
           <Route path="/checkout"      element={<ProtectedRoute><CheckoutPage /></ProtectedRoute>} />
           <Route path="/orders"        element={<ProtectedRoute><OrdersPage /></ProtectedRoute>} />

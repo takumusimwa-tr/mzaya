@@ -8,16 +8,16 @@ import LoadingScreen from '../../components/ui/LoadingScreen'
 import Badge from '../../components/ui/Badge'
 
 const CATEGORIES = [
-  { id: 'food',      label: 'Food',       emoji: '🍽️' },
-  { id: 'grocery',   label: 'Grocery',    emoji: '🛒' },
-  { id: 'materials', label: 'Materials',  emoji: '🏗️' },
-  { id: 'errand',    label: 'Errands',    emoji: '📋' },
+  { id: 'food',      label: 'Food',      emoji: '🍽️', hasVendors: true  },
+  { id: 'grocery',   label: 'Grocery',   emoji: '🛒', hasVendors: true  },
+  { id: 'materials', label: 'Materials', emoji: '🏗️', hasVendors: true  },
+  { id: 'errand',    label: 'Errands',   emoji: '📋', hasVendors: false },
 ]
 
 export default function HomePage() {
-  const user         = useAuthStore((s) => s.user)
-  const totalItems   = useCartStore((s) => s.totalItems())
-  const navigate     = useNavigate()
+  const user       = useAuthStore((s) => s.user)
+  const totalItems = useCartStore((s) => s.totalItems())
+  const navigate   = useNavigate()
   const [category, setCategory] = useState('food')
   const [cityId,   setCityId]   = useState(null)
 
@@ -26,12 +26,13 @@ export default function HomePage() {
     queryFn:  () => cityAPI.list().then((r) => r.data.cities),
   })
 
+  const currentCat = CATEGORIES.find((c) => c.id === category)
+
   const { data: vendors, isLoading } = useQuery({
     queryKey: ['vendors', category, cityId],
     queryFn:  () => vendorAPI.list({ category, city_id: cityId }).then((r) => r.data.vendors),
+    enabled:  currentCat?.hasVendors,
   })
-
-  if (isLoading && !vendors) return <LoadingScreen message="Finding vendors near you..." />
 
   return (
     <div className="pb-24">
@@ -76,7 +77,10 @@ export default function HomePage() {
           {CATEGORIES.map((cat) => (
             <button
               key={cat.id}
-              onClick={() => setCategory(cat.id)}
+              onClick={() => {
+                setCategory(cat.id)
+                if (!cat.hasVendors) navigate('/errand')
+              }}
               className={`flex-shrink-0 flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-all
                 ${category === cat.id
                   ? 'bg-green-600 text-white shadow-sm'
@@ -92,27 +96,34 @@ export default function HomePage() {
 
       {/* Vendors */}
       <div className="px-4 mt-5">
-        <h2 className="text-base font-bold text-gray-900 mb-3">
-          {CATEGORIES.find((c) => c.id === category)?.label} near you
-        </h2>
-
-        {!vendors?.length ? (
-          <div className="text-center py-16">
-            <p className="text-4xl mb-3">🏪</p>
-            <p className="text-gray-500 text-sm">No vendors available right now</p>
-            <p className="text-gray-400 text-xs mt-1">Check back later or try another category</p>
-          </div>
-        ) : (
-          <div className="flex flex-col gap-3">
-            {vendors.map((vendor) => (
-              <VendorCard
-                key={vendor.id}
-                vendor={vendor}
-                onClick={() => navigate(`/vendor/${vendor.id}`)}
-              />
-            ))}
-          </div>
-        )}
+        {currentCat?.hasVendors ? (
+          <>
+            <h2 className="text-base font-bold text-gray-900 mb-3">
+              {currentCat.label} near you
+            </h2>
+            {isLoading ? (
+              <div className="flex justify-center py-12">
+                <div className="w-8 h-8 rounded-full border-4 border-green-100 border-t-green-600 animate-spin" />
+              </div>
+            ) : !vendors?.length ? (
+              <div className="text-center py-16">
+                <p className="text-4xl mb-3">🏪</p>
+                <p className="text-gray-500 text-sm">No vendors available right now</p>
+                <p className="text-gray-400 text-xs mt-1">Check back later or try another category</p>
+              </div>
+            ) : (
+              <div className="flex flex-col gap-3">
+                {vendors.map((vendor) => (
+                  <VendorCard
+                    key={vendor.id}
+                    vendor={vendor}
+                    onClick={() => navigate(`/vendor/${vendor.id}`)}
+                  />
+                ))}
+              </div>
+            )}
+          </>
+        ) : null}
       </div>
     </div>
   )
@@ -124,7 +135,6 @@ function VendorCard({ vendor, onClick }) {
       onClick={onClick}
       className="w-full text-left bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden active:scale-98 transition-transform"
     >
-      {/* Vendor image placeholder */}
       <div className="h-36 bg-gradient-to-br from-green-400 to-green-600 flex items-center justify-center">
         <span className="text-5xl">🏪</span>
       </div>
