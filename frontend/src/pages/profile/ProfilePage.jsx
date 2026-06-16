@@ -2,6 +2,20 @@ import { useNavigate } from 'react-router-dom'
 import useAuthStore from '../../store/useAuthStore'
 import Button from '../../components/ui/Button'
 
+const ROLE_HOME = {
+  customer: '/home',
+  rider:    '/rider',
+  vendor:   '/vendor',
+  admin:    '/admin',
+}
+
+const ROLE_COLOR = {
+  customer: 'bg-green-100 text-green-700',
+  rider:    'bg-blue-100 text-blue-700',
+  vendor:   'bg-orange-100 text-orange-700',
+  admin:    'bg-gray-100 text-gray-700',
+}
+
 export default function ProfilePage() {
   const navigate = useNavigate()
   const { user, logout } = useAuthStore()
@@ -11,9 +25,19 @@ export default function ProfilePage() {
     navigate('/login')
   }
 
+  const homeRoute = ROLE_HOME[user?.role] || '/home'
+  const roleColor = ROLE_COLOR[user?.role] || 'bg-gray-100 text-gray-700'
+
   return (
     <div className="pb-24">
-      <div className="px-4 pt-14 pb-4">
+      {/* Header with back button */}
+      <div className="flex items-center gap-3 px-4 pt-14 pb-4">
+        <button
+          onClick={() => navigate(homeRoute)}
+          className="p-2 rounded-full bg-gray-100"
+        >
+          <BackIcon />
+        </button>
         <h1 className="text-xl font-bold text-gray-900">Profile</h1>
       </div>
 
@@ -24,50 +48,33 @@ export default function ProfilePage() {
         </div>
         <p className="text-lg font-bold text-gray-900">{user?.name}</p>
         <p className="text-sm text-gray-500">{user?.phone}</p>
-        <span className="mt-2 text-xs bg-green-100 text-green-700 font-semibold px-3 py-1 rounded-full capitalize">
+        <span className={`mt-2 text-xs font-semibold px-3 py-1 rounded-full capitalize ${roleColor}`}>
           {user?.role}
         </span>
       </div>
 
       {/* Menu items */}
       <div className="px-4 mt-4 flex flex-col gap-3">
-        <ProfileMenuItem
-          icon="📦"
-          label="My Orders"
-          onClick={() => navigate('/orders')}
-        />
-        <ProfileMenuItem
-          icon="📍"
-          label="Saved Addresses"
-          onClick={() => {}}
-          badge="Coming soon"
-        />
-        <ProfileMenuItem
-          icon="💳"
-          label="Payment Methods"
-          onClick={() => {}}
-          badge="Coming soon"
-        />
-        <ProfileMenuItem
-          icon="🔔"
-          label="Notifications"
-          onClick={() => {}}
-          badge="Coming soon"
-        />
-        <ProfileMenuItem
-          icon="❓"
-          label="Help & Support"
-          onClick={() => {}}
-        />
+        {user?.role === 'customer' && (
+          <ProfileMenuItem icon="📦" label="My Orders" onClick={() => navigate('/orders')} />
+        )}
+        {user?.role === 'rider' && (
+          <ProfileMenuItem icon="💰" label="My Earnings" onClick={() => navigate('/rider/earnings')} />
+        )}
+        {user?.role === 'vendor' && (
+          <ProfileMenuItem icon="📋" label="My Orders" onClick={() => navigate('/vendor/orders')} />
+        )}
+        {user?.role === 'vendor' && (
+          <ProfileMenuItem icon="🍽️" label="My Menu" onClick={() => navigate('/vendor/menu')} />
+        )}
+        <ProfileMenuItem icon="📍" label="Saved Addresses" onClick={() => {}} badge="Coming soon" />
+        <ProfileMenuItem icon="🔔" label="Notifications" onClick={() => {}} badge="Coming soon" />
+        <ProfileMenuItem icon="❓" label="Help & Support" onClick={() => {}} />
       </div>
 
-      {/* App info */}
-      <div className="px-4 mt-6">
-        <p className="text-xs text-gray-400 text-center">Mzaya v1.0.0 · Built for Zimbabwe</p>
-      </div>
+      <p className="text-center text-xs text-gray-400 mt-6">Mzaya v1.0.0 · Built for Zimbabwe</p>
 
-      {/* Logout */}
-      <div className="px-4 mt-6">
+      <div className="px-4 mt-4">
         <Button variant="danger" size="lg" onClick={handleLogout}>
           Logout
         </Button>
@@ -87,11 +94,17 @@ function ProfileMenuItem({ icon, label, onClick, badge }) {
         <span className="text-sm font-medium text-gray-800">{label}</span>
       </div>
       <div className="flex items-center gap-2">
-        {badge && (
-          <span className="text-xs bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full">{badge}</span>
-        )}
+        {badge && <span className="text-xs bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full">{badge}</span>}
         <span className="text-gray-400">›</span>
       </div>
     </button>
+  )
+}
+
+function BackIcon() {
+  return (
+    <svg className="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+    </svg>
   )
 }
