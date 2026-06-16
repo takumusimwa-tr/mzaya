@@ -1,6 +1,9 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import useAuthStore from './store/useAuthStore'
 
+// Onboarding
+import OnboardingPage from './pages/onboarding/OnboardingPage'
+
 // Customer pages
 import LoginPage     from './pages/auth/LoginPage'
 import RegisterPage  from './pages/auth/RegisterPage'
@@ -28,13 +31,13 @@ import VendorMenu    from './pages/vendor/VendorMenu'
 import AdminHome     from './pages/admin/AdminHome'
 
 // Layout
-import BottomNav         from './components/layout/BottomNav'
-import RiderBottomNav    from './components/layout/RiderBottomNav'
-import VendorBottomNav   from './components/layout/VendorBottomNav'
+import BottomNav       from './components/layout/BottomNav'
+import RiderBottomNav  from './components/layout/RiderBottomNav'
+import VendorBottomNav from './components/layout/VendorBottomNav'
 
 function ProtectedRoute({ children }) {
   const token = useAuthStore((s) => s.token)
-  if (!token) return <Navigate to="/login" replace />
+  if (!token) return <Navigate to="/welcome" replace />
   return children
 }
 
@@ -44,13 +47,12 @@ function GuestRoute({ children }) {
   return children
 }
 
-// Root redirect based on role
 function RootRedirect() {
   const user = useAuthStore((s) => s.user)
-  if (!user) return <Navigate to="/login" replace />
-  if (user.role === 'rider')  return <Navigate to="/rider" replace />
+  if (!user) return <Navigate to="/welcome" replace />
+  if (user.role === 'rider')  return <Navigate to="/rider"  replace />
   if (user.role === 'vendor') return <Navigate to="/vendor" replace />
-  if (user.role === 'admin')  return <Navigate to="/admin" replace />
+  if (user.role === 'admin')  return <Navigate to="/admin"  replace />
   return <Navigate to="/home" replace />
 }
 
@@ -63,14 +65,17 @@ export default function App() {
     <BrowserRouter>
       <div className="min-h-screen bg-gray-50 max-w-md mx-auto relative">
         <Routes>
+          {/* Onboarding — shown to new users */}
+          <Route path="/welcome"  element={<GuestRoute><OnboardingPage /></GuestRoute>} />
+
           {/* Auth */}
           <Route path="/login"    element={<GuestRoute><LoginPage /></GuestRoute>} />
           <Route path="/register" element={<GuestRoute><RegisterPage /></GuestRoute>} />
 
-          {/* Root — redirect by role */}
+          {/* Root redirect */}
           <Route path="/" element={<ProtectedRoute><RootRedirect /></ProtectedRoute>} />
 
-          {/* ── Customer routes ── */}
+          {/* ── Customer ── */}
           <Route path="/home"          element={<ProtectedRoute><HomePage /></ProtectedRoute>} />
           <Route path="/vendor/:id"    element={<ProtectedRoute><VendorPage /></ProtectedRoute>} />
           <Route path="/errand"        element={<ProtectedRoute><ErrandPage /></ProtectedRoute>} />
@@ -81,21 +86,21 @@ export default function App() {
           <Route path="/track/:id"     element={<ProtectedRoute><TrackingPage /></ProtectedRoute>} />
           <Route path="/profile"       element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
 
-          {/* ── Rider routes ── */}
+          {/* ── Rider ── */}
           <Route path="/rider"              element={<ProtectedRoute><RiderHome /></ProtectedRoute>} />
           <Route path="/rider/delivery/:id" element={<ProtectedRoute><RiderDelivery /></ProtectedRoute>} />
           <Route path="/rider/earnings"     element={<ProtectedRoute><RiderEarnings /></ProtectedRoute>} />
 
-          {/* ── Vendor routes ── */}
+          {/* ── Vendor ── */}
           <Route path="/vendor"        element={<ProtectedRoute><VendorHome /></ProtectedRoute>} />
           <Route path="/vendor/orders" element={<ProtectedRoute><VendorOrders /></ProtectedRoute>} />
           <Route path="/vendor/menu"   element={<ProtectedRoute><VendorMenu /></ProtectedRoute>} />
 
-          {/* ── Admin routes ── */}
+          {/* ── Admin ── */}
           <Route path="/admin"         element={<ProtectedRoute><AdminHome /></ProtectedRoute>} />
 
           {/* Fallback */}
-          <Route path="*" element={<Navigate to="/" replace />} />
+          <Route path="*" element={<Navigate to={token ? '/' : '/welcome'} replace />} />
         </Routes>
 
         {/* Role-based bottom nav */}
