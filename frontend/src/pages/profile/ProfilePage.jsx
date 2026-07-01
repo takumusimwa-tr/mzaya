@@ -58,6 +58,9 @@ export default function ProfilePage() {
         {user?.role === 'customer' && (
           <ProfileMenuItem icon="📦" label="My Orders" onClick={() => navigate('/orders')} />
         )}
+        {user?.role === 'customer' && (
+          <ProfileMenuItem icon="❤️" label="Favorites" onClick={() => navigate('/favorites')} />
+        )}
         {user?.role === 'rider' && (
           <ProfileMenuItem icon="💰" label="My Earnings" onClick={() => navigate('/rider/earnings')} />
         )}
@@ -67,7 +70,9 @@ export default function ProfilePage() {
         {user?.role === 'vendor' && (
           <ProfileMenuItem icon="🍽️" label="My Menu" onClick={() => navigate('/vendor/menu')} />
         )}
-        <ProfileMenuItem icon="📍" label="Saved Addresses" onClick={() => {}} badge="Coming soon" />
+        {user?.role === 'customer' && (
+          <ProfileMenuItem icon="📍" label="Saved Addresses" onClick={() => navigate('/addresses')} />
+        )}
         <ProfileMenuItem icon="🔔" label="Notifications" onClick={() => {}} badge="Coming soon" />
         <ProfileMenuItem icon="❓" label="Help & Support" onClick={() => {}} />
       </div>

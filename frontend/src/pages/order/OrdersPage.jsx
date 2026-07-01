@@ -3,9 +3,11 @@ import { useQuery } from '@tanstack/react-query'
 import { orderAPI } from '../../api/api'
 import LoadingScreen from '../../components/ui/LoadingScreen'
 import Badge from '../../components/ui/Badge'
+import useReorder from '../../hooks/useReorder'
 
 export default function OrdersPage() {
   const navigate = useNavigate()
+  const reorder  = useReorder()
 
   const { data: orders, isLoading } = useQuery({
     queryKey: ['my-orders'],
@@ -30,28 +32,38 @@ export default function OrdersPage() {
       ) : (
         <div className="px-4 flex flex-col gap-3">
           {orders.map((order) => (
-            <button
+            <div
               key={order.id}
-              onClick={() => navigate(`/orders/${order.id}`)}
-              className="w-full text-left bg-white rounded-2xl p-4 shadow-sm border border-gray-100 active:scale-98 transition-transform"
+              className="w-full bg-white rounded-2xl p-4 shadow-sm border border-gray-100"
             >
-              <div className="flex items-start justify-between mb-2">
-                <div>
-                  <p className="text-xs text-gray-400 font-mono">#{order.id.slice(0, 8).toUpperCase()}</p>
-                  <p className="font-semibold text-gray-900 mt-0.5 capitalize">{order.category_type} order</p>
+              <button onClick={() => navigate(`/orders/${order.id}`)}
+                className="w-full text-left active:scale-98 transition-transform">
+                <div className="flex items-start justify-between mb-2">
+                  <div>
+                    <p className="text-xs text-gray-400 font-mono">#{order.id.slice(0, 8).toUpperCase()}</p>
+                    <p className="font-semibold text-gray-900 mt-0.5 capitalize">{order.category_type} order</p>
+                  </div>
+                  <Badge label={order.status.replace('_', ' ')} type={order.status} />
                 </div>
-                <Badge label={order.status.replace('_', ' ')} type={order.status} />
-              </div>
-              <div className="flex items-center justify-between mt-3">
-                <p className="text-xs text-gray-500">{order.pickup_address}</p>
-                <p className="font-bold text-green-600">${Number(order.total_usd).toFixed(2)}</p>
-              </div>
-              <p className="text-xs text-gray-400 mt-1">
-                {new Date(order.createdAt).toLocaleDateString('en-ZW', {
-                  day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit'
-                })}
-              </p>
-            </button>
+                <div className="flex items-center justify-between mt-3">
+                  <p className="text-xs text-gray-500">{order.pickup_address}</p>
+                  <p className="font-bold text-green-600">${Number(order.total_usd).toFixed(2)}</p>
+                </div>
+                <p className="text-xs text-gray-400 mt-1">
+                  {new Date(order.createdAt).toLocaleDateString('en-ZW', {
+                    day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit'
+                  })}
+                </p>
+              </button>
+              {/* Quick reorder for finished orders */}
+              {(order.status === 'delivered' || order.status === 'cancelled') && (
+                <button onClick={() => reorder(order)}
+                  className="w-full mt-3 py-2.5 rounded-xl font-bold text-sm active:scale-98 transition-transform border"
+                  style={{ borderColor: '#FF3008', color: '#FF3008' }}>
+                  🔄 Reorder
+                </button>
+              )}
+            </div>
           ))}
         </div>
       )}

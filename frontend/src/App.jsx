@@ -4,7 +4,7 @@ import useAuthStore from './store/useAuthStore'
 // Onboarding
 import OnboardingPage from './pages/onboarding/OnboardingPage'
 
-// Customer pages
+// Customer
 import LoginPage     from './pages/auth/LoginPage'
 import RegisterPage  from './pages/auth/RegisterPage'
 import HomePage      from './pages/home/HomePage'
@@ -16,18 +16,20 @@ import OrdersPage    from './pages/order/OrdersPage'
 import OrderDetail   from './pages/order/OrderDetail'
 import TrackingPage  from './pages/tracking/TrackingPage'
 import ProfilePage   from './pages/profile/ProfilePage'
+import FavoritesPage from './pages/profile/FavoritesPage'
+import AddressesPage from './pages/profile/AddressesPage'
 
-// Rider pages
+// Rider
 import RiderHome     from './pages/rider/RiderHome'
 import RiderDelivery from './pages/rider/RiderDelivery'
 import RiderEarnings from './pages/rider/RiderEarnings'
 
-// Vendor pages
+// Vendor
 import VendorHome    from './pages/vendor/VendorHome'
 import VendorOrders  from './pages/vendor/VendorOrders'
 import VendorMenu    from './pages/vendor/VendorMenu'
 
-// Admin pages
+// Admin
 import AdminHome     from './pages/admin/AdminHome'
 
 // Layout
@@ -63,47 +65,43 @@ export default function App() {
 
   return (
     <BrowserRouter>
-      <div className="min-h-screen bg-gray-50 max-w-md mx-auto relative">
+      <div className="min-h-screen bg-gray-50 max-w-md mx-auto">
         <Routes>
-          {/* Onboarding — shown to new users */}
           <Route path="/welcome"  element={<GuestRoute><OnboardingPage /></GuestRoute>} />
-
-          {/* Auth */}
           <Route path="/login"    element={<GuestRoute><LoginPage /></GuestRoute>} />
           <Route path="/register" element={<GuestRoute><RegisterPage /></GuestRoute>} />
 
-          {/* Root redirect */}
           <Route path="/" element={<ProtectedRoute><RootRedirect /></ProtectedRoute>} />
 
-          {/* ── Customer ── */}
-          <Route path="/home"          element={<ProtectedRoute><HomePage /></ProtectedRoute>} />
-          <Route path="/vendor/:id"    element={<ProtectedRoute><VendorPage /></ProtectedRoute>} />
-          <Route path="/errand"        element={<ProtectedRoute><ErrandPage /></ProtectedRoute>} />
-          <Route path="/cart"          element={<ProtectedRoute><CartPage /></ProtectedRoute>} />
-          <Route path="/checkout"      element={<ProtectedRoute><CheckoutPage /></ProtectedRoute>} />
-          <Route path="/orders"        element={<ProtectedRoute><OrdersPage /></ProtectedRoute>} />
-          <Route path="/orders/:id"    element={<ProtectedRoute><OrderDetail /></ProtectedRoute>} />
-          <Route path="/track/:id"     element={<ProtectedRoute><TrackingPage /></ProtectedRoute>} />
-          <Route path="/profile"       element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
+          {/* Customer */}
+          <Route path="/home"       element={<ProtectedRoute><HomePage /></ProtectedRoute>} />
+          <Route path="/vendor/:id" element={<ProtectedRoute><VendorPage /></ProtectedRoute>} />
+          <Route path="/errand"     element={<ProtectedRoute><ErrandPage /></ProtectedRoute>} />
+          <Route path="/cart"       element={<ProtectedRoute><CartPage /></ProtectedRoute>} />
+          <Route path="/checkout"   element={<ProtectedRoute><CheckoutPage /></ProtectedRoute>} />
+          <Route path="/orders"     element={<ProtectedRoute><OrdersPage /></ProtectedRoute>} />
+          <Route path="/orders/:id" element={<ProtectedRoute><OrderDetail /></ProtectedRoute>} />
+          <Route path="/track/:id"  element={<ProtectedRoute><TrackingPage /></ProtectedRoute>} />
+          <Route path="/profile"    element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
+          <Route path="/favorites"  element={<ProtectedRoute><FavoritesPage /></ProtectedRoute>} />
+          <Route path="/addresses"  element={<ProtectedRoute><AddressesPage /></ProtectedRoute>} />
 
-          {/* ── Rider ── */}
+          {/* Rider */}
           <Route path="/rider"              element={<ProtectedRoute><RiderHome /></ProtectedRoute>} />
           <Route path="/rider/delivery/:id" element={<ProtectedRoute><RiderDelivery /></ProtectedRoute>} />
           <Route path="/rider/earnings"     element={<ProtectedRoute><RiderEarnings /></ProtectedRoute>} />
 
-          {/* ── Vendor ── */}
+          {/* Vendor */}
           <Route path="/vendor"        element={<ProtectedRoute><VendorHome /></ProtectedRoute>} />
           <Route path="/vendor/orders" element={<ProtectedRoute><VendorOrders /></ProtectedRoute>} />
           <Route path="/vendor/menu"   element={<ProtectedRoute><VendorMenu /></ProtectedRoute>} />
 
-          {/* ── Admin ── */}
-          <Route path="/admin"         element={<ProtectedRoute><AdminHome /></ProtectedRoute>} />
+          {/* Admin */}
+          <Route path="/admin" element={<ProtectedRoute><AdminHome /></ProtectedRoute>} />
 
-          {/* Fallback */}
           <Route path="*" element={<Navigate to={token ? '/' : '/welcome'} replace />} />
         </Routes>
 
-        {/* Role-based bottom nav */}
         {token && role === 'customer' && <BottomNav />}
         {token && role === 'rider'    && <RiderBottomNav />}
         {token && role === 'vendor'   && <VendorBottomNav />}

@@ -1,81 +1,77 @@
-const { Rider, City } = require('../models/associations');
+const { Rider, Order } = require('../models/associations');
 
-// ─── Register rider profile ───────────────────────────────────────────────────
-async function registerRider(req, res) {
-  try {
-    const { city_id, vehicle_type, vehicle_plate, vehicle_model, national_id } = req.body;
-
-    if (!city_id || !vehicle_type) {
-      return res.status(400).json({ error: 'city_id and vehicle_type are required' });
-    }
-
-    const existing = await Rider.findOne({ where: { user_id: req.user.id } });
-    if (existing) return res.status(409).json({ error: 'Rider profile already exists' });
-
-    const rider = await Rider.create({
-      user_id:       req.user.id,
-      city_id,
-      vehicle_type,
-      vehicle_plate: vehicle_plate || null,
-      vehicle_model: vehicle_model || null,
-      national_id:   national_id || null,
-    });
-
-    return res.status(201).json({
-      message: 'Rider profile created — pending admin approval',
-      rider,
-    });
-  } catch (err) {
-    console.error('registerRider error:', err.message);
-    return res.status(500).json({ error: 'Could not register rider' });
-  }
-}
-
-// ─── Get rider profile ────────────────────────────────────────────────────────
-async function getRiderProfile(req, res) {
+// GET /api/riders/profile
+async function getProfile(req, res) {
   try {
     const rider = await Rider.findOne({ where: { user_id: req.user.id } });
     if (!rider) return res.status(404).json({ error: 'Rider profile not found' });
     return res.status(200).json({ rider });
   } catch (err) {
-    return res.status(500).json({ error: err.message });
+    console.error('getProfile error:', err.message);
+    return res.status(500).json({ error: 'Failed to fetch rider profile' });
   }
 }
 
-// ─── Toggle online status ─────────────────────────────────────────────────────
+// PATCH /api/riders/online
 async function toggleOnline(req, res) {
   try {
-    const rider = await Rider.findOne({ where: { user_id: req.user.id } });
-    if (!rider) return res.status(404).json({ error: 'Rider profile not found' });
-    if (!rider.is_approved) return res.status(403).json({ error: 'Rider not yet approved' });
-
-    await rider.update({ is_online: !rider.is_online });
-    return res.status(200).json({
-      message: `You are now ${rider.is_online ? 'online' : 'offline'}`,
-      is_online: rider.is_online,
-    });
+    const { is_online } = req.body;
+    let rider = await Rider.findOne({ where: { user_id: req.user.id } });
+    if (!rider) return res.status(404).json({ error: 'Rider profile not found. Please complete rider registration.' });
+    await rider.update({ is_online: !!is_online });
+    return res.status(200).json({ message: 'Status updated', rider });
   } catch (err) {
-    return res.status(500).json({ error: err.message });
+    console.error('toggleOnline error:', err.message);
+    return res.status(500).json({ error: 'Failed to update online status' });
   }
 }
 
-// ─── Update rider location ────────────────────────────────────────────────────
+// PATCH /api/riders/location
 async function updateLocation(req, res) {
   try {
     const { lat, lng } = req.body;
-    if (!lat || !lng) return res.status(400).json({ error: 'lat and lng are required' });
-
+    if (lat == null || lng == null) {
+      return res.status(400).json({ error: 'lat and lng are required' });
+    }
     const rider = await Rider.findOne({ where: { user_id: req.user.id } });
     if (!rider) return res.status(404).json({ error: 'Rider profile not found' });
 
     await rider.update({
-      current_location: { lat, lng, updated_at: new Date() },
+      current_location: { lat, lng, updated_at: new Date().toISOString() },
     });
 
     return res.status(200).json({ message: 'Location updated' });
   } catch (err) {
-    return res.status(500).json({ error: err.message });
+    console.error('updateLocation error:', err.message);
+    return res.status(500).json({ error: 'Failed to update location' });
   }
 }
 
-module.exports = { registerRider, getRiderProfile, toggleOnline, updateLocation };
+// GET /api/riders/location/:orderId — customer fetches rider location for an order
+async function getRiderLocationForOrder(req, res) {
+  try {
+    const order = await Order.findByPk(req.params.orderId);
+    if (!order) return res.status(404).json({ error: 'Order not found' });
+
+    // Only the customer who placed it (or admin) can track
+    if (order.customer_id !== req.user.id && req.user.role !== 'admin') {
+      return res.status(403).json({ error: 'Access denied' });
+    }
+
+    if (!order.rider_id) {
+      return res.status(200).json({ location: null, message: 'No rider assigned yet' });
+    }
+
+    const rider = await Rider.findByPk(order.rider_id);
+    if (!rider || !rider.current_location) {
+      return res.status(200).json({ location: null, message: 'Rider location not available' });
+    }
+
+    return res.status(200).json({ location: rider.current_location });
+  } catch (err) {
+    console.error('getRiderLocationForOrder error:', err.message);
+    return res.status(500).json({ error: 'Failed to fetch rider location' });
+  }
+}
+
+module.exports = { getProfile, toggleOnline, updateLocation, getRiderLocationForOrder };

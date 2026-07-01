@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import api from '../../api/api'
 import LoadingScreen from '../../components/ui/LoadingScreen'
 import Badge from '../../components/ui/Badge'
+import useRiderTracking from '../../hooks/useRiderTracking'
 
 const STATUS_FLOW = {
   accepted:  { next: 'picked_up',  label: 'Mark as Picked Up',  color: 'bg-purple-600' },
@@ -29,6 +30,10 @@ export default function RiderDelivery() {
       if (status === 'delivered') navigate('/rider')
     },
   })
+
+  // Broadcast GPS while on active delivery
+  const isActiveDelivery = data && ['accepted', 'picked_up', 'en_route'].includes(data.status)
+  useRiderTracking(isActiveDelivery)
 
   if (isLoading) return <LoadingScreen message="Loading order..." />
   if (!data)     return <div className="p-6 text-center text-gray-500">Order not found</div>

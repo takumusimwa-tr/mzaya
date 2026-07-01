@@ -3,29 +3,27 @@ const router  = express.Router();
 const { authenticate, requireRole } = require('../middleware/auth.middleware');
 const { USER_ROLE } = require('../config/constants');
 const {
-  placeOrder,
-  getOrder,
-  myOrders,
-  updateStatus,
-  cancel,
+  placeOrder, getOrder, myOrders, availableOrders, claimOrder,
+  updateStatus, cancel, vendorOrders, rateOrder,
 } = require('../controllers/order.controller');
 
-// All order routes require authentication
-router.use(authenticate);
+// Customer
+router.post('/',           authenticate, requireRole(USER_ROLE.CUSTOMER), placeOrder);
+router.get('/my',          authenticate, myOrders);
+router.post('/:id/cancel', authenticate, requireRole(USER_ROLE.CUSTOMER), cancel);
+router.post('/:id/rate',   authenticate, requireRole(USER_ROLE.CUSTOMER), rateOrder);
 
-// POST /api/orders — customers only
-router.post('/', requireRole(USER_ROLE.CUSTOMER), placeOrder);
+// Rider — available orders + claiming (must come before /:id)
+router.get('/available',   authenticate, requireRole(USER_ROLE.RIDER), availableOrders);
+router.post('/:id/claim',  authenticate, requireRole(USER_ROLE.RIDER), claimOrder);
 
-// GET /api/orders/my — customers see their orders, riders see their deliveries
-router.get('/my', myOrders);
+// Vendor
+router.get('/vendor',      authenticate, requireRole(USER_ROLE.VENDOR, USER_ROLE.ADMIN), vendorOrders);
 
-// GET /api/orders/:id — customer, rider, or admin
-router.get('/:id', getOrder);
+// Rider status updates
+router.patch('/:id/status', authenticate, requireRole(USER_ROLE.RIDER, USER_ROLE.ADMIN), updateStatus);
 
-// PATCH /api/orders/:id/status — riders only
-router.patch('/:id/status', requireRole(USER_ROLE.RIDER), updateStatus);
-
-// POST /api/orders/:id/cancel — customers only
-router.post('/:id/cancel', requireRole(USER_ROLE.CUSTOMER), cancel);
+// Any authenticated — must be last
+router.get('/:id', authenticate, getOrder);
 
 module.exports = router;

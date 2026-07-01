@@ -1,91 +1,118 @@
 import { useNavigate } from 'react-router-dom'
 import useCartStore from '../../store/useCartStore'
-import Button from '../../components/ui/Button'
 
 export default function CartPage() {
   const navigate = useNavigate()
-  const { items, vendorName, addItem, removeItem, clearCart, totalItems, totalUsd, vendor, categoryType, city } = useCartStore()
+  const cart     = useCartStore()
 
-  if (!items.length) {
+  const items      = cart.items
+  const subtotal   = cart.totalPrice()
+  const totalItems = cart.totalItems()
+
+  if (items.length === 0) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center gap-4 px-6">
-        <p className="text-5xl">🛒</p>
-        <p className="text-gray-600 font-semibold">Your cart is empty</p>
-        <p className="text-gray-400 text-sm text-center">Add items from a vendor to get started</p>
-        <Button onClick={() => navigate('/')}>Browse vendors</Button>
+      <div className="min-h-screen flex flex-col" style={{ background: '#F8F8F8' }}>
+        <div className="flex items-center gap-3 px-4 pt-14 pb-4 bg-white border-b border-gray-100">
+          <button onClick={() => navigate(-1)} className="p-2 rounded-full bg-gray-100">
+            <BackIcon />
+          </button>
+          <h1 className="text-lg font-bold text-gray-900">Cart</h1>
+        </div>
+        <div className="flex-1 flex flex-col items-center justify-center px-6">
+          <div className="text-6xl mb-4">🛒</div>
+          <h2 className="text-lg font-bold text-gray-900 mb-1">Your cart is empty</h2>
+          <p className="text-gray-400 text-sm text-center mb-6">Add items from a vendor to get started</p>
+          <button onClick={() => navigate('/home')}
+            className="px-8 py-3 rounded-2xl text-white font-bold active:scale-95"
+            style={{ background: '#FF3008' }}>
+            Browse vendors
+          </button>
+        </div>
       </div>
     )
   }
 
   return (
-    <div className="pb-32">
+    <div className="min-h-screen pb-32" style={{ background: '#F8F8F8' }}>
       {/* Header */}
-      <div className="flex items-center gap-3 px-4 pt-14 pb-4">
+      <div className="flex items-center gap-3 px-4 pt-14 pb-4 bg-white border-b border-gray-100">
         <button onClick={() => navigate(-1)} className="p-2 rounded-full bg-gray-100">
           <BackIcon />
         </button>
         <div>
           <h1 className="text-lg font-bold text-gray-900">Your cart</h1>
-          <p className="text-xs text-gray-500">{vendorName}</p>
+          <p className="text-xs text-gray-400">{cart.vendorName}</p>
         </div>
+        <button onClick={() => cart.clearCart()}
+          className="ml-auto text-xs text-red-500 font-semibold">
+          Clear
+        </button>
       </div>
 
       {/* Items */}
-      <div className="px-4 flex flex-col gap-3">
-        {items.map((item) => (
-          <div key={item.id} className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100 flex items-center justify-between gap-4">
-            <div className="flex-1 min-w-0">
-              <p className="font-semibold text-gray-900 text-sm">{item.name}</p>
-              <p className="text-green-600 font-bold text-sm mt-0.5">${(item.price_usd * item.qty).toFixed(2)}</p>
-            </div>
-            <div className="flex items-center gap-3 flex-shrink-0">
-              <button
-                onClick={() => removeItem(item.id)}
-                className="bg-gray-100 w-8 h-8 rounded-full flex items-center justify-center text-lg font-bold active:scale-95"
-              >
-                −
-              </button>
-              <span className="text-sm font-bold w-4 text-center">{item.qty}</span>
-              <button
-                onClick={() => addItem(item, vendor, vendorName, categoryType, city)}
-                className="bg-green-600 text-white w-8 h-8 rounded-full flex items-center justify-center text-lg font-bold active:scale-95"
-              >
-                +
-              </button>
+      <div className="px-4 mt-4 flex flex-col gap-3">
+        {items.map((item, index) => (
+          <div key={index} className="bg-white rounded-2xl p-4 border border-gray-100"
+            style={{ boxShadow: '0 1px 6px rgba(0,0,0,0.05)' }}>
+            <div className="flex items-start justify-between">
+              <div className="flex-1">
+                <h3 className="font-bold text-gray-900">{item.name}</h3>
+                {item.special_instructions && (
+                  <p className="text-xs text-gray-400 mt-0.5">📝 {item.special_instructions}</p>
+                )}
+                <p className="text-sm font-black text-gray-900 mt-1">
+                  ${(item.unit_price_usd * item.qty).toFixed(2)}
+                </p>
+              </div>
+
+              {/* Quantity controls */}
+              <div className="flex items-center gap-2 bg-gray-100 rounded-full px-1.5 py-1">
+                <button onClick={() => item.qty > 1 ? cart.updateQty(index, item.qty - 1) : cart.removeItem(index)}
+                  className="w-7 h-7 rounded-full bg-white flex items-center justify-center shadow-sm active:scale-90">
+                  {item.qty > 1
+                    ? <svg className="w-3.5 h-3.5 text-gray-700" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M20 12H4" /></svg>
+                    : <svg className="w-3.5 h-3.5 text-red-500" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+                  }
+                </button>
+                <span className="font-black text-gray-900 w-5 text-center text-sm">{item.qty}</span>
+                <button onClick={() => cart.updateQty(index, item.qty + 1)}
+                  className="w-7 h-7 rounded-full bg-white flex items-center justify-center shadow-sm active:scale-90">
+                  <svg className="w-3.5 h-3.5 text-gray-700" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" /></svg>
+                </button>
+              </div>
             </div>
           </div>
         ))}
+
+        {/* Add more */}
+        <button onClick={() => navigate(`/vendor/${cart.vendorId}`)}
+          className="text-center py-3 text-sm font-semibold rounded-2xl border-2 border-dashed border-gray-200 text-gray-500 active:bg-gray-50">
+          + Add more items
+        </button>
       </div>
 
       {/* Summary */}
-      <div className="mx-4 mt-4 bg-white rounded-2xl p-4 shadow-sm border border-gray-100">
-        <div className="flex justify-between text-sm text-gray-600 mb-2">
-          <span>Subtotal</span>
-          <span>${totalUsd().toFixed(2)}</span>
-        </div>
-        <div className="flex justify-between text-sm text-gray-400 mb-3">
-          <span>Delivery fee</span>
-          <span>Calculated at checkout</span>
-        </div>
-        <div className="border-t border-gray-100 pt-3 flex justify-between font-bold text-gray-900">
-          <span>Total</span>
-          <span>${totalUsd().toFixed(2)}+</span>
+      <div className="px-4 mt-4">
+        <div className="bg-white rounded-2xl p-4 border border-gray-100">
+          <div className="flex justify-between text-sm text-gray-600 mb-2">
+            <span>Subtotal ({totalItems} items)</span>
+            <span className="font-semibold">${subtotal.toFixed(2)}</span>
+          </div>
+          <div className="flex justify-between text-sm text-gray-400">
+            <span>Delivery fee</span>
+            <span>Calculated at checkout</span>
+          </div>
         </div>
       </div>
 
-      {/* Clear cart */}
-      <button
-        onClick={clearCart}
-        className="mx-4 mt-3 text-sm text-red-500 underline"
-      >
-        Clear cart
-      </button>
-
-      {/* Checkout button */}
-      <div className="fixed bottom-16 left-1/2 -translate-x-1/2 w-full max-w-md px-4 pb-4 bg-gradient-to-t from-white via-white to-transparent pt-4">
-        <Button size="lg" onClick={() => navigate('/checkout')}>
-          Proceed to checkout · {totalItems()} items
-        </Button>
+      {/* Checkout bar */}
+      <div className="fixed bottom-20 left-1/2 -translate-x-1/2 w-full max-w-md px-4 z-30">
+        <button onClick={() => navigate('/checkout')}
+          className="w-full flex items-center justify-between px-5 py-4 rounded-2xl text-white font-bold active:scale-98 transition-transform"
+          style={{ background: '#FF3008', boxShadow: '0 8px 24px #FF300850' }}>
+          <span>Go to checkout</span>
+          <span>${subtotal.toFixed(2)}</span>
+        </button>
       </div>
     </div>
   )

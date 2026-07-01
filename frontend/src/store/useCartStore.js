@@ -1,53 +1,83 @@
 import { create } from 'zustand'
+import { persist } from 'zustand/middleware'
 
-const useCartStore = create((set, get) => ({
-  items:         [],
-  vendor:        null,
-  vendorName:    null,
-  vendorAddress: null,
-  categoryType:  null,
-  city:          null,
+const useCartStore = create(
+  persist(
+    (set, get) => ({
+      items:         [],
+      vendorId:      null,
+      vendorName:    null,
+      vendorAddress: null,
+      categoryType:  null,
 
-  // Add item — enforces single-vendor rule
-  addItem: (item, vendor, vendorName, categoryType, city, vendorAddress) => {
-    const { vendor: currentVendor, items } = get()
+      // Add item — enforces single-vendor cart
+      addItem: (item, vendorInfo) => {
+        const state = get()
 
-    // Switching vendors clears cart
-    if (currentVendor && currentVendor !== vendor) {
-      set({
-        items:         [{ ...item, qty: 1 }],
-        vendor, vendorName, vendorAddress, categoryType, city,
-      })
-      return
-    }
+        // If adding from a different vendor, clear cart first
+        if (state.vendorId && state.vendorId !== vendorInfo.vendorId) {
+          if (!confirm(`Your cart has items from ${state.vendorName}. Clear it and add from ${vendorInfo.vendorName}?`)) {
+            return
+          }
+          set({
+            items:         [{ ...item }],
+            vendorId:      vendorInfo.vendorId,
+            vendorName:    vendorInfo.vendorName,
+            vendorAddress: vendorInfo.vendorAddress,
+            categoryType:  vendorInfo.categoryType,
+          })
+          return
+        }
 
-    const existing = items.find((i) => i.id === item.id)
-    if (existing) {
-      set({ items: items.map((i) => i.id === item.id ? { ...i, qty: i.qty + 1 } : i) })
-    } else {
-      set({
-        items: [...items, { ...item, qty: 1 }],
-        vendor, vendorName, vendorAddress, categoryType, city,
-      })
-    }
-  },
+        // Same vendor or empty cart
+        const existing = state.items.find(
+          (i) => i.id === item.id && i.special_instructions === item.special_instructions
+        )
 
-  removeItem: (itemId) => {
-    const { items } = get()
-    const updated = items
-      .map((i) => i.id === itemId ? { ...i, qty: i.qty - 1 } : i)
-      .filter((i) => i.qty > 0)
-    set({ items: updated })
-    if (updated.length === 0) get().clearCart()
-  },
+        if (existing) {
+          set({
+            items: state.items.map((i) =>
+              i === existing ? { ...i, qty: i.qty + item.qty } : i
+            ),
+          })
+        } else {
+          set({
+            items:         [...state.items, item],
+            vendorId:      vendorInfo.vendorId,
+            vendorName:    vendorInfo.vendorName,
+            vendorAddress: vendorInfo.vendorAddress,
+            categoryType:  vendorInfo.categoryType,
+          })
+        }
+      },
 
-  clearCart: () => set({
-    items: [], vendor: null, vendorName: null,
-    vendorAddress: null, categoryType: null, city: null,
-  }),
+      removeItem: (index) => {
+        const items = get().items.filter((_, i) => i !== index)
+        set(items.length === 0
+          ? { items: [], vendorId: null, vendorName: null, vendorAddress: null, categoryType: null }
+          : { items }
+        )
+      },
 
-  totalItems: () => get().items.reduce((sum, i) => sum + i.qty, 0),
-  totalUsd:   () => get().items.reduce((sum, i) => sum + i.price_usd * i.qty, 0),
-}))
+      updateQty: (index, qty) => {
+        if (qty < 1) return
+        set({
+          items: get().items.map((item, i) => (i === index ? { ...item, qty } : item)),
+        })
+      },
+
+      clearCart: () => set({
+        items: [], vendorId: null, vendorName: null, vendorAddress: null, categoryType: null,
+      }),
+
+      totalItems: () => get().items.reduce((sum, i) => sum + i.qty, 0),
+
+      totalPrice: () => get().items.reduce((sum, i) => sum + i.unit_price_usd * i.qty, 0),
+
+      totalWeight: () => get().items.reduce((sum, i) => sum + (i.weight_kg || 0.5) * i.qty, 0),
+    }),
+    { name: 'mzaya-cart' }
+  )
+)
 
 export default useCartStore

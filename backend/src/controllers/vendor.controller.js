@@ -1,42 +1,42 @@
-const { Vendor, MenuItem, City } = require('../models/associations');
+const { Vendor, MenuItem } = require('../models/associations');
 
-// ─── Register a vendor ────────────────────────────────────────────────────────
-async function registerVendor(req, res) {
+// GET /api/vendors
+async function listVendors(req, res) {
   try {
-    const { name, category, phone, address, location, city_id, description, opening_hours } = req.body;
+    const { category, city_id, is_open } = req.query;
+    const where = { is_active: true };
+    if (category) where.category = category;
+    if (city_id)  where.city_id  = city_id;
+    if (is_open !== undefined) where.is_open = is_open === 'true';
 
-    if (!name || !category || !phone || !address || !city_id) {
-      return res.status(400).json({ error: 'name, category, phone, address and city_id are required' });
-    }
-
-    const existing = await Vendor.findOne({ where: { owner_id: req.user.id } });
-    if (existing) {
-      return res.status(409).json({ error: 'You already have a registered vendor' });
-    }
-
-    const vendor = await Vendor.create({
-      owner_id: req.user.id,
-      city_id,
-      name,
-      category,
-      phone,
-      address,
-      location:      location || null,
-      description:   description || null,
-      opening_hours: opening_hours || null,
+    const vendors = await Vendor.findAll({
+      where,
+      include: [{ model: MenuItem, as: 'menuItems', where: { is_available: true }, required: false }],
+      order: [['createdAt', 'DESC']],
     });
-
-    return res.status(201).json({
-      message: 'Vendor registered — pending admin approval',
-      vendor,
-    });
+    return res.status(200).json({ vendors });
   } catch (err) {
-    console.error('registerVendor error:', err.message);
-    return res.status(500).json({ error: 'Could not register vendor' });
+    console.error(err);
+    return res.status(500).json({ error: 'Failed to fetch vendors' });
   }
 }
 
-// ─── Get vendor profile ───────────────────────────────────────────────────────
+// GET /api/vendors/my
+async function getMyVendor(req, res) {
+  try {
+    const vendor = await Vendor.findOne({
+      where: { owner_id: req.user.id },
+      include: [{ model: MenuItem, as: 'menuItems', required: false }],
+    });
+    if (!vendor) return res.status(404).json({ error: 'Vendor profile not found' });
+    return res.status(200).json({ vendor });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ error: 'Failed to fetch vendor profile' });
+  }
+}
+
+// GET /api/vendors/:id
 async function getVendor(req, res) {
   try {
     const vendor = await Vendor.findByPk(req.params.id, {
@@ -45,97 +45,88 @@ async function getVendor(req, res) {
     if (!vendor) return res.status(404).json({ error: 'Vendor not found' });
     return res.status(200).json({ vendor });
   } catch (err) {
-    return res.status(500).json({ error: err.message });
+    console.error(err);
+    return res.status(500).json({ error: 'Failed to fetch vendor' });
   }
 }
 
-// ─── List vendors by city and category ───────────────────────────────────────
-async function listVendors(req, res) {
+// POST /api/vendors
+async function createVendor(req, res) {
   try {
-    const { city_id, category } = req.query;
-    const where = { is_active: true, is_open: true };
-    if (city_id)   where.city_id  = city_id;
-    if (category)  where.category = category;
-
-    const vendors = await Vendor.findAll({ where, limit: 50 });
-    return res.status(200).json({ vendors });
+    const { name, category, phone, address, city_id, description } = req.body;
+    const vendor = await Vendor.create({
+      owner_id: req.user.id,
+      name, category, phone, address, city_id, description,
+      is_active: false,
+      is_open:   false,
+    });
+    return res.status(201).json({ message: 'Vendor registered — pending approval', vendor });
   } catch (err) {
-    return res.status(500).json({ error: err.message });
+    console.error(err);
+    return res.status(500).json({ error: 'Failed to register vendor' });
   }
 }
 
-// ─── Update vendor (owner only) ───────────────────────────────────────────────
+// PUT /api/vendors/:id
 async function updateVendor(req, res) {
   try {
-    const vendor = await Vendor.findOne({ where: { id: req.params.id, owner_id: req.user.id } });
-    if (!vendor) return res.status(404).json({ error: 'Vendor not found or access denied' });
-
-    const allowed = ['name', 'phone', 'address', 'location', 'description', 'opening_hours', 'is_open', 'logo_url'];
-    const updates = {};
-    allowed.forEach(field => { if (req.body[field] !== undefined) updates[field] = req.body[field]; });
-
-    await vendor.update(updates);
-    return res.status(200).json({ message: 'Vendor updated', vendor });
+    const vendor = await Vendor.findByPk(req.params.id);
+    if (!vendor) return res.status(404).json({ error: 'Vendor not found' });
+    if (vendor.owner_id !== req.user.id && req.user.role !== 'admin') {
+      return res.status(403).json({ error: 'Access denied' });
+    }
+    await vendor.update(req.body);
+    return res.status(200).json({ vendor });
   } catch (err) {
-    return res.status(500).json({ error: err.message });
+    console.error(err);
+    return res.status(500).json({ error: 'Failed to update vendor' });
   }
 }
 
-// ─── Add menu item ────────────────────────────────────────────────────────────
+// POST /api/vendors/:id/menu
 async function addMenuItem(req, res) {
   try {
-    const vendor = await Vendor.findOne({ where: { id: req.params.id, owner_id: req.user.id } });
-    if (!vendor) return res.status(404).json({ error: 'Vendor not found or access denied' });
-
-    const { name, description, price_usd, weight_kg, category, image_url } = req.body;
-    if (!name || !price_usd) return res.status(400).json({ error: 'name and price_usd are required' });
-
+    const { name, description, price_usd, category } = req.body;
     const item = await MenuItem.create({
-      vendor_id:   vendor.id,
-      name,
-      description: description || null,
-      price_usd,
-      weight_kg:   weight_kg || 0,
-      category:    category || null,
-      image_url:   image_url || null,
+      vendor_id:    req.params.id,
+      name, description, price_usd, category,
+      is_available: true,
     });
-
-    return res.status(201).json({ message: 'Menu item added', item });
+    return res.status(201).json({ item });
   } catch (err) {
-    return res.status(500).json({ error: err.message });
+    console.error(err);
+    return res.status(500).json({ error: 'Failed to add menu item' });
   }
 }
 
-// ─── Update menu item ─────────────────────────────────────────────────────────
+// PUT /api/vendors/:id/menu/:itemId
 async function updateMenuItem(req, res) {
   try {
     const item = await MenuItem.findByPk(req.params.itemId);
     if (!item) return res.status(404).json({ error: 'Item not found' });
-
-    const vendor = await Vendor.findOne({ where: { id: item.vendor_id, owner_id: req.user.id } });
-    if (!vendor) return res.status(403).json({ error: 'Access denied' });
-
     await item.update(req.body);
-    return res.status(200).json({ message: 'Item updated', item });
+    return res.status(200).json({ item });
   } catch (err) {
-    return res.status(500).json({ error: err.message });
+    console.error(err);
+    return res.status(500).json({ error: 'Failed to update item' });
   }
 }
 
-// ─── Delete menu item ─────────────────────────────────────────────────────────
+// DELETE /api/vendors/:id/menu/:itemId
 async function deleteMenuItem(req, res) {
   try {
     const item = await MenuItem.findByPk(req.params.itemId);
     if (!item) return res.status(404).json({ error: 'Item not found' });
-
-    const vendor = await Vendor.findOne({ where: { id: item.vendor_id, owner_id: req.user.id } });
-    if (!vendor) return res.status(403).json({ error: 'Access denied' });
-
     await item.destroy();
     return res.status(200).json({ message: 'Item deleted' });
   } catch (err) {
-    return res.status(500).json({ error: err.message });
+    console.error(err);
+    return res.status(500).json({ error: 'Failed to delete item' });
   }
 }
 
-module.exports = { registerVendor, getVendor, listVendors, updateVendor, addMenuItem, updateMenuItem, deleteMenuItem };
+module.exports = {
+  listVendors, getMyVendor, getVendor,
+  createVendor, updateVendor,
+  addMenuItem, updateMenuItem, deleteMenuItem,
+};

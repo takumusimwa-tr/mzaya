@@ -290,7 +290,7 @@ export default function ErrandPage() {
       </form>
 
       {/* Submit button */}
-      <div className="fixed bottom-16 left-1/2 -translate-x-1/2 w-full max-w-md px-4 pb-4 bg-gradient-to-t from-white via-white to-transparent pt-4">
+      <div className="fixed bottom-20 left-1/2 -translate-x-1/2 w-full max-w-md px-4 z-30">
         <Button
           size="lg"
           loading={loading}

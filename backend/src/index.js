@@ -20,12 +20,19 @@ const riderRoutes     = require('./routes/rider.routes');
 const cityRoutes      = require('./routes/city.routes');
 const paymentRoutes   = require('./routes/payment.routes');
 const analyticsRoutes = require('./routes/analytics.routes');
+const uploadRoutes    = require('./routes/upload.routes');
+const favoriteRoutes  = require('./routes/favorite.routes');
+const addressRoutes   = require('./routes/address.routes');
 
 const app = express();
 
 app.use(express.json());
 app.use(cors());
-app.use(helmet());
+// helmet with crossOriginResourcePolicy disabled so uploaded images load cross-origin (frontend on :5173)
+app.use(helmet({ crossOriginResourcePolicy: false }));
+
+// Serve uploaded images statically
+app.use('/uploads', express.static(path.join(__dirname, '..', 'uploads')));
 
 app.use('/api/auth',      authRoutes);
 app.use('/api/orders',    orderRoutes);
@@ -34,6 +41,9 @@ app.use('/api/riders',    riderRoutes);
 app.use('/api/cities',    cityRoutes);
 app.use('/api/payments',  paymentRoutes);
 app.use('/api/analytics', analyticsRoutes);
+app.use('/api/uploads',   uploadRoutes);
+app.use('/api/favorites', favoriteRoutes);
+app.use('/api/addresses', addressRoutes);
 
 app.get('/', (req, res) => {
   res.json({
@@ -43,14 +53,14 @@ app.get('/', (req, res) => {
     endpoints: [
       '/api/auth', '/api/orders', '/api/vendors',
       '/api/riders', '/api/cities', '/api/payments',
-      '/api/analytics',
+      '/api/analytics', '/api/uploads', '/api/favorites', '/api/addresses',
     ],
   });
 });
 
 app.use((err, req, res, next) => {
   console.error('Unhandled error:', err.message);
-  res.status(500).json({ error: 'Internal server error' });
+  res.status(500).json({ error: err.message || 'Internal server error' });
 });
 
 async function boot() {
