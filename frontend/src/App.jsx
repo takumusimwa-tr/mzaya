@@ -20,9 +20,10 @@ import FavoritesPage from './pages/profile/FavoritesPage'
 import AddressesPage from './pages/profile/AddressesPage'
 
 // Rider
-import RiderHome     from './pages/rider/RiderHome'
-import RiderDelivery from './pages/rider/RiderDelivery'
-import RiderEarnings from './pages/rider/RiderEarnings'
+import RiderHome        from './pages/rider/RiderHome'
+import RiderDelivery    from './pages/rider/RiderDelivery'
+import RiderEarnings    from './pages/rider/RiderEarnings'
+import RiderProfilePage from './pages/rider/RiderProfilePage'
 
 // Vendor
 import VendorHome    from './pages/vendor/VendorHome'
@@ -88,6 +89,7 @@ export default function App() {
 
           {/* Rider */}
           <Route path="/rider"              element={<ProtectedRoute><RiderHome /></ProtectedRoute>} />
+          <Route path="/rider/setup"        element={<ProtectedRoute><RiderProfilePage /></ProtectedRoute>} />
           <Route path="/rider/delivery/:id" element={<ProtectedRoute><RiderDelivery /></ProtectedRoute>} />
           <Route path="/rider/earnings"     element={<ProtectedRoute><RiderEarnings /></ProtectedRoute>} />
 

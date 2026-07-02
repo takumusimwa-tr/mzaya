@@ -3,12 +3,13 @@ const router  = express.Router();
 const { authenticate, requireRole } = require('../middleware/auth.middleware');
 const { USER_ROLE } = require('../config/constants');
 const {
-  placeOrder, getOrder, myOrders, availableOrders, claimOrder,
+  placeOrder, quote, getOrder, myOrders, availableOrders, claimOrder,
   updateStatus, cancel, vendorOrders, rateOrder,
 } = require('../controllers/order.controller');
 
 // Customer
 router.post('/',           authenticate, requireRole(USER_ROLE.CUSTOMER), placeOrder);
+router.post('/quote',      authenticate, requireRole(USER_ROLE.CUSTOMER), quote);
 router.get('/my',          authenticate, myOrders);
 router.post('/:id/cancel', authenticate, requireRole(USER_ROLE.CUSTOMER), cancel);
 router.post('/:id/rate',   authenticate, requireRole(USER_ROLE.CUSTOMER), rateOrder);

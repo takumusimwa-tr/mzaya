@@ -33,6 +33,7 @@ export default function ItemModal({ item, vendor, onClose }) {
       vendorId:      vendor.id,
       vendorName:    vendor.name,
       vendorAddress: vendor.address,
+      vendorCity:    vendor.city?.name ? vendor.city.name.toLowerCase() : null,
       categoryType:  vendor.category,
     })
     setTimeout(() => { setAdding(false); onClose() }, 200)

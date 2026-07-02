@@ -38,6 +38,7 @@ export const authAPI = {
 // ─── Orders ──────────────────────────────────────────────────────────────────
 export const orderAPI = {
   place:        (data)       => api.post('/orders', data),
+  quote:        (data)       => api.post('/orders/quote', data),
   myOrders:     ()           => api.get('/orders/my'),
   getOrder:     (id)         => api.get(`/orders/${id}`),
   cancel:       (id, reason) => api.post(`/orders/${id}/cancel`, { reason }),
@@ -52,6 +53,28 @@ export const vendorAPI = {
 // ─── Cities ───────────────────────────────────────────────────────────────────
 export const cityAPI = {
   list: () => api.get('/cities'),
+};
+
+// ─── Riders ──────────────────────────────────────────────────────────────────
+export const riderAPI = {
+  getProfile:  ()     => api.get('/riders/profile'),
+  saveProfile: (data) => api.put('/riders/profile', data),
+  setOnline:   (on)   => api.patch('/riders/online', { is_online: on }),
+};
+
+// ─── Vehicles ─────────────────────────────────────────────────────────────────
+export const vehicleAPI = {
+  list: () => api.get('/vehicles'),
+};
+
+// ─── Geo — resolve WhatsApp/Maps location pins ───────────────────────────────
+export const geoAPI = {
+  resolvePin: (link) => api.post('/geo/resolve-pin', { link }),
+};
+
+// ─── Promos ───────────────────────────────────────────────────────────────────
+export const promoAPI = {
+  validate: (payload) => api.post('/promos/validate', payload),
 };
 
 // ─── Payments ────────────────────────────────────────────────────────────────

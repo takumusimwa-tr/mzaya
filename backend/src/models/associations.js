@@ -8,6 +8,7 @@ const Vendor          = require('./vendorModel');
 const MenuItem        = require('./menuItemModel');
 const Rider           = require('./riderModel');
 const City            = require('./cityModel');
+const Promo           = require('./promoModel');
 
 // ─── City associations ────────────────────────────────────────────────────────
 City.hasMany(Vendor, { foreignKey: 'city_id', as: 'vendors' });
@@ -59,4 +60,5 @@ module.exports = {
   MenuItem,
   Rider,
   City,
+  Promo,
 };

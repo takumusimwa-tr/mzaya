@@ -8,6 +8,7 @@ const useCartStore = create(
       vendorId:      null,
       vendorName:    null,
       vendorAddress: null,
+      vendorCity:    null,   // vendor's city slug (e.g. 'harare') — decides order city
       categoryType:  null,
 
       // Add item — enforces single-vendor cart
@@ -24,6 +25,7 @@ const useCartStore = create(
             vendorId:      vendorInfo.vendorId,
             vendorName:    vendorInfo.vendorName,
             vendorAddress: vendorInfo.vendorAddress,
+            vendorCity:    vendorInfo.vendorCity || null,
             categoryType:  vendorInfo.categoryType,
           })
           return
@@ -46,6 +48,7 @@ const useCartStore = create(
             vendorId:      vendorInfo.vendorId,
             vendorName:    vendorInfo.vendorName,
             vendorAddress: vendorInfo.vendorAddress,
+            vendorCity:    vendorInfo.vendorCity || null,
             categoryType:  vendorInfo.categoryType,
           })
         }
@@ -54,7 +57,7 @@ const useCartStore = create(
       removeItem: (index) => {
         const items = get().items.filter((_, i) => i !== index)
         set(items.length === 0
-          ? { items: [], vendorId: null, vendorName: null, vendorAddress: null, categoryType: null }
+          ? { items: [], vendorId: null, vendorName: null, vendorAddress: null, vendorCity: null, categoryType: null }
           : { items }
         )
       },
@@ -67,7 +70,7 @@ const useCartStore = create(
       },
 
       clearCart: () => set({
-        items: [], vendorId: null, vendorName: null, vendorAddress: null, categoryType: null,
+        items: [], vendorId: null, vendorName: null, vendorAddress: null, vendorCity: null, categoryType: null,
       }),
 
       totalItems: () => get().items.reduce((sum, i) => sum + i.qty, 0),

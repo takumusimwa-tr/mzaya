@@ -1,4 +1,4 @@
-const { Vendor, MenuItem } = require('../models/associations');
+const { Vendor, MenuItem, City } = require('../models/associations');
 
 // GET /api/vendors
 async function listVendors(req, res) {
@@ -11,7 +11,10 @@ async function listVendors(req, res) {
 
     const vendors = await Vendor.findAll({
       where,
-      include: [{ model: MenuItem, as: 'menuItems', where: { is_available: true }, required: false }],
+      include: [
+        { model: MenuItem, as: 'menuItems', where: { is_available: true }, required: false },
+        { model: City,     as: 'city',      required: false },
+      ],
       order: [['createdAt', 'DESC']],
     });
     return res.status(200).json({ vendors });
@@ -40,7 +43,10 @@ async function getMyVendor(req, res) {
 async function getVendor(req, res) {
   try {
     const vendor = await Vendor.findByPk(req.params.id, {
-      include: [{ model: MenuItem, as: 'menuItems', where: { is_available: true }, required: false }],
+      include: [
+        { model: MenuItem, as: 'menuItems', where: { is_available: true }, required: false },
+        { model: City,     as: 'city',      required: false },
+      ],
     });
     if (!vendor) return res.status(404).json({ error: 'Vendor not found' });
     return res.status(200).json({ vendor });

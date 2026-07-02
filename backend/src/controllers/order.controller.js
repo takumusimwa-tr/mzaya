@@ -1,11 +1,22 @@
 const {
   createOrder,
+  quoteOrder,
   getOrderById,
   getCustomerOrders,
   getRiderOrders,
   updateOrderStatus,
   cancelOrder,
 } = require('../services/order.service');
+const { VEHICLE_RANK } = require('../config/constants');
+
+// Default an unknown/missing vehicle to bicycle-level capability (rank 1) so a
+// rider with a bad record still sees the lightest orders but nothing gated.
+function riderRankOf(vehicle) {
+  return VEHICLE_RANK[vehicle] || VEHICLE_RANK.bicycle;
+}
+function orderRankOf(vehicle) {
+  return VEHICLE_RANK[vehicle] || VEHICLE_RANK.bicycle;
+}
 
 // POST /api/orders
 async function placeOrder(req, res) {
@@ -18,6 +29,18 @@ async function placeOrder(req, res) {
     });
   } catch (err) {
     console.error('placeOrder error:', err.message);
+    return res.status(400).json({ error: err.message });
+  }
+}
+
+// POST /api/orders/quote — compute fee + required vehicle without placing.
+// Uses the same logic as placement so the quote matches the final charge.
+async function quote(req, res) {
+  try {
+    const result = quoteOrder(req.body);
+    return res.status(200).json({ quote: result });
+  } catch (err) {
+    console.error('quote error:', err.message);
     return res.status(400).json({ error: err.message });
   }
 }
@@ -46,17 +69,21 @@ async function myOrders(req, res) {
   }
 }
 
-// GET /api/orders/available — unassigned pending orders for riders to claim
+// GET /api/orders/available — unassigned pending orders a rider may claim.
+// Returns only orders whose required vehicle class this rider's vehicle can
+// handle (a sedan rider never sees a 5-tonne materials order).
 async function availableOrders(req, res) {
   try {
-    const { Order, Rider, City, OrderFood, OrderGrocery, OrderMaterials, OrderErrand } = require('../models/associations');
+    const { Order, Rider, City, OrderFood, OrderGrocery, OrderMaterials, OrderErrand } =
+      require('../models/associations');
     const { Op } = require('sequelize');
 
-    // Find the rider's city (to match against the order's city string)
     const rider = await Rider.findOne({ where: { user_id: req.user.id } });
     if (!rider) return res.status(404).json({ error: 'Rider profile not found' });
 
-    // Resolve the rider's city name (lowercase slug) from the cities table
+    const riderRank = riderRankOf(rider.vehicle_type);
+
+    // Resolve the rider's city → lowercase slug used on orders.city
     let cityName = null;
     try {
       if (rider.city_id && City) {
@@ -64,18 +91,11 @@ async function availableOrders(req, res) {
         if (city) cityName = city.name.toLowerCase();
       }
     } catch (e) {
-      // City model not available — skip city filtering
       cityName = null;
     }
 
-    // Build where clause — pending, unassigned. Filter by city if known.
-    const where = {
-      status:   'pending',
-      rider_id: { [Op.is]: null },
-    };
-    if (cityName) {
-      where.city = cityName;
-    }
+    const where = { status: 'pending', rider_id: { [Op.is]: null } };
+    if (cityName) where.city = cityName;
 
     const orders = await Order.findAll({
       where,
@@ -86,25 +106,30 @@ async function availableOrders(req, res) {
         { model: OrderErrand,    as: 'errandDetail',    required: false },
       ],
       order: [['createdAt', 'ASC']],
-      limit: 20,
+      limit: 40, // over-fetch; vehicle filter trims below
     });
 
-    return res.status(200).json({ orders });
+    const visible = orders
+      .filter((o) => orderRankOf(o.vehicle_type) <= riderRank)
+      .slice(0, 20);
+
+    return res.status(200).json({ orders: visible });
   } catch (err) {
     console.error('availableOrders error:', err.message);
     return res.status(500).json({ error: 'Failed to fetch available orders' });
   }
 }
 
-// POST /api/orders/:id/claim — rider claims an available order
+// POST /api/orders/:id/claim — rider claims an order. Re-checks vehicle class
+// server-side so a stale board or crafted request can't let an under-capacity
+// rider take a heavy order.
 async function claimOrder(req, res) {
   try {
-    const { Order } = require('../models/associations');
+    const { Order, Rider } = require('../models/associations');
 
     const order = await Order.findByPk(req.params.id);
     if (!order) return res.status(404).json({ error: 'Order not found' });
 
-    // Prevent double-claiming
     if (order.rider_id) {
       return res.status(409).json({ error: 'This order was already taken by another rider' });
     }
@@ -112,7 +137,16 @@ async function claimOrder(req, res) {
       return res.status(400).json({ error: 'This order is no longer available' });
     }
 
-    // rider_id references users(id), so store the rider's user id
+    const rider = await Rider.findOne({ where: { user_id: req.user.id } });
+    if (!rider) return res.status(404).json({ error: 'Rider profile not found' });
+
+    if (riderRankOf(rider.vehicle_type) < orderRankOf(order.vehicle_type)) {
+      return res.status(403).json({
+        error: 'This order needs a larger vehicle than your registered one',
+      });
+    }
+
+    // rider_id references users(id)
     await order.update({ rider_id: req.user.id, status: 'accepted', accepted_at: new Date() });
     return res.status(200).json({ message: 'Order claimed', order });
   } catch (err) {
@@ -148,7 +182,8 @@ async function cancel(req, res) {
 // GET /api/orders/vendor
 async function vendorOrders(req, res) {
   try {
-    const { Order, OrderFood, OrderGrocery, OrderMaterials, OrderErrand, Vendor } = require('../models/associations');
+    const { Order, OrderFood, OrderGrocery, OrderMaterials, OrderErrand, Vendor } =
+      require('../models/associations');
     const { Op } = require('sequelize');
 
     const vendor = await Vendor.findOne({ where: { owner_id: req.user.id } });
@@ -208,6 +243,6 @@ async function rateOrder(req, res) {
 }
 
 module.exports = {
-  placeOrder, getOrder, myOrders, availableOrders, claimOrder,
+  placeOrder, quote, getOrder, myOrders, availableOrders, claimOrder,
   updateStatus, cancel, vendorOrders, rateOrder,
 };

@@ -10,6 +10,7 @@ const helmet  = require('helmet');
 
 const { connectDB, sequelize }       = require('./config/db');
 const { startCurrencySyncJob }       = require('./jobs/currencySync.job');
+const { startScheduledReleaseJob }   = require('./jobs/scheduledRelease.job');
 
 require('./models/associations');
 
@@ -23,6 +24,9 @@ const analyticsRoutes = require('./routes/analytics.routes');
 const uploadRoutes    = require('./routes/upload.routes');
 const favoriteRoutes  = require('./routes/favorite.routes');
 const addressRoutes   = require('./routes/address.routes');
+const vehicleRoutes   = require('./routes/vehicle.routes');
+const geoRoutes       = require('./routes/geo.routes');
+const promoRoutes     = require('./routes/promo.routes');
 
 const app = express();
 
@@ -44,6 +48,9 @@ app.use('/api/analytics', analyticsRoutes);
 app.use('/api/uploads',   uploadRoutes);
 app.use('/api/favorites', favoriteRoutes);
 app.use('/api/addresses', addressRoutes);
+app.use('/api/vehicles',  vehicleRoutes);
+app.use('/api/geo',       geoRoutes);
+app.use('/api/promos',    promoRoutes);
 
 app.get('/', (req, res) => {
   res.json({
@@ -53,7 +60,8 @@ app.get('/', (req, res) => {
     endpoints: [
       '/api/auth', '/api/orders', '/api/vendors',
       '/api/riders', '/api/cities', '/api/payments',
-      '/api/analytics', '/api/uploads', '/api/favorites', '/api/addresses',
+      '/api/analytics', '/api/uploads', '/api/favorites',
+      '/api/addresses', '/api/vehicles', '/api/geo', '/api/promos',
     ],
   });
 });
@@ -69,6 +77,7 @@ async function boot() {
   console.log('Models synced');
 
   startCurrencySyncJob();
+  startScheduledReleaseJob();
 
   const PORT = process.env.PORT || 5000;
   app.listen(PORT, () => {

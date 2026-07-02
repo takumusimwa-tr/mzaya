@@ -41,6 +41,12 @@ const Order = sequelize.define('Order', {
     defaultValue: ORDER_STATUS.PENDING,
   },
 
+  // When set, this is a scheduled order to be released for dispatch at this time.
+  scheduled_for: {
+    type: DataTypes.DATE,
+    allowNull: true,
+  },
+
   // Delivery addresses
   pickup_address: {
     type: DataTypes.STRING,
@@ -56,6 +62,10 @@ const Order = sequelize.define('Order', {
   },
   dropoff_location: {
     type: DataTypes.JSONB, // { lat, lng }
+    allowNull: true,
+  },
+  dropoff_landmark: {
+    type: DataTypes.STRING, // human cue for unstructured ZW addresses, e.g. "blue gate opposite Total"
     allowNull: true,
   },
 
@@ -81,6 +91,20 @@ const Order = sequelize.define('Order', {
     type: DataTypes.DECIMAL(10, 2),
     allowNull: false,
     defaultValue: 0,
+  },
+  tip_usd: {
+    type: DataTypes.DECIMAL(10, 2),
+    allowNull: false,
+    defaultValue: 0, // voluntary rider tip — 100% to rider, no commission
+  },
+  promo_code: {
+    type: DataTypes.STRING,
+    allowNull: true, // code applied, if any
+  },
+  discount_usd: {
+    type: DataTypes.DECIMAL(10, 2),
+    allowNull: false,
+    defaultValue: 0, // promo discount off subtotal+fee (never off tip)
   },
   total_usd: {
     type: DataTypes.DECIMAL(10, 2),

@@ -24,10 +24,14 @@ export default function RiderHome() {
   const quote       = QUOTES[new Date().getMinutes() % QUOTES.length]
 
   // Fetch real online status from rider profile
-  const { data: riderProfile } = useQuery({
+  const { data: riderProfile, isFetched: profileFetched } = useQuery({
     queryKey: ['rider-profile'],
-    queryFn:  () => api.get('/riders/profile').then((r) => r.data.rider),
+    queryFn:  () => api.get('/riders/profile').then((r) => r.data.rider).catch(() => null),
+    retry: false,
   })
+
+  // Rider hasn't set vehicle + city yet — can't be matched to orders until they do.
+  const needsSetup = profileFetched && (!riderProfile || !riderProfile.vehicle_type || !riderProfile.city_id)
 
   useEffect(() => {
     if (riderProfile) setOnline(riderProfile.is_online)
@@ -66,6 +70,15 @@ export default function RiderHome() {
     onSuccess:  () => {
       setOnline((p) => !p)
       queryClient.invalidateQueries(['rider-profile'])
+    },
+    onError: (err) => {
+      const msg = err.response?.data?.error || 'Could not update status'
+      // Backend blocks going online without vehicle + city — send them to setup
+      if (msg.toLowerCase().includes('vehicle') || msg.toLowerCase().includes('city')) {
+        navigate('/rider/setup')
+      } else {
+        alert(msg)
+      }
     },
   })
 
@@ -148,6 +161,27 @@ export default function RiderHome() {
       </div>
 
       <div className="px-4 mt-4 flex flex-col gap-4">
+        {/* Setup prompt — rider has no vehicle/city yet */}
+        {needsSetup && (
+          <button
+            onClick={() => navigate('/rider/setup')}
+            className="w-full text-left rounded-2xl p-4 active:scale-98 transition-all"
+            style={{ background: '#FEF3C7', border: '1.5px solid #FCD34D' }}>
+            <div className="flex items-center gap-3">
+              <span className="text-2xl">🛵</span>
+              <div className="flex-1">
+                <p className="font-bold text-sm" style={{ color: '#92400E' }}>
+                  Complete your rider setup
+                </p>
+                <p className="text-xs" style={{ color: '#B45309' }}>
+                  Add your vehicle and city so we can match you with deliveries.
+                </p>
+              </div>
+              <span style={{ color: '#B45309' }}>→</span>
+            </div>
+          </button>
+        )}
+
         {/* Active deliveries */}
         {active.length > 0 && (
           <div>
