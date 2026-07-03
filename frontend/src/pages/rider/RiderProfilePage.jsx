@@ -70,7 +70,7 @@ export default function RiderProfilePage() {
   const selectedVehicle = vehicles?.find((v) => v.value === vehicleType)
 
   return (
-    <div className="min-h-screen bg-white pb-32">
+    <div className="h-screen bg-white flex flex-col">
       {/* Header */}
       <div className="px-6 pt-16 pb-8" style={{ background: '#0F172A' }}>
         <button onClick={() => navigate(-1)} className="bg-white/10 p-2 rounded-full mb-4 inline-block">
@@ -84,7 +84,7 @@ export default function RiderProfilePage() {
         </p>
       </div>
 
-      <div className="px-6 pt-6 flex flex-col gap-5">
+      <div className="px-6 pt-6 pb-6 flex flex-col gap-5 flex-1 overflow-y-auto">
         {error && (
           <div className="p-3 bg-red-50 border border-red-100 rounded-xl">
             <p className="text-sm text-red-600">{error}</p>
@@ -183,8 +183,8 @@ export default function RiderProfilePage() {
         )}
       </div>
 
-      {/* Save */}
-      <div className="fixed bottom-6 left-1/2 -translate-x-1/2 w-full max-w-md px-6 z-30">
+      {/* Save — static footer, always visible below the scroll area */}
+      <div className="px-6 py-4 border-t border-gray-100 bg-white">
         <button
           onClick={handleSave}
           disabled={saveMut.isPending}

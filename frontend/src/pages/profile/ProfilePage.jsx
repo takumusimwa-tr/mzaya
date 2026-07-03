@@ -62,6 +62,9 @@ export default function ProfilePage() {
           <ProfileMenuItem icon="❤️" label="Favorites" onClick={() => navigate('/favorites')} />
         )}
         {user?.role === 'rider' && (
+          <ProfileMenuItem icon="🛵" label="Vehicle & City" onClick={() => navigate('/rider/setup')} />
+        )}
+        {user?.role === 'rider' && (
           <ProfileMenuItem icon="💰" label="My Earnings" onClick={() => navigate('/rider/earnings')} />
         )}
         {user?.role === 'vendor' && (

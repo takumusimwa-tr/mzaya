@@ -67,7 +67,8 @@ export default function VendorMenu() {
   }, {})
 
   return (
-    <div className="pb-24">
+    <div className="h-screen overflow-y-auto">
+     <div className="max-w-4xl mx-auto pb-10">
       <div className="flex items-center justify-between px-4 pt-14 pb-4">
         <h1 className="text-xl font-bold text-gray-900">Menu</h1>
         <button
@@ -155,6 +156,7 @@ export default function VendorMenu() {
           ))
         )}
       </div>
+     </div>
     </div>
   )
 }

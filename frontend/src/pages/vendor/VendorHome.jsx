@@ -67,7 +67,8 @@ export default function VendorHome() {
   const menuItems = vendorData?.menuItems || []
 
   return (
-    <div className="pb-24 min-h-screen" style={{ background: '#F7F7F7' }}>
+    <div className="h-screen overflow-y-auto" style={{ background: '#F7F7F7' }}>
+     <div className="max-w-5xl mx-auto">
 
       {/* ── Hero header ── */}
       <div className="px-4 pt-12 pb-5 bg-white border-b border-gray-100">
@@ -107,12 +108,12 @@ export default function VendorHome() {
               }>
               {vendorData?.is_open ? '● Open' : '○ Closed'}
             </button>
-            {/* Profile avatar */}
-            <button onClick={() => navigate('/profile')}
+            {/* Profile avatar (logout is in the side rail) */}
+            <div
               className="w-9 h-9 rounded-full flex items-center justify-center font-black text-sm border border-gray-200"
               style={{ background: color.light, color: color.bg }}>
               {user?.name?.charAt(0)}
-            </button>
+            </div>
           </div>
         </div>
 
@@ -231,6 +232,7 @@ export default function VendorHome() {
           </div>
         )}
       </div>
+     </div>
     </div>
   )
 }
