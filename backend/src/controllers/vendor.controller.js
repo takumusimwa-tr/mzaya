@@ -1,4 +1,5 @@
 const { Vendor, MenuItem, City } = require('../models/associations');
+const { withLiveOpen } = require('../utils/vendorHours');
 
 // GET /api/vendors
 async function listVendors(req, res) {
@@ -7,9 +8,8 @@ async function listVendors(req, res) {
     const where = { is_active: true };
     if (category) where.category = category;
     if (city_id)  where.city_id  = city_id;
-    if (is_open !== undefined) where.is_open = is_open === 'true';
 
-    const vendors = await Vendor.findAll({
+    const rows = await Vendor.findAll({
       where,
       include: [
         { model: MenuItem, as: 'menuItems', where: { is_available: true }, required: false },
@@ -17,9 +17,19 @@ async function listVendors(req, res) {
       ],
       order: [['createdAt', 'DESC']],
     });
+
+    // Compute live open/closed from hours + pause for each vendor.
+    let vendors = rows.map((v) => withLiveOpen(v.toJSON()));
+
+    // If the caller asked to filter by open status, apply it after computing.
+    if (is_open !== undefined) {
+      const want = is_open === 'true';
+      vendors = vendors.filter((v) => v.is_open === want);
+    }
+
     return res.status(200).json({ vendors });
   } catch (err) {
-    console.error(err);
+    console.error('listVendors error:', err.message);
     return res.status(500).json({ error: 'Failed to fetch vendors' });
   }
 }
@@ -32,7 +42,7 @@ async function getMyVendor(req, res) {
       include: [{ model: MenuItem, as: 'menuItems', required: false }],
     });
     if (!vendor) return res.status(404).json({ error: 'Vendor profile not found' });
-    return res.status(200).json({ vendor });
+    return res.status(200).json({ vendor: withLiveOpen(vendor.toJSON()) });
   } catch (err) {
     console.error(err);
     return res.status(500).json({ error: 'Failed to fetch vendor profile' });
@@ -49,7 +59,7 @@ async function getVendor(req, res) {
       ],
     });
     if (!vendor) return res.status(404).json({ error: 'Vendor not found' });
-    return res.status(200).json({ vendor });
+    return res.status(200).json({ vendor: withLiveOpen(vendor.toJSON()) });
   } catch (err) {
     console.error(err);
     return res.status(500).json({ error: 'Failed to fetch vendor' });
@@ -81,10 +91,21 @@ async function updateVendor(req, res) {
     if (vendor.owner_id !== req.user.id && req.user.role !== 'admin') {
       return res.status(403).json({ error: 'Access denied' });
     }
-    await vendor.update(req.body);
-    return res.status(200).json({ vendor });
+
+    // Only allow safe, owner-editable fields (never owner_id, rating, totals).
+    const ALLOWED = [
+      'name', 'description', 'category', 'phone', 'address', 'city_id',
+      'location', 'opening_hours', 'is_paused', 'is_active', 'logo_url', 'cover_url',
+    ];
+    const patch = {};
+    for (const key of ALLOWED) {
+      if (req.body[key] !== undefined) patch[key] = req.body[key];
+    }
+
+    await vendor.update(patch);
+    return res.status(200).json({ vendor: withLiveOpen(vendor.toJSON()) });
   } catch (err) {
-    console.error(err);
+    console.error('updateVendor error:', err.message);
     return res.status(500).json({ error: 'Failed to update vendor' });
   }
 }

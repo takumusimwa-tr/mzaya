@@ -50,8 +50,8 @@ export default function VendorHome() {
     if ('Notification' in window && Notification.permission === 'default') Notification.requestPermission()
   }, [])
 
-  const toggleOpen = useMutation({
-    mutationFn: () => api.put(`/vendors/${vendorData?.id}`, { is_open: !vendorData?.is_open }),
+  const togglePause = useMutation({
+    mutationFn: () => api.put(`/vendors/${vendorData?.id}`, { is_paused: !vendorData?.is_paused }),
     onSuccess:  () => queryClient.invalidateQueries(['my-vendor']),
   })
 
@@ -77,7 +77,7 @@ export default function VendorHome() {
           <div className="w-16 h-16 rounded-2xl flex items-center justify-center flex-shrink-0 shadow-sm"
             style={{ background: color.light, border: `1.5px solid ${color.bg}22` }}>
             {vendorData?.logo_url
-              ? <img src={vendorData.logo_url} alt="" className="w-full h-full object-cover rounded-2xl" />
+              ? <img src={imageUrl(vendorData.logo_url)} alt="" className="w-full h-full object-cover rounded-2xl" />
               : <span className="text-2xl font-black" style={{ color: color.bg }}>
                   {vendorData?.name?.charAt(0)}
                 </span>
@@ -99,21 +99,23 @@ export default function VendorHome() {
           </div>
 
           <div className="flex items-center gap-2 flex-shrink-0">
-            {/* Open/close toggle */}
-            <button onClick={() => toggleOpen.mutate()}
-              className="px-3 py-1.5 rounded-full text-xs font-bold transition-all active:scale-95 border"
+            {/* Live open/closed status (auto from hours) */}
+            <span className="px-3 py-1.5 rounded-full text-xs font-bold border"
               style={vendorData?.is_open
                 ? { background: '#EDFAF3', color: '#00A651', borderColor: '#00A65130' }
-                : { background: '#F5F5F5', color: '#888', borderColor: '#E5E5E5' }
+                : { background: '#FDECEC', color: '#D33', borderColor: '#D3333330' }
               }>
               {vendorData?.is_open ? '● Open' : '○ Closed'}
+            </span>
+            {/* Manual pause override */}
+            <button onClick={() => togglePause.mutate()} disabled={togglePause.isPending}
+              className="px-3 py-1.5 rounded-full text-xs font-bold transition-all active:scale-95 border disabled:opacity-50"
+              style={vendorData?.is_paused
+                ? { background: '#FFF0EE', color: '#FF3008', borderColor: '#FF300830' }
+                : { background: '#F5F5F5', color: '#888', borderColor: '#E5E5E5' }
+              }>
+              {vendorData?.is_paused ? '▶ Resume orders' : '⏸ Pause orders'}
             </button>
-            {/* Profile avatar (logout is in the side rail) */}
-            <div
-              className="w-9 h-9 rounded-full flex items-center justify-center font-black text-sm border border-gray-200"
-              style={{ background: color.light, color: color.bg }}>
-              {user?.name?.charAt(0)}
-            </div>
           </div>
         </div>
 

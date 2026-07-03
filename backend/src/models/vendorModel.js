@@ -65,10 +65,21 @@ const Vendor = sequelize.define('Vendor', {
 
   is_open: {
     type: DataTypes.BOOLEAN,
-    defaultValue: false, // vendor toggles this themselves
+    defaultValue: false, // legacy manual flag; live status is now computed from hours
+  },
+
+  // Manual override — vendor force-closes early even during open hours ("Pause orders").
+  is_paused: {
+    type: DataTypes.BOOLEAN,
+    defaultValue: false,
   },
 
   logo_url: {
+    type: DataTypes.STRING,
+    allowNull: true,
+  },
+
+  cover_url: {
     type: DataTypes.STRING,
     allowNull: true,
   },

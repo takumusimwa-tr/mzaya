@@ -1,16 +1,25 @@
 import { NavLink, useNavigate } from 'react-router-dom'
+import { useQuery } from '@tanstack/react-query'
 import useAuthStore from '../../store/useAuthStore'
+import api from '../../api/api'
+import imageUrl from '../../utils/imageUrl'
 
 const tabs = [
-  { to: '/vendor',        label: 'Home',   icon: HomeIcon,  end: true  },
-  { to: '/vendor/orders', label: 'Orders', icon: OrderIcon, end: false },
-  { to: '/vendor/menu',   label: 'Menu',   icon: MenuIcon,  end: false },
+  { to: '/vendor',          label: 'Home',     icon: HomeIcon,     end: true  },
+  { to: '/vendor/orders',   label: 'Orders',   icon: OrderIcon,    end: false },
+  { to: '/vendor/menu',     label: 'Menu',     icon: MenuIcon,     end: false },
+  { to: '/vendor/settings', label: 'Settings', icon: SettingsIcon, end: false },
 ]
 
 export default function VendorSideRail() {
   const navigate = useNavigate()
   const logout   = useAuthStore((s) => s.logout)
   const user     = useAuthStore((s) => s.user)
+
+  const { data: vendor } = useQuery({
+    queryKey: ['my-vendor'],
+    queryFn:  () => api.get('/vendors/my').then((r) => r.data.vendor),
+  })
 
   const handleLogout = () => {
     logout?.()
@@ -44,8 +53,11 @@ export default function VendorSideRail() {
 
       {/* Profile / logout */}
       <div className="mt-auto flex flex-col items-center gap-3">
-        <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center text-gray-600 font-bold">
-          {user?.name?.charAt(0)?.toUpperCase() || 'V'}
+        <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center text-gray-600 font-bold overflow-hidden">
+          {vendor?.logo_url
+            ? <img src={imageUrl(vendor.logo_url)} alt="" className="w-full h-full object-cover" />
+            : (user?.name?.charAt(0)?.toUpperCase() || 'V')
+          }
         </div>
         <button onClick={handleLogout}
           className="w-16 lg:w-20 py-2.5 rounded-2xl flex flex-col items-center gap-1 text-[11px] font-semibold text-gray-400 hover:text-red-500 hover:bg-red-50 transition-all">
@@ -77,6 +89,15 @@ function MenuIcon() {
   return (
     <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24">
       <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h7" />
+    </svg>
+  )
+}
+
+function SettingsIcon() {
+  return (
+    <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+      <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
     </svg>
   )
 }
