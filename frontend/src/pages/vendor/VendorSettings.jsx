@@ -70,7 +70,7 @@ export default function VendorSettings() {
 
   return (
     <div className="h-screen overflow-y-auto bg-gray-50">
-      <div className="max-w-3xl mx-auto px-6 py-8">
+      <div className="w-full px-8 py-8">
         <div className="flex items-center justify-between mb-6">
           <h1 className="text-2xl font-black text-gray-900">Business settings</h1>
           {saved && <span className="text-sm font-semibold text-green-600">Saved ✓</span>}

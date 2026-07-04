@@ -68,8 +68,8 @@ export default function VendorMenu() {
 
   return (
     <div className="h-screen overflow-y-auto">
-     <div className="max-w-4xl mx-auto pb-10">
-      <div className="flex items-center justify-between px-4 pt-14 pb-4">
+     <div className="w-full pb-10">
+      <div className="flex items-center justify-between px-8 pt-14 pb-4">
         <h1 className="text-xl font-bold text-gray-900">Menu</h1>
         <button
           onClick={() => { setShowForm(true); setEditItem(null); setForm({ name: '', description: '', price_usd: '', category: '', image_url: '' }) }}
@@ -108,7 +108,7 @@ export default function VendorMenu() {
       )}
 
       {/* Menu list */}
-      <div className="px-4 flex flex-col gap-6">
+      <div className="px-8 flex flex-col gap-6">
         {!menuItems.length ? (
           <div className="text-center py-16">
             <p className="text-4xl mb-3">🍽️</p>

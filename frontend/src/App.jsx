@@ -30,6 +30,7 @@ import VendorHome    from './pages/vendor/VendorHome'
 import VendorOrders  from './pages/vendor/VendorOrders'
 import VendorMenu    from './pages/vendor/VendorMenu'
 import VendorSettings from './pages/vendor/VendorSettings'
+import VendorAnalytics from './pages/vendor/VendorAnalytics'
 
 // Admin
 import AdminHome     from './pages/admin/AdminHome'
@@ -80,6 +81,7 @@ function AppShell() {
             <Route path="/vendor/orders" element={<ProtectedRoute><VendorOrders /></ProtectedRoute>} />
             <Route path="/vendor/menu"   element={<ProtectedRoute><VendorMenu /></ProtectedRoute>} />
             <Route path="/vendor/settings" element={<ProtectedRoute><VendorSettings /></ProtectedRoute>} />
+            <Route path="/vendor/analytics" element={<ProtectedRoute><VendorAnalytics /></ProtectedRoute>} />
             <Route path="*" element={<Navigate to="/vendor" replace />} />
           </Routes>
         </main>

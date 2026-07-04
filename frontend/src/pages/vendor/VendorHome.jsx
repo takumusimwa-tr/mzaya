@@ -68,7 +68,7 @@ export default function VendorHome() {
 
   return (
     <div className="h-screen overflow-y-auto" style={{ background: '#F7F7F7' }}>
-     <div className="max-w-5xl mx-auto">
+     <div className="w-full px-6">
 
       {/* ── Hero header ── */}
       <div className="px-4 pt-12 pb-5 bg-white border-b border-gray-100">

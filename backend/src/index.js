@@ -27,6 +27,7 @@ const addressRoutes   = require('./routes/address.routes');
 const vehicleRoutes   = require('./routes/vehicle.routes');
 const geoRoutes       = require('./routes/geo.routes');
 const promoRoutes     = require('./routes/promo.routes');
+const vendorStatsRoutes = require('./routes/vendorStats.routes');
 
 const app = express();
 
@@ -51,6 +52,7 @@ app.use('/api/addresses', addressRoutes);
 app.use('/api/vehicles',  vehicleRoutes);
 app.use('/api/geo',       geoRoutes);
 app.use('/api/promos',    promoRoutes);
+app.use('/api/vendor-stats', vendorStatsRoutes);
 
 app.get('/', (req, res) => {
   res.json({
