@@ -121,7 +121,7 @@ export default function OrderDetail() {
             {(isDelivered || isCancelled) && (
               <button onClick={() => reorder(order)}
                 className="w-full mt-3 py-3 rounded-xl font-bold text-sm active:scale-98 transition-transform border-2"
-                style={{ borderColor: '#FF3008', color: '#FF3008', background: '#FFF8F7' }}>
+                style={{ borderColor: '#00A651', color: '#00A651', background: '#FFF8F7' }}>
                 🔄 Reorder these items
               </button>
             )}

@@ -158,7 +158,7 @@ export default function VendorSettings() {
                   <button onClick={() => setDay(d.key, { closed: !h.closed })}
                     className="text-xs font-semibold px-3 py-1.5 rounded-lg"
                     style={h.closed
-                      ? { background: '#FFF0EE', color: '#FF3008' }
+                      ? { background: '#EDFAF3', color: '#00A651' }
                       : { background: '#F3F4F6', color: '#6B7280' }
                     }>
                     {h.closed ? 'Set open' : 'Mark closed'}
@@ -171,7 +171,7 @@ export default function VendorSettings() {
 
         <button onClick={save} disabled={saveMut.isPending}
           className="w-full py-4 rounded-2xl text-white font-bold active:scale-98 transition-transform disabled:opacity-60"
-          style={{ background: '#FF3008' }}>
+          style={{ background: '#00A651' }}>
           {saveMut.isPending ? 'Saving…' : 'Save settings'}
         </button>
       </div>

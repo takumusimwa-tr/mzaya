@@ -32,7 +32,7 @@ export default function VendorSideRail() {
       {/* Brand mark */}
       <div className="mb-8">
         <div className="w-11 h-11 rounded-2xl flex items-center justify-center"
-          style={{ background: '#FF3008' }}>
+          style={{ background: '#00A651' }}>
           <span className="text-white font-black text-lg">M</span>
         </div>
       </div>

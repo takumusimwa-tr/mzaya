@@ -1,5 +1,5 @@
-import { useState } from 'react'
-import { useParams, useNavigate } from 'react-router-dom'
+import { useState, useEffect } from 'react'
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { vendorAPI } from '../../api/api'
 import useCartStore from '../../store/useCartStore'
@@ -11,6 +11,8 @@ import { useFavoriteIds } from '../../hooks/useFavorites'
 export default function VendorPage() {
   const { id }   = useParams()
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
+  const highlightId = searchParams.get('highlight')
   const cart     = useCartStore()
   const [activeItem, setActiveItem] = useState(null)
   const [activeCategory, setActiveCategory] = useState(null)
@@ -20,6 +22,13 @@ export default function VendorPage() {
     queryKey: ['vendor', id],
     queryFn:  () => vendorAPI.getById(id).then((r) => r.data.vendor),
   })
+
+  // If arrived from a product tap (?highlight=itemId), auto-open that item.
+  useEffect(() => {
+    if (!highlightId || !vendor?.menuItems) return
+    const item = vendor.menuItems.find((i) => i.id === highlightId)
+    if (item) setActiveItem(item)
+  }, [highlightId, vendor])
 
   if (isLoading) return <LoadingScreen message="Loading menu..." />
   if (!vendor)   return <div className="p-6 text-center text-gray-500">Vendor not found</div>
@@ -44,7 +53,7 @@ export default function VendorPage() {
       <div className="relative h-52">
         {vendor.cover_url
           ? <img src={imageUrl(vendor.cover_url)} alt={vendor.name} className="w-full h-full object-cover" />
-          : <div className="w-full h-full" style={{ background: 'linear-gradient(135deg, #FF6B00, #FF3008)' }} />
+          : <div className="w-full h-full" style={{ background: 'linear-gradient(135deg, #FF6B00, #00A651)' }} />
         }
         {/* Back button */}
         <button onClick={() => navigate(-1)}
@@ -57,8 +66,8 @@ export default function VendorPage() {
         <button onClick={() => toggle(vendor.id)}
           className="absolute top-12 right-4 w-9 h-9 rounded-full bg-white flex items-center justify-center shadow-md active:scale-90 transition-transform">
           <svg className="w-5 h-5 transition-colors"
-            fill={isFavorite(vendor.id) ? '#FF3008' : 'none'}
-            stroke={isFavorite(vendor.id) ? '#FF3008' : '#1f2937'}
+            fill={isFavorite(vendor.id) ? '#00A651' : 'none'}
+            stroke={isFavorite(vendor.id) ? '#00A651' : '#1f2937'}
             strokeWidth={1.8} viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
           </svg>
@@ -107,7 +116,7 @@ export default function VendorPage() {
                 }}
                 className="flex-shrink-0 px-4 py-1.5 rounded-full text-sm font-semibold transition-all"
                 style={activeCategory === cat
-                  ? { background: '#FF3008', color: '#fff' }
+                  ? { background: '#00A651', color: '#fff' }
                   : { background: '#F2F2F2', color: '#666' }
                 }>
                 {cat}
@@ -162,7 +171,7 @@ export default function VendorPage() {
                       }
                       {vendor.is_open && (
                         <div className="absolute bottom-2 right-2 w-7 h-7 rounded-full bg-white shadow-md flex items-center justify-center">
-                          <svg className="w-4 h-4" style={{ color: '#FF3008' }} fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
+                          <svg className="w-4 h-4" style={{ color: '#00A651' }} fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
                           </svg>
                         </div>
@@ -181,7 +190,7 @@ export default function VendorPage() {
         <div className="fixed bottom-20 left-1/2 -translate-x-1/2 w-full max-w-md px-4 z-30">
           <button onClick={() => navigate('/cart')}
             className="w-full flex items-center justify-between px-5 py-4 rounded-2xl text-white font-bold active:scale-98 transition-transform"
-            style={{ background: '#FF3008', boxShadow: '0 8px 24px #FF300850' }}>
+            style={{ background: '#00A651', boxShadow: '0 8px 24px #00A65150' }}>
             <span className="flex items-center gap-2">
               <span className="bg-white/25 w-6 h-6 rounded-full flex items-center justify-center text-sm">{cartCount}</span>
               View cart

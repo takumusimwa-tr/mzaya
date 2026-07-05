@@ -137,10 +137,10 @@ export default function VendorOrders() {
               <button key={grp.key} onClick={() => setGroup(grp.key)}
                 className="px-4 py-2 rounded-xl text-sm font-semibold transition-all flex items-center gap-2"
                 style={active
-                  ? { background: '#FF3008', color: '#fff' }
+                  ? { background: '#00A651', color: '#fff' }
                   : { background: '#F3F4F6', color: '#4B5563' }
                 }>
-                {isNew && <span className="w-2 h-2 rounded-full bg-current animate-pulse" style={{ color: active ? '#fff' : '#FF3008' }} />}
+                {isNew && <span className="w-2 h-2 rounded-full bg-current animate-pulse" style={{ color: active ? '#fff' : '#00A651' }} />}
                 {grp.label}
                 <span className="text-xs opacity-80">({count})</span>
               </button>
@@ -204,7 +204,7 @@ function OrderListItem({ order, selected, onClick }) {
     <button onClick={onClick}
       className="text-left rounded-2xl p-3 border transition-all"
       style={selected
-        ? { background: '#fff', borderColor: '#FF3008', boxShadow: '0 2px 8px rgba(255,48,8,0.10)' }
+        ? { background: '#fff', borderColor: '#00A651', boxShadow: '0 2px 8px rgba(255,48,8,0.10)' }
         : { background: '#fff', borderColor: '#E5E7EB' }
       }>
       <div className="flex items-center justify-between mb-1">
@@ -289,7 +289,7 @@ function OrderDetailPane({ order, onAccept, accepting, vehicles, onUpgrade, upgr
       {order.status === 'pending' && (
         <button onClick={onAccept} disabled={accepting}
           className="w-full py-4 rounded-2xl text-white font-bold text-base active:scale-98 transition-transform disabled:opacity-50"
-          style={{ background: '#FF3008' }}>
+          style={{ background: '#00A651' }}>
           {accepting ? 'Accepting…' : 'Accept order'}
         </button>
       )}

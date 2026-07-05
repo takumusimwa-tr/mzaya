@@ -11,7 +11,7 @@ import imageUrl from '../../utils/imageUrl'
 // Generate a consistent accent color from vendor name
 function vendorColor(name = '') {
   const colors = [
-    { bg: '#FF3008', light: '#FFF0EE', text: '#FF3008' }, // red
+    { bg: '#00A651', light: '#EDFAF3', text: '#00A651' }, // red
     { bg: '#FF6B00', light: '#FFF4EC', text: '#FF6B00' }, // orange
     { bg: '#00A651', light: '#EDFAF3', text: '#00A651' }, // green
     { bg: '#0052CC', light: '#EEF4FF', text: '#0052CC' }, // blue
@@ -111,7 +111,7 @@ export default function VendorHome() {
             <button onClick={() => togglePause.mutate()} disabled={togglePause.isPending}
               className="px-3 py-1.5 rounded-full text-xs font-bold transition-all active:scale-95 border disabled:opacity-50"
               style={vendorData?.is_paused
-                ? { background: '#FFF0EE', color: '#FF3008', borderColor: '#FF300830' }
+                ? { background: '#EDFAF3', color: '#00A651', borderColor: '#00A65130' }
                 : { background: '#F5F5F5', color: '#888', borderColor: '#E5E5E5' }
               }>
               {vendorData?.is_paused ? '▶ Resume orders' : '⏸ Pause orders'}
@@ -122,7 +122,7 @@ export default function VendorHome() {
         {/* Stats */}
         <div className="grid grid-cols-4 gap-0 mt-5 bg-gray-50 rounded-2xl overflow-hidden">
           {[
-            { label: 'New',      value: pending.length,   color: pending.length > 0 ? '#FF3008' : '#111' },
+            { label: 'New',      value: pending.length,   color: pending.length > 0 ? '#00A651' : '#111' },
             { label: 'Active',   value: active.length,    color: '#0052CC'                               },
             { label: 'Done',     value: delivered.length, color: '#111'                                  },
             { label: 'Revenue',  value: `$${revenue.toFixed(0)}`, color: '#00A651'                      },
@@ -140,7 +140,7 @@ export default function VendorHome() {
         {pending.length > 0 && (
           <button onClick={() => navigate('/vendor/orders')}
             className="w-full rounded-2xl p-4 flex items-center justify-between active:scale-98"
-            style={{ background: '#FF3008', boxShadow: '0 4px 20px #FF300830' }}>
+            style={{ background: '#00A651', boxShadow: '0 4px 20px #00A65130' }}>
             <div className="flex items-center gap-3">
               <span className="text-2xl animate-bounce">🔔</span>
               <div className="text-left">

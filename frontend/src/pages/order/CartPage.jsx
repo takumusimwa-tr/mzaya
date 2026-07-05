@@ -24,7 +24,7 @@ export default function CartPage() {
           <p className="text-gray-400 text-sm text-center mb-6">Add items from a vendor to get started</p>
           <button onClick={() => navigate('/home')}
             className="px-8 py-3 rounded-2xl text-white font-bold active:scale-95"
-            style={{ background: '#FF3008' }}>
+            style={{ background: '#00A651' }}>
             Browse vendors
           </button>
         </div>
@@ -109,7 +109,7 @@ export default function CartPage() {
       <div className="fixed bottom-20 left-1/2 -translate-x-1/2 w-full max-w-md px-4 z-30">
         <button onClick={() => navigate('/checkout')}
           className="w-full flex items-center justify-between px-5 py-4 rounded-2xl text-white font-bold active:scale-98 transition-transform"
-          style={{ background: '#FF3008', boxShadow: '0 8px 24px #FF300850' }}>
+          style={{ background: '#00A651', boxShadow: '0 8px 24px #00A65150' }}>
           <span>Go to checkout</span>
           <span>${subtotal.toFixed(2)}</span>
         </button>

@@ -106,7 +106,7 @@ export default function ItemModal({ item, vendor, onClose }) {
           <button onClick={handleAdd}
             disabled={adding}
             className="flex-1 flex items-center justify-between px-5 py-3.5 rounded-2xl text-white font-bold active:scale-98 transition-transform disabled:opacity-70"
-            style={{ background: '#FF3008' }}>
+            style={{ background: '#00A651' }}>
             <span>{adding ? 'Added!' : 'Add to cart'}</span>
             <span>${total.toFixed(2)}</span>
           </button>

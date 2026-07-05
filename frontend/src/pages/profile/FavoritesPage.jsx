@@ -31,7 +31,7 @@ export default function FavoritesPage() {
           </p>
           <button onClick={() => navigate('/home')}
             className="px-8 py-3 rounded-2xl text-white font-bold active:scale-95"
-            style={{ background: '#FF3008' }}>
+            style={{ background: '#00A651' }}>
             Browse vendors
           </button>
         </div>
@@ -53,7 +53,7 @@ export default function FavoritesPage() {
                 <button
                   onClick={(e) => { e.stopPropagation(); toggle(vendor.id) }}
                   className="absolute top-3 right-3 w-8 h-8 rounded-full bg-white/90 flex items-center justify-center shadow-sm active:scale-90">
-                  <svg className="w-4 h-4" fill="#FF3008" stroke="#FF3008" strokeWidth={2} viewBox="0 0 24 24">
+                  <svg className="w-4 h-4" fill="#00A651" stroke="#00A651" strokeWidth={2} viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
                   </svg>
                 </button>

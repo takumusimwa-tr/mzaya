@@ -105,7 +105,7 @@ export default function AddressesPage() {
       <div className="fixed bottom-20 left-1/2 -translate-x-1/2 w-full max-w-md px-4 z-30">
         <button onClick={() => { setShowForm(true); setEditId(null); setForm({ label: '', address: '', notes: '', is_default: false }) }}
           className="w-full py-4 rounded-2xl text-white font-bold active:scale-98 transition-transform"
-          style={{ background: '#FF3008', boxShadow: '0 8px 24px #FF300850' }}>
+          style={{ background: '#00A651', boxShadow: '0 8px 24px #00A65150' }}>
           + Add new address
         </button>
       </div>
@@ -145,13 +145,13 @@ export default function AddressesPage() {
               <label className="flex items-center gap-2 cursor-pointer mt-1">
                 <input type="checkbox" checked={form.is_default}
                   onChange={(e) => setForm({ ...form, is_default: e.target.checked })}
-                  style={{ accentColor: '#FF3008' }} />
+                  style={{ accentColor: '#00A651' }} />
                 <span className="text-sm text-gray-600">Set as default address</span>
               </label>
 
               <button type="submit" disabled={save.isPending}
                 className="mt-3 py-3.5 rounded-2xl text-white font-bold active:scale-98 transition-transform disabled:opacity-70"
-                style={{ background: '#FF3008' }}>
+                style={{ background: '#00A651' }}>
                 {save.isPending ? 'Saving...' : editId ? 'Save changes' : 'Add address'}
               </button>
             </form>

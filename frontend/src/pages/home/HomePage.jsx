@@ -79,7 +79,7 @@ export default function HomePage() {
       <div className="sticky top-0 z-40 bg-white px-4 pt-12 pb-3" style={{ boxShadow: '0 1px 0 #F0F0F0' }}>
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-1">
-            <span className="font-black text-2xl tracking-tight" style={{ color: '#FF3008' }}>mzaya</span>
+            <span className="font-black text-2xl tracking-tight" style={{ color: '#00A651' }}>mzaya</span>
             {selectedCity && <span className="text-xs text-gray-400 font-medium ml-1 mt-0.5">· {selectedCity.name}</span>}
           </div>
           <div className="flex items-center gap-2">
@@ -96,7 +96,7 @@ export default function HomePage() {
               </svg>
               {totalItems > 0 && (
                 <span className="absolute -top-0.5 -right-0.5 w-4 h-4 rounded-full text-white flex items-center justify-center font-bold"
-                  style={{ background: '#FF3008', fontSize: 9 }}>{totalItems}</span>
+                  style={{ background: '#00A651', fontSize: 9 }}>{totalItems}</span>
               )}
             </button>
           </div>
@@ -132,13 +132,13 @@ export default function HomePage() {
               className="flex-shrink-0 flex flex-col items-center gap-1.5 active:opacity-70">
               <div className="w-14 h-14 rounded-2xl flex items-center justify-center text-2xl transition-all"
                 style={{
-                  background: category === cat.id ? '#FF3008' : '#F5F5F5',
-                  boxShadow: category === cat.id ? '0 4px 12px #FF300840' : 'none',
+                  background: category === cat.id ? '#00A651' : '#F5F5F5',
+                  boxShadow: category === cat.id ? '0 4px 12px #00A65140' : 'none',
                   transform: category === cat.id ? 'scale(1.05)' : 'scale(1)',
                 }}>
                 {cat.emoji}
               </div>
-              <span className="text-xs font-semibold" style={{ color: category === cat.id ? '#FF3008' : '#888' }}>
+              <span className="text-xs font-semibold" style={{ color: category === cat.id ? '#00A651' : '#888' }}>
                 {cat.label}
               </span>
             </button>
@@ -235,7 +235,7 @@ function BrandCard({ brand, onClick, isFavorite, onToggleFavorite }) {
         )}
         <button onClick={(e) => { e.stopPropagation(); onToggleFavorite?.() }}
           className="absolute top-3 right-3 w-8 h-8 rounded-full bg-white/90 flex items-center justify-center shadow-sm active:scale-90 transition-transform">
-          <svg className="w-4 h-4" fill={isFavorite ? '#FF3008' : 'none'} stroke={isFavorite ? '#FF3008' : '#6b7280'} strokeWidth={2} viewBox="0 0 24 24">
+          <svg className="w-4 h-4" fill={isFavorite ? '#00A651' : 'none'} stroke={isFavorite ? '#00A651' : '#6b7280'} strokeWidth={2} viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
           </svg>
         </button>
@@ -387,7 +387,7 @@ function CategoryChip({ label, active, onClick }) {
     <button onClick={onClick}
       className="flex-shrink-0 px-3 py-2 rounded-full text-xs font-semibold transition-all"
       style={active
-        ? { background: '#FF3008', color: '#fff' }
+        ? { background: '#00A651', color: '#fff' }
         : { background: '#fff', color: '#555', border: '1px solid #E5E5E5', boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }
       }>
       {label}

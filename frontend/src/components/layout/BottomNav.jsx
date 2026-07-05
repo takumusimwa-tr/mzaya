@@ -13,8 +13,9 @@ export default function BottomNav() {
         <NavLink key={to} to={to} end
           className={({ isActive }) =>
             `flex-1 flex flex-col items-center py-3 gap-1 text-xs font-semibold transition-colors
-             ${isActive ? 'text-red-500' : 'text-gray-400'}`
+             ${isActive ? '' : 'text-gray-400'}`
           }
+          style={({ isActive }) => (isActive ? { color: '#00A651' } : undefined)}
         >
           <Icon />
           <span>{label}</span>
