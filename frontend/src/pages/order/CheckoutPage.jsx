@@ -79,6 +79,10 @@ export default function CheckoutPage() {
   const subtotal    = cart.totalPrice()
   const totalWeight = cart.totalWeight()
 
+  // Longest prep time in the cart drives the earliest a scheduled order can be.
+  const longestPrep = cart.items.reduce((max, i) => Math.max(max, i.prep_minutes || 0), 0)
+  const minLeadMinutes = Math.max(30, longestPrep)
+
   // ── Live quote from backend — single source of truth for fee + vehicle ──────
   // Recomputes when cart category/subtotal/weight changes. Uses the same logic
   // the backend uses at placement, so the price shown is the price charged.
@@ -217,7 +221,10 @@ export default function CheckoutPage() {
     if (scheduleMode === 'later') {
       if (!scheduledFor) { setError('Please pick a delivery time'); return }
       const when = new Date(scheduledFor).getTime()
-      if (when < Date.now() + 30 * 60 * 1000) { setError('Schedule at least 30 minutes ahead'); return }
+      if (when < Date.now() + minLeadMinutes * 60 * 1000) {
+        setError(`Schedule at least ${minLeadMinutes} minutes ahead${longestPrep > 30 ? ' (some items need prep time)' : ''}`)
+        return
+      }
     }
 
     setLoading(true)
@@ -430,12 +437,14 @@ export default function CheckoutPage() {
               <input
                 type="datetime-local"
                 value={scheduledFor}
-                min={new Date(Date.now() + 30 * 60 * 1000).toISOString().slice(0, 16)}
+                min={new Date(Date.now() + minLeadMinutes * 60 * 1000).toISOString().slice(0, 16)}
                 onChange={(e) => setScheduledFor(e.target.value)}
                 className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm outline-none focus:border-red-400"
               />
               <p className="text-xs text-gray-400 mt-2">
-                At least 30 minutes ahead, up to 7 days. We'll dispatch a rider close to your chosen time.
+                {longestPrep > 30
+                  ? `Some items need ~${longestPrep} min prep, so the earliest is ${minLeadMinutes} minutes from now.`
+                  : "At least 30 minutes ahead, up to 7 days. We'll dispatch a rider close to your chosen time."}
               </p>
             </>
           )}

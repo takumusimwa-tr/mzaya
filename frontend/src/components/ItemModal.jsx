@@ -29,6 +29,7 @@ export default function ItemModal({ item, vendor, onClose }) {
       qty,
       special_instructions: instructions || null,
       weight_kg:            item.weight_kg || 0.5,
+      prep_minutes:         item.prep_minutes || 0,
     }, {
       vendorId:      vendor.id,
       vendorName:    vendor.name,

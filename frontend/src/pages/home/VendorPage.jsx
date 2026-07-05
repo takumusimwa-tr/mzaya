@@ -147,7 +147,12 @@ export default function VendorPage() {
                       {item.description && (
                         <p className="text-xs text-gray-400 mt-1 line-clamp-2">{item.description}</p>
                       )}
-                      <p className="text-sm font-black text-gray-900 mt-2">${Number(item.price_usd).toFixed(2)}</p>
+                      <div className="flex items-center gap-2 mt-2">
+                        <p className="text-sm font-black text-gray-900">${Number(item.price_usd).toFixed(2)}</p>
+                        {item.prep_minutes > 0 && (
+                          <span className="text-[11px] text-gray-400">· Ready in ~{item.prep_minutes} min</span>
+                        )}
+                      </div>
                     </div>
                     {/* Item image */}
                     <div className="w-24 h-24 flex-shrink-0 bg-gray-100 flex items-center justify-center relative">

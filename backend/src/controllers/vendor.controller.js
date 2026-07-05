@@ -113,15 +113,18 @@ async function updateVendor(req, res) {
 // POST /api/vendors/:id/menu
 async function addMenuItem(req, res) {
   try {
-    const { name, description, price_usd, category } = req.body;
+    const { name, description, price_usd, category, prep_minutes, weight_kg, image_url } = req.body;
     const item = await MenuItem.create({
       vendor_id:    req.params.id,
       name, description, price_usd, category,
+      prep_minutes: prep_minutes || 0,
+      weight_kg:    weight_kg || 0,
+      image_url:    image_url || null,
       is_available: true,
     });
     return res.status(201).json({ item });
   } catch (err) {
-    console.error(err);
+    console.error('addMenuItem error:', err.message);
     return res.status(500).json({ error: 'Failed to add menu item' });
   }
 }

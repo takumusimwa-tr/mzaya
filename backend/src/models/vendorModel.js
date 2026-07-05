@@ -15,6 +15,18 @@ const Vendor = sequelize.define('Vendor', {
     allowNull: false,
   },
 
+  // The brand this branch belongs to (customers browse brands, not branches).
+  brand_id: {
+    type: DataTypes.UUID,
+    allowNull: true, // nullable during migration; backfilled for all branches
+  },
+
+  // Branch label within the brand, e.g. "CBD", "Borrowdale", "Bulawayo".
+  branch_name: {
+    type: DataTypes.STRING,
+    allowNull: true,
+  },
+
   city_id: {
     type: DataTypes.UUID,
     allowNull: false,

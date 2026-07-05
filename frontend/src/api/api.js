@@ -75,6 +75,35 @@ export const geoAPI = {
 // ─── Promos ───────────────────────────────────────────────────────────────────
 export const promoAPI = {
   validate: (payload) => api.post('/promos/validate', payload),
+  list:     () => api.get('/promos'),
+  create:   (data) => api.post('/promos', data),
+  update:   (id, data) => api.patch(`/promos/${id}`, data),
+  remove:   (id) => api.delete(`/promos/${id}`),
+}
+
+// ─── Admin ────────────────────────────────────────────────────────────────────
+export const adminAPI = {
+  overview:      () => api.get('/admin/overview'),
+  vendors:       (status) => api.get(`/admin/vendors?status=${status || 'all'}`),
+  approveVendor: (id) => api.patch(`/admin/vendors/${id}/approve`),
+  rejectVendor:  (id) => api.patch(`/admin/vendors/${id}/reject`),
+  riders:        (status) => api.get(`/admin/riders?status=${status || 'all'}`),
+  approveRider:  (id) => api.patch(`/admin/riders/${id}/approve`),
+  liveOrders:    () => api.get('/admin/orders/live'),
+}
+
+// ─── Browse (customer home) ───────────────────────────────────────────────────
+export const browseAPI = {
+  // Brand-first (food/errands)
+  brands:   ({ category, city_id, lat, lng }) => {
+    const p = new URLSearchParams({ category, city_id, ...(lat && { lat }), ...(lng && { lng }) })
+    return api.get(`/browse/brands?${p.toString()}`)
+  },
+  // Product-first (materials/grocery)
+  products: ({ category, city_id, q, lat, lng }) => {
+    const p = new URLSearchParams({ category, city_id, ...(q && { q }), ...(lat && { lat }), ...(lng && { lng }) })
+    return api.get(`/browse/products?${p.toString()}`)
+  },
 };
 
 // ─── Payments ────────────────────────────────────────────────────────────────

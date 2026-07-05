@@ -50,6 +50,14 @@ const MenuItem = sequelize.define('MenuItem', {
     defaultValue: true,
   },
 
+  // Preparation lead time in minutes — how long before this item is ready.
+  // Drives "Ready in ~X min" and the minimum scheduling window.
+  prep_minutes: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+    defaultValue: 0,
+  },
+
 }, {
   tableName: 'menu_items',
   timestamps: true,

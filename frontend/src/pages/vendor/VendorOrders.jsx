@@ -88,6 +88,18 @@ export default function VendorOrders() {
     onSuccess:  () => queryClient.invalidateQueries(['vendor-orders']),
   })
 
+  // Vehicle tiers for the truck-upgrade control.
+  const { data: vehicles } = useQuery({
+    queryKey: ['vehicles'],
+    queryFn:  () => api.get('/vehicles').then((r) => r.data.vehicles),
+  })
+
+  const upgradeVehicle = useMutation({
+    mutationFn: ({ orderId, vehicle_type }) =>
+      api.post(`/orders/${orderId}/upgrade-vehicle`, { vehicle_type }),
+    onSuccess:  () => queryClient.invalidateQueries(['vendor-orders']),
+  })
+
   const grouped = useMemo(() => {
     const g = { new: [], active: [], past: [] }
     for (const o of orders || []) {
@@ -161,7 +173,12 @@ export default function VendorOrders() {
           {selected ? (
             <OrderDetailPane order={selected}
               onAccept={() => acceptOrder.mutate(selected.id)}
-              accepting={acceptOrder.isPending} />
+              accepting={acceptOrder.isPending}
+              vehicles={vehicles}
+              onUpgrade={(vehicle_type) => upgradeVehicle.mutate({ orderId: selected.id, vehicle_type })}
+              upgrading={upgradeVehicle.isPending}
+              upgradeResult={upgradeVehicle.data}
+              upgradeError={upgradeVehicle.error} />
           ) : (
             <div className="h-full flex items-center justify-center text-gray-300">
               <div className="text-center">
@@ -203,7 +220,7 @@ function OrderListItem({ order, selected, onClick }) {
   )
 }
 
-function OrderDetailPane({ order, onAccept, accepting }) {
+function OrderDetailPane({ order, onAccept, accepting, vehicles, onUpgrade, upgrading, upgradeResult, upgradeError }) {
   const detail = orderDetail(order)
   const placed = new Date(order.createdAt)
 
@@ -275,6 +292,81 @@ function OrderDetailPane({ order, onAccept, accepting }) {
           style={{ background: '#FF3008' }}>
           {accepting ? 'Accepting…' : 'Accept order'}
         </button>
+      )}
+
+      {/* Truck upgrade — materials/grocery, before pickup */}
+      {['materials', 'grocery'].includes(order.category_type)
+        && ['pending', 'accepted'].includes(order.status) && (
+        <VehicleUpgrade
+          order={order}
+          vehicles={vehicles}
+          onUpgrade={onUpgrade}
+          upgrading={upgrading}
+          result={upgradeResult}
+          error={upgradeError}
+        />
+      )}
+    </div>
+  )
+}
+
+// Lets the vendor bump an order to a bigger vehicle if the load is bulkier than
+// the weight suggested. Only offers tiers larger than the current one.
+function VehicleUpgrade({ order, vehicles, onUpgrade, upgrading, result, error }) {
+  const [open, setOpen] = useState(false)
+  const [pick, setPick] = useState('')
+
+  const currentRank = vehicles?.find((v) => v.value === order.vehicle_type)?.rank ?? 0
+  const larger = (vehicles || []).filter((v) => v.rank > currentRank)
+
+  if (!larger.length) return null
+
+  return (
+    <div className="mt-4 pt-4 border-t border-gray-100">
+      {!open ? (
+        <button onClick={() => setOpen(true)}
+          className="text-sm font-semibold px-4 py-2.5 rounded-xl"
+          style={{ background: '#FFF4E5', color: '#B8860B' }}>
+          🚚 Needs a bigger vehicle?
+        </button>
+      ) : (
+        <div className="rounded-xl border border-gray-200 p-4">
+          <p className="text-sm font-bold text-gray-700 mb-1">Request a bigger vehicle</p>
+          <p className="text-xs text-gray-400 mb-3">
+            Currently assigned: {vehicles?.find((v) => v.value === order.vehicle_type)?.name || order.vehicle_type}.
+            The delivery fee will update.
+          </p>
+          <div className="flex flex-col gap-2 mb-3">
+            {larger.map((v) => (
+              <button key={v.value} onClick={() => setPick(v.value)}
+                className="flex items-center justify-between p-2.5 rounded-lg border text-left text-sm transition-all"
+                style={pick === v.value
+                  ? { borderColor: '#00A651', background: '#EDFAF3' }
+                  : { borderColor: '#E5E7EB' }
+                }>
+                <span className="font-semibold text-gray-800">{v.name}</span>
+                <span className="text-xs text-gray-400">{v.hint}</span>
+              </button>
+            ))}
+          </div>
+          {result && (
+            <p className="text-xs mb-2" style={{ color: '#00A651' }}>{result.message}</p>
+          )}
+          {error && (
+            <p className="text-xs mb-2 text-red-500">{error.response?.data?.error || 'Upgrade failed'}</p>
+          )}
+          <div className="flex gap-2">
+            <button onClick={() => { setOpen(false); setPick('') }}
+              className="flex-1 py-2.5 rounded-lg bg-gray-100 text-gray-600 text-sm font-semibold">
+              Cancel
+            </button>
+            <button onClick={() => pick && onUpgrade(pick)} disabled={!pick || upgrading}
+              className="flex-1 py-2.5 rounded-lg text-white text-sm font-semibold disabled:opacity-50"
+              style={{ background: '#00A651' }}>
+              {upgrading ? 'Upgrading…' : 'Confirm upgrade'}
+            </button>
+          </div>
+        </div>
       )}
     </div>
   )

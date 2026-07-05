@@ -4,7 +4,7 @@ const { authenticate, requireRole } = require('../middleware/auth.middleware');
 const { USER_ROLE } = require('../config/constants');
 const {
   placeOrder, quote, getOrder, myOrders, availableOrders, claimOrder,
-  updateStatus, cancel, vendorOrders, rateOrder,
+  updateStatus, cancel, vendorOrders, rateOrder, upgradeVehicle,
 } = require('../controllers/order.controller');
 
 // Customer
@@ -20,6 +20,7 @@ router.post('/:id/claim',  authenticate, requireRole(USER_ROLE.RIDER), claimOrde
 
 // Vendor
 router.get('/vendor',      authenticate, requireRole(USER_ROLE.VENDOR, USER_ROLE.ADMIN), vendorOrders);
+router.post('/:id/upgrade-vehicle', authenticate, requireRole(USER_ROLE.VENDOR, USER_ROLE.ADMIN), upgradeVehicle);
 
 // Rider status updates
 router.patch('/:id/status', authenticate, requireRole(USER_ROLE.RIDER, USER_ROLE.ADMIN), updateStatus);

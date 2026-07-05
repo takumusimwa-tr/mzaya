@@ -155,6 +155,94 @@ async function claimOrder(req, res) {
   }
 }
 
+// POST /api/orders/:id/upgrade-vehicle  { vehicle_type }
+// Vendor flags that an order needs a bigger vehicle than assigned (e.g. bulky
+// materials). Bumps the order's vehicle tier, recomputes the fee, and if the
+// current rider's vehicle can no longer handle it, releases it back to dispatch.
+async function upgradeVehicle(req, res) {
+  try {
+    const { Order, Vendor, OrderFood, OrderGrocery, OrderMaterials } = require('../models/associations');
+    const { VEHICLE_RANK, VEHICLE_META, ORDER_STATUS } = require('../config/constants');
+    const { calculateFees, convertToZig } = require('../utils/feeCalculator');
+    const { feeTierFor, calculateDistanceKm, rankOf } = require('../services/dispatch.service');
+    const { getCurrentRate } = require('../services/currency.service');
+
+    const { vehicle_type } = req.body;
+    if (!vehicle_type || !VEHICLE_RANK[vehicle_type]) {
+      return res.status(400).json({ error: 'A valid vehicle type is required' });
+    }
+
+    const order = await Order.findByPk(req.params.id);
+    if (!order) return res.status(404).json({ error: 'Order not found' });
+
+    // Authorize: the requesting vendor must own this order.
+    const vendor = await Vendor.findOne({ where: { owner_id: req.user.id } });
+    if (!vendor) return res.status(403).json({ error: 'Not a vendor' });
+    const owns = await OrderFood.findOne({ where: { order_id: order.id, restaurant_id: vendor.id } })
+      || await OrderGrocery.findOne({ where: { order_id: order.id, store_id: vendor.id } })
+      || await OrderMaterials.findOne({ where: { order_id: order.id, supplier_id: vendor.id } });
+    if (!owns) return res.status(403).json({ error: 'This order does not belong to your store' });
+
+    // Can only upgrade before pickup.
+    if (![ORDER_STATUS.PENDING, ORDER_STATUS.ACCEPTED].includes(order.status)) {
+      return res.status(400).json({ error: 'This order can no longer be upgraded (already picked up)' });
+    }
+
+    // Must be an actual upgrade (higher rank than current).
+    if (rankOf(vehicle_type) <= rankOf(order.vehicle_type)) {
+      return res.status(400).json({ error: 'Choose a larger vehicle than the current one' });
+    }
+
+    // Recompute the delivery fee for the bigger vehicle.
+    const distanceKm = calculateDistanceKm(order.pickup_location, order.dropoff_location);
+    const weightKg   = Number(owns.total_weight_kg || 0);
+    const fees = calculateFees({
+      categoryType: order.category_type,
+      vehicleType:  feeTierFor(vehicle_type),
+      distanceKm,
+      subtotalUsd:  Number(order.subtotal_usd || 0),
+      weightKg,
+    });
+
+    const zigRate = getCurrentRate();
+    // Preserve tip + discount that were on the order.
+    const tip = Number(order.tip_usd || 0);
+    const discount = Number(order.discount_usd || 0);
+    const newTotal = parseFloat(Math.max(0, fees.total_usd + tip - discount).toFixed(2));
+
+    // If a rider is assigned but their vehicle can't handle the new class, release it.
+    let released = false;
+    if (order.rider_id) {
+      const { Rider } = require('../models/associations');
+      const rider = await Rider.findOne({ where: { user_id: order.rider_id } });
+      if (!rider || rankOf(rider.vehicle_type) < rankOf(vehicle_type)) {
+        released = true;
+      }
+    }
+
+    await order.update({
+      vehicle_type,
+      delivery_fee_usd: fees.delivery_fee_usd,
+      total_usd:        newTotal,
+      total_zig:        zigRate ? convertToZig(newTotal, zigRate) : order.total_zig,
+      ...(released ? { rider_id: null, status: ORDER_STATUS.PENDING, accepted_at: null } : {}),
+    });
+
+    return res.status(200).json({
+      message: released
+        ? `Upgraded to ${VEHICLE_META[vehicle_type]?.name}. Reassigning to a suitable rider.`
+        : `Upgraded to ${VEHICLE_META[vehicle_type]?.name}.`,
+      vehicle_type,
+      delivery_fee_usd: fees.delivery_fee_usd,
+      total_usd: newTotal,
+      released,
+    });
+  } catch (err) {
+    console.error('upgradeVehicle error:', err.message);
+    return res.status(500).json({ error: 'Failed to upgrade vehicle' });
+  }
+}
+
 // PATCH /api/orders/:id/status
 async function updateStatus(req, res) {
   try {
@@ -244,5 +332,5 @@ async function rateOrder(req, res) {
 
 module.exports = {
   placeOrder, quote, getOrder, myOrders, availableOrders, claimOrder,
-  updateStatus, cancel, vendorOrders, rateOrder,
+  updateStatus, cancel, vendorOrders, rateOrder, upgradeVehicle,
 };

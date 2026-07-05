@@ -9,6 +9,7 @@ const MenuItem        = require('./menuItemModel');
 const Rider           = require('./riderModel');
 const City            = require('./cityModel');
 const Promo           = require('./promoModel');
+const Brand           = require('./brandModel');
 
 // ─── City associations ────────────────────────────────────────────────────────
 City.hasMany(Vendor, { foreignKey: 'city_id', as: 'vendors' });
@@ -26,6 +27,14 @@ Vendor.belongsTo(User, { foreignKey: 'owner_id', as: 'owner' });
 
 Vendor.hasMany(MenuItem, { foreignKey: 'vendor_id', as: 'menuItems' });
 MenuItem.belongsTo(Vendor, { foreignKey: 'vendor_id', as: 'vendor' });
+
+// ─── Brand → Branch (vendor) associations ─────────────────────────────────────
+// A Brand is the customer-facing storefront; each Vendor row is a physical branch.
+Brand.hasMany(Vendor, { foreignKey: 'brand_id', as: 'branches' });
+Vendor.belongsTo(Brand, { foreignKey: 'brand_id', as: 'brand' });
+
+User.hasMany(Brand, { foreignKey: 'owner_id', as: 'brands' });
+Brand.belongsTo(User, { foreignKey: 'owner_id', as: 'owner' });
 
 // ─── Rider associations ───────────────────────────────────────────────────────
 User.hasOne(Rider, { foreignKey: 'user_id', as: 'riderProfile' });
@@ -61,4 +70,5 @@ module.exports = {
   Rider,
   City,
   Promo,
+  Brand,
 };

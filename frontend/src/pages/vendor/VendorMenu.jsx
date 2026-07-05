@@ -11,7 +11,7 @@ export default function VendorMenu() {
   const queryClient = useQueryClient()
   const [showForm,  setShowForm]  = useState(false)
   const [editItem,  setEditItem]  = useState(null)
-  const [form, setForm] = useState({ name: '', description: '', price_usd: '', category: '', image_url: '' })
+  const [form, setForm] = useState({ name: '', description: '', price_usd: '', category: '', image_url: '', prep_minutes: '' })
   const [error, setError] = useState('')
 
   const { data: vendorData, isLoading } = useQuery({
@@ -30,7 +30,7 @@ export default function VendorMenu() {
       queryClient.invalidateQueries(['my-vendor'])
       setShowForm(false)
       setEditItem(null)
-      setForm({ name: '', description: '', price_usd: '', category: '' })
+      setForm({ name: '', description: '', price_usd: '', category: '', image_url: '', prep_minutes: '' })
     },
     onError: (err) => setError(err.response?.data?.error || 'Could not save item'),
   })
@@ -40,9 +40,15 @@ export default function VendorMenu() {
     onSuccess:  () => queryClient.invalidateQueries(['my-vendor']),
   })
 
+  const toggleStock = useMutation({
+    mutationFn: ({ itemId, available }) =>
+      api.put(`/vendors/${vendorData.id}/menu/${itemId}`, { is_available: available }),
+    onSuccess:  () => queryClient.invalidateQueries(['my-vendor']),
+  })
+
   const openEdit = (item) => {
     setEditItem(item)
-    setForm({ name: item.name, description: item.description || '', price_usd: item.price_usd, category: item.category || '', image_url: item.image_url || '' })
+    setForm({ name: item.name, description: item.description || '', price_usd: item.price_usd, category: item.category || '', image_url: item.image_url || '', prep_minutes: item.prep_minutes || '' })
     setShowForm(true)
   }
 
@@ -53,7 +59,7 @@ export default function VendorMenu() {
       setError('Name and price are required')
       return
     }
-    saveItem.mutate({ ...form, price_usd: parseFloat(form.price_usd) })
+    saveItem.mutate({ ...form, price_usd: parseFloat(form.price_usd), prep_minutes: parseInt(form.prep_minutes) || 0 })
   }
 
   if (isLoading) return <LoadingScreen message="Loading menu..." />
@@ -72,7 +78,7 @@ export default function VendorMenu() {
       <div className="flex items-center justify-between px-8 pt-14 pb-4">
         <h1 className="text-xl font-bold text-gray-900">Menu</h1>
         <button
-          onClick={() => { setShowForm(true); setEditItem(null); setForm({ name: '', description: '', price_usd: '', category: '', image_url: '' }) }}
+          onClick={() => { setShowForm(true); setEditItem(null); setForm({ name: '', description: '', price_usd: '', category: '', image_url: '', prep_minutes: '' }) }}
           className="bg-orange-500 text-white px-4 py-2 rounded-xl text-sm font-semibold active:scale-95"
         >
           + Add item
@@ -99,6 +105,7 @@ export default function VendorMenu() {
               <Input label="Description (optional)" name="description" value={form.description} onChange={handleChange} placeholder="e.g. 2 pieces chicken with chips" />
               <Input label="Price (USD)" name="price_usd" type="number" value={form.price_usd} onChange={handleChange} placeholder="e.g. 3.50" required />
               <Input label="Category" name="category" value={form.category} onChange={handleChange} placeholder="e.g. Chicken, Burgers, Drinks" />
+              <Input label="Prep time (minutes)" name="prep_minutes" type="number" value={form.prep_minutes} onChange={handleChange} placeholder="e.g. 15 — leave 0 if ready immediately" />
               <Button type="submit" size="lg" loading={saveItem.isPending} className="mt-2 bg-orange-500 hover:bg-orange-600">
                 {editItem ? 'Save changes' : 'Add to menu'}
               </Button>
@@ -120,8 +127,12 @@ export default function VendorMenu() {
             <div key={category}>
               <h2 className="text-sm font-bold text-gray-500 uppercase tracking-wide mb-3">{category}</h2>
               <div className="flex flex-col gap-3">
-                {items.map((item) => (
-                  <div key={item.id} className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100">
+                {items.map((item) => {
+                  const outOfStock = item.is_available === false
+                  return (
+                  <div key={item.id}
+                    className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100"
+                    style={outOfStock ? { opacity: 0.55 } : undefined}>
                     <div className="flex items-start gap-3">
                       <div className="w-16 h-16 rounded-xl bg-gray-100 flex-shrink-0 overflow-hidden flex items-center justify-center">
                         {item.image_url
@@ -130,11 +141,34 @@ export default function VendorMenu() {
                         }
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="font-semibold text-gray-900">{item.name}</p>
+                        <div className="flex items-center gap-2">
+                          <p className="font-semibold text-gray-900">{item.name}</p>
+                          {outOfStock && (
+                            <span className="text-[10px] font-bold uppercase px-2 py-0.5 rounded-full bg-red-50 text-red-500">
+                              Out of stock
+                            </span>
+                          )}
+                        </div>
                         {item.description && <p className="text-xs text-gray-400 mt-0.5 truncate">{item.description}</p>}
-                        <p className="text-orange-500 font-bold mt-1">${Number(item.price_usd).toFixed(2)}</p>
+                        <div className="flex items-center gap-2 mt-1">
+                          <p className="text-orange-500 font-bold">${Number(item.price_usd).toFixed(2)}</p>
+                          {item.prep_minutes > 0 && (
+                            <span className="text-[11px] text-gray-400">· ~{item.prep_minutes} min prep</span>
+                          )}
+                        </div>
                       </div>
                       <div className="flex gap-2 ml-1">
+                        <button
+                          onClick={() => toggleStock.mutate({ itemId: item.id, available: outOfStock })}
+                          disabled={toggleStock.isPending}
+                          className="text-xs px-3 py-1.5 rounded-lg font-medium active:scale-95 disabled:opacity-50"
+                          style={outOfStock
+                            ? { background: '#EDFAF3', color: '#00A651' }
+                            : { background: '#FFF4E5', color: '#B8860B' }
+                          }
+                        >
+                          {outOfStock ? 'Mark available' : 'Out of stock'}
+                        </button>
                         <button
                           onClick={() => openEdit(item)}
                           className="text-xs bg-gray-100 text-gray-600 px-3 py-1.5 rounded-lg font-medium active:scale-95"
@@ -150,7 +184,8 @@ export default function VendorMenu() {
                       </div>
                     </div>
                   </div>
-                ))}
+                  )
+                })}
               </div>
             </div>
           ))
