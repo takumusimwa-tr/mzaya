@@ -150,7 +150,12 @@ const Order = sequelize.define('Order', {
   },
   payment_reference: {
     type: DataTypes.STRING,
-    allowNull: true, // ContiPay reference ID
+    allowNull: true, // Paynow reference (MZAYA-<orderId>)
+  },
+  // Paynow poll URL — used to confirm mobile-money (EcoCash/OneMoney) payments.
+  payment_poll_url: {
+    type: DataTypes.STRING,
+    allowNull: true,
   },
   currency_paid: {
     type: DataTypes.STRING,

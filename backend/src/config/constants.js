@@ -104,6 +104,8 @@ const PAYMENT_METHOD = {
   ZIPIT:     'zipit',
   VISA:      'visa',
   MASTERCARD:'mastercard',
+  CARD:      'card',       // Paynow hosted card page
+  DIASPORA:  'diaspora',   // Paynow diaspora / international cards
 };
 
 // ─── Currency ─────────────────────────────────────────────────────────────────

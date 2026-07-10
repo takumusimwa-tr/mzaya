@@ -37,6 +37,7 @@ const negotiationRoutes = require('./routes/negotiation.routes');
 const app = express();
 
 app.use(express.json());
+app.use(express.urlencoded({ extended: true })); // Paynow webhooks are form-encoded
 app.use(cors());
 // helmet with crossOriginResourcePolicy disabled so uploaded images load cross-origin (frontend on :5173)
 app.use(helmet({ crossOriginResourcePolicy: false }));
