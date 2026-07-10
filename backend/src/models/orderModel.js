@@ -92,6 +92,23 @@ const Order = sequelize.define('Order', {
     allowNull: false,
     defaultValue: 0,
   },
+
+  // ── Fare negotiation (materials/errands, inDrive-style) ──────────────────
+  // Whether this order is open for fare bargaining.
+  is_negotiable: {
+    type: DataTypes.BOOLEAN,
+    defaultValue: false,
+  },
+  // The fare the customer initially offered.
+  offered_fare_usd: {
+    type: DataTypes.DECIMAL(10, 2),
+    allowNull: true,
+  },
+  // The fare finally agreed (what the rider gets paid for the delivery).
+  agreed_fare_usd: {
+    type: DataTypes.DECIMAL(10, 2),
+    allowNull: true,
+  },
   tip_usd: {
     type: DataTypes.DECIMAL(10, 2),
     allowNull: false,

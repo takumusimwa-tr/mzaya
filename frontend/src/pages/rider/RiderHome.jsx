@@ -6,6 +6,8 @@ import useAuthStore from '../../store/useAuthStore'
 import Badge from '../../components/ui/Badge'
 import LoadingScreen from '../../components/ui/LoadingScreen'
 import { sendNotification } from '../../hooks/useNotifications'
+import useSocketEvent from '../../hooks/useSocketEvent'
+import { joinCity, leaveCity } from '../../realtime/socket'
 
 const QUOTES = [
   "The mzaya never refuses.",
@@ -54,7 +56,7 @@ export default function RiderHome() {
   const { data: available } = useQuery({
     queryKey: ['available-orders'],
     queryFn:  () => api.get('/orders/available').then((r) => r.data.orders),
-    refetchInterval: online ? 8000 : false,
+    refetchInterval: online ? 12000 : false,
     enabled:  online,
     onSuccess: (data) => {
       const count = data?.length || 0
@@ -64,6 +66,22 @@ export default function RiderHome() {
       prevOrders.current = data || []
     },
   })
+
+  // Real-time: join my city room while online; refetch board on new orders.
+  const cityId = riderProfile?.city_id
+  useEffect(() => {
+    if (!online || !cityId) return
+    joinCity(cityId)
+    return () => leaveCity(cityId)
+  }, [online, cityId])
+
+  useSocketEvent('order:new', () => {
+    queryClient.invalidateQueries(['available-orders'])
+  }, [])
+  useSocketEvent('order:assigned', () => {
+    queryClient.invalidateQueries(['rider-orders'])
+    queryClient.invalidateQueries(['available-orders'])
+  }, [])
 
   const toggleOnline = useMutation({
     mutationFn: () => api.patch('/riders/online', { is_online: !online }),
@@ -189,7 +207,7 @@ export default function RiderHome() {
             {active.map((order) => (
               <button key={order.id} onClick={() => navigate(`/rider/delivery/${order.id}`)}
                 className="w-full text-left rounded-2xl p-4 mb-3 active:scale-98"
-                style={{ background: '#0F172A', boxShadow: '0 4px 20px rgba(59,130,246,0.2)' }}>
+                style={{ background: '#0F172A', boxShadow: '0 4px 20px rgba(0,166,81,0.2)' }}>
                 <div className="flex items-start justify-between mb-3">
                   <div>
                     <Badge label={order.status.replace('_', ' ')} type={order.status} />
@@ -209,6 +227,19 @@ export default function RiderHome() {
               </button>
             ))}
           </div>
+        )}
+
+        {/* Name-your-fare jobs entry */}
+        {online && (
+          <button onClick={() => navigate('/rider/negotiate')}
+            className="w-full mb-4 p-4 rounded-2xl flex items-center justify-between active:scale-98 transition-transform"
+            style={{ background: '#EDFAF3', border: '1px solid #BBF7D0' }}>
+            <div className="text-left">
+              <p className="font-bold text-sm" style={{ color: '#00A651' }}>🤝 Name-your-fare jobs</p>
+              <p className="text-xs mt-0.5" style={{ color: '#15803D' }}>Bargain on materials & errands</p>
+            </div>
+            <span style={{ color: '#00A651' }}>→</span>
+          </button>
         )}
 
         {/* Offline state */}

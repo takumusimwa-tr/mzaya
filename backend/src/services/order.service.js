@@ -6,6 +6,7 @@ const { evaluatePromo } = require('../utils/promoEval');
 const { getCurrentRate } = require('./currency.service');
 const { VEHICLE_META } = require('../config/constants');
 const mlService = require('./ml.service');
+const realtime = require('../realtime/socket');
 
 // ─── Quote an order (no persistence) ──────────────────────────────────────────
 // Shared by POST /api/orders/quote and createOrder so the fee the customer sees
@@ -78,6 +79,8 @@ async function createOrder(customerId, orderData) {
     promo_code,
     scheduled_for,
     detail,
+    is_negotiable,
+    offered_fare_usd,
   } = orderData;
 
   if (!Object.values(CATEGORY_TYPE).includes(category_type)) {
@@ -114,6 +117,8 @@ async function createOrder(customerId, orderData) {
     status:           isScheduled ? ORDER_STATUS.SCHEDULED : ORDER_STATUS.PENDING,
     scheduled_for:    scheduledFor,
     subtotal_usd:     subtotalUsd,
+    is_negotiable:    !!is_negotiable,
+    offered_fare_usd: is_negotiable ? Number(offered_fare_usd) || 0 : null,
   });
 
   await createDetailRecord(category_type, order.id, detail);
@@ -130,7 +135,7 @@ async function createOrder(customerId, orderData) {
     subtotalUsd,
     estimatedDurationMinutes: detail?.estimated_duration_minutes || 0,
     zigRate,
-    deferDispatch:            isScheduled,
+    deferDispatch:            isScheduled || !!is_negotiable,
   });
 
   // ── Apply promo (authoritative) + tip on top of the dispatched total ────────
@@ -171,6 +176,23 @@ async function createOrder(customerId, orderData) {
   }
 
   const updatedOrder = await Order.findByPk(order.id);
+
+  // ── Real-time: announce the new order + any immediate assignment ──────────
+  try {
+    const vendorId = detail?.restaurant_id || detail?.store_id || detail?.supplier_id || null;
+    const cityId   = await resolveCityId(vendorId);
+    realtime.emitOrderNew({
+      id: updatedOrder.id,
+      vendor_id: vendorId,
+      city_id: cityId,
+    });
+    // If a rider was assigned on dispatch, notify them.
+    if (updatedOrder.rider_id) {
+      realtime.emitOrderAssigned(updatedOrder.rider_id, updatedOrder);
+    }
+  } catch (err) {
+    console.error('[realtime] emit new order failed:', err.message);
+  }
 
   // ── Fire-and-forget: extract ML features + score anomaly ──────────────────
   setImmediate(async () => {
@@ -227,6 +249,14 @@ async function updateOrderStatus(orderId, newStatus, riderId) {
   };
 
   await order.update({ status: newStatus, ...timestamps[newStatus] });
+
+  // ── Real-time: broadcast the status change ────────────────────────────────
+  try {
+    const vendorId = await resolveVendorId(order.id);
+    realtime.emitOrderUpdated(order, { vendorId });
+  } catch (err) {
+    console.error('[realtime] emit status failed:', err.message);
+  }
 
   // On delivery, credit the rider: delivery fee + 100% of the tip, and bump
   // their delivery count. Only credit once (guard on delivered_at being freshly
@@ -305,6 +335,25 @@ async function createDetailRecord(categoryType, orderId, detail) {
     default:
       throw new Error(`Unknown category type: ${categoryType}`);
   }
+}
+
+// Resolve which vendor (branch) an order belongs to, via its detail record.
+async function resolveVendorId(orderId) {
+  const food = await OrderFood.findOne({ where: { order_id: orderId }, attributes: ['restaurant_id'], raw: true });
+  if (food?.restaurant_id) return food.restaurant_id;
+  const groc = await OrderGrocery.findOne({ where: { order_id: orderId }, attributes: ['store_id'], raw: true });
+  if (groc?.store_id) return groc.store_id;
+  const mat = await OrderMaterials.findOne({ where: { order_id: orderId }, attributes: ['supplier_id'], raw: true });
+  if (mat?.supplier_id) return mat.supplier_id;
+  return null;
+}
+
+// Resolve a vendor's city id (for city-room broadcasts to riders).
+async function resolveCityId(vendorId) {
+  if (!vendorId) return null;
+  const { Vendor } = require('../models/associations');
+  const v = await Vendor.findByPk(vendorId, { attributes: ['city_id'], raw: true });
+  return v?.city_id || null;
 }
 
 module.exports = {

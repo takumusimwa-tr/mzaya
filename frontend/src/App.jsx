@@ -1,5 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom'
+import { useEffect } from 'react'
 import useAuthStore from './store/useAuthStore'
+import { connectSocket, disconnectSocket } from './realtime/socket'
 
 // Onboarding
 import OnboardingPage from './pages/onboarding/OnboardingPage'
@@ -22,6 +24,7 @@ import AddressesPage from './pages/profile/AddressesPage'
 // Rider
 import RiderHome        from './pages/rider/RiderHome'
 import RiderDelivery    from './pages/rider/RiderDelivery'
+import RiderNegotiate   from './pages/rider/RiderNegotiate'
 import RiderEarnings    from './pages/rider/RiderEarnings'
 import RiderProfilePage from './pages/rider/RiderProfilePage'
 
@@ -120,6 +123,7 @@ function AppShell() {
         <Route path="/rider"              element={<ProtectedRoute><RiderHome /></ProtectedRoute>} />
         <Route path="/rider/setup"        element={<ProtectedRoute><RiderProfilePage /></ProtectedRoute>} />
         <Route path="/rider/delivery/:id" element={<ProtectedRoute><RiderDelivery /></ProtectedRoute>} />
+        <Route path="/rider/negotiate"    element={<ProtectedRoute><RiderNegotiate /></ProtectedRoute>} />
         <Route path="/rider/earnings"     element={<ProtectedRoute><RiderEarnings /></ProtectedRoute>} />
 
         {/* Admin */}
@@ -135,6 +139,15 @@ function AppShell() {
 }
 
 export default function App() {
+  const token = useAuthStore((s) => s.token)
+
+  useEffect(() => {
+    if (token) {
+      connectSocket(token)
+      return () => disconnectSocket()
+    }
+  }, [token])
+
   return (
     <BrowserRouter>
       <AppShell />

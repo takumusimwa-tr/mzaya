@@ -10,6 +10,7 @@ const Rider           = require('./riderModel');
 const City            = require('./cityModel');
 const Promo           = require('./promoModel');
 const Brand           = require('./brandModel');
+const OrderOffer      = require('./orderOfferModel');
 
 // ─── City associations ────────────────────────────────────────────────────────
 City.hasMany(Vendor, { foreignKey: 'city_id', as: 'vendors' });
@@ -58,6 +59,11 @@ OrderGrocery.belongsTo(Order,   { foreignKey: 'order_id' });
 OrderMaterials.belongsTo(Order, { foreignKey: 'order_id' });
 OrderErrand.belongsTo(Order,    { foreignKey: 'order_id' });
 
+// ─── Order offers (fare negotiation) ──────────────────────────────────────────
+Order.hasMany(OrderOffer, { foreignKey: 'order_id', as: 'offers' });
+OrderOffer.belongsTo(Order, { foreignKey: 'order_id', as: 'order' });
+OrderOffer.belongsTo(User, { foreignKey: 'rider_id', as: 'rider' });
+
 module.exports = {
   User,
   Order,
@@ -71,4 +77,5 @@ module.exports = {
   City,
   Promo,
   Brand,
+  OrderOffer,
 };

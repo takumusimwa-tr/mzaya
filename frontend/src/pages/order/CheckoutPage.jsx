@@ -60,6 +60,8 @@ export default function CheckoutPage() {
   const [instructions, setInstructions]   = useState('')
   const [tip, setTip]                     = useState(0)
   const [customTip, setCustomTip]         = useState('')
+  const [nameYourFare, setNameYourFare]   = useState(false)
+  const [offeredFare, setOfferedFare]     = useState('')
   const [promoInput, setPromoInput]       = useState('')
   const [promo, setPromo]                 = useState(null) // { code, discount_usd, free_delivery }
   const [promoStatus, setPromoStatus]     = useState('')   // '', 'loading', 'ok', 'error'
@@ -104,6 +106,10 @@ export default function CheckoutPage() {
 
   const deliveryFee = quote ? quote.delivery_fee_usd : null
   const total       = quote ? quote.total_usd : subtotal
+
+  // Fare negotiation applies to materials + errands (inDrive-style).
+  const NEGOTIABLE = ['materials', 'errand']
+  const canNegotiate = NEGOTIABLE.includes(cart.categoryType)
 
   // Resolve a pasted WhatsApp/Maps pin to coordinates via the backend
   // (backend reads coords directly if present, or follows short goo.gl links).
@@ -206,6 +212,11 @@ export default function CheckoutPage() {
   const handleSubmit = async (e) => {
     e.preventDefault()
     setError('')
+
+    if (canNegotiate && nameYourFare) {
+      const f = parseFloat(offeredFare)
+      if (!f || f <= 0) { setError('Enter the fare you want to offer'); return }
+    }
     if (!dropoff.trim()) {
       setError('Please enter your delivery address')
       return
@@ -229,6 +240,7 @@ export default function CheckoutPage() {
 
     setLoading(true)
     try {
+      const useNegotiation = canNegotiate && nameYourFare
       const orderData = {
         category_type:   cart.categoryType,
         city:            cart.vendorCity || 'harare', // order belongs to the vendor's city
@@ -243,6 +255,10 @@ export default function CheckoutPage() {
         scheduled_for:   scheduleMode === 'later' && scheduledFor ? new Date(scheduledFor).toISOString() : null,
         special_instructions: instructions || null,
         detail: buildDetail(cart, totalWeight),
+        ...(useNegotiation ? {
+          is_negotiable:    true,
+          offered_fare_usd: parseFloat(offeredFare),
+        } : {}),
       }
 
       const { data } = await orderAPI.place(orderData)
@@ -302,7 +318,7 @@ export default function CheckoutPage() {
                   onClick={() => setDropoff(addr.address)}
                   className="flex-shrink-0 flex items-center gap-1.5 px-3 py-2 rounded-xl border text-sm active:scale-95 transition-transform"
                   style={dropoff === addr.address
-                    ? { borderColor: '#00A651', background: '#EDFAF3', color: '#00A651' }
+                    ? { borderColor: '#FF3008', background: '#FFF0EE', color: '#FF3008' }
                     : { borderColor: '#E5E5E5', color: '#444' }
                   }>
                   <span>📍</span>
@@ -346,7 +362,7 @@ export default function CheckoutPage() {
               <button type="button" onClick={useCurrentLocation}
                 disabled={pinStatus === 'loading'}
                 className="w-full flex items-center justify-center gap-2 mt-1 mb-2 px-4 py-3 rounded-xl text-sm font-semibold text-white active:scale-98 transition-transform disabled:opacity-60"
-                style={{ background: '#00A651' }}>
+                style={{ background: '#FF3008' }}>
                 <span>📍</span>
                 {pinStatus === 'loading' ? 'Getting location…' : 'Use my current location'}
               </button>
@@ -418,7 +434,7 @@ export default function CheckoutPage() {
             <button type="button" onClick={() => setScheduleMode('now')}
               className="flex-1 py-2.5 rounded-xl border text-sm font-semibold transition-all active:scale-95"
               style={scheduleMode === 'now'
-                ? { borderColor: '#00A651', background: '#EDFAF3', color: '#00A651' }
+                ? { borderColor: '#FF3008', background: '#FFF0EE', color: '#FF3008' }
                 : { borderColor: '#E5E5E5', color: '#444' }
               }>
               Deliver now
@@ -426,7 +442,7 @@ export default function CheckoutPage() {
             <button type="button" onClick={() => setScheduleMode('later')}
               className="flex-1 py-2.5 rounded-xl border text-sm font-semibold transition-all active:scale-95"
               style={scheduleMode === 'later'
-                ? { borderColor: '#00A651', background: '#EDFAF3', color: '#00A651' }
+                ? { borderColor: '#FF3008', background: '#FFF0EE', color: '#FF3008' }
                 : { borderColor: '#E5E5E5', color: '#444' }
               }>
               Schedule for later
@@ -450,6 +466,42 @@ export default function CheckoutPage() {
           )}
         </div>
 
+        {/* Name your fare — materials/errands only (inDrive-style) */}
+        {canNegotiate && (
+          <div className="bg-white rounded-2xl p-4 border border-gray-100">
+            <div className="flex items-center justify-between mb-1">
+              <div>
+                <h2 className="text-sm font-bold text-gray-700">Name your fare</h2>
+                <p className="text-xs text-gray-400 mt-0.5">Offer a price — riders accept or counter.</p>
+              </div>
+              <button type="button" onClick={() => setNameYourFare((v) => !v)}
+                className="relative w-11 h-6 rounded-full transition-colors"
+                style={{ background: nameYourFare ? '#00A651' : '#D1D5DB' }}>
+                <span className="absolute top-0.5 w-5 h-5 rounded-full bg-white transition-all"
+                  style={{ left: nameYourFare ? '22px' : '2px' }} />
+              </button>
+            </div>
+
+            {nameYourFare && (
+              <div className="mt-3">
+                <div className="flex items-center gap-2 px-4 py-3 rounded-xl border border-gray-200">
+                  <span className="text-gray-400 font-bold">$</span>
+                  <input
+                    type="number" inputMode="decimal" value={offeredFare}
+                    onChange={(e) => setOfferedFare(e.target.value)}
+                    placeholder={quote ? deliveryFee.toFixed(2) : '0.00'}
+                    className="flex-1 bg-transparent text-lg font-bold text-gray-900 outline-none"
+                  />
+                </div>
+                <p className="text-xs text-gray-400 mt-2">
+                  {quote ? `Suggested fare ~$${deliveryFee.toFixed(2)} based on distance and load. ` : ''}
+                  Riders nearby will see your offer and can accept or propose a different price.
+                </p>
+              </div>
+            )}
+          </div>
+        )}
+
         {/* Tip the rider */}
         <div className="bg-white rounded-2xl p-4 border border-gray-100">
           <h2 className="text-sm font-bold text-gray-700 mb-1">Tip your rider</h2>
@@ -460,7 +512,7 @@ export default function CheckoutPage() {
                 onClick={() => { setTip(amt); setCustomTip('') }}
                 className="flex-1 py-2.5 rounded-xl border text-sm font-semibold transition-all active:scale-95"
                 style={tip === amt && customTip === ''
-                  ? { borderColor: '#00A651', background: '#EDFAF3', color: '#00A651' }
+                  ? { borderColor: '#FF3008', background: '#FFF0EE', color: '#FF3008' }
                   : { borderColor: '#E5E5E5', color: '#444' }
                 }>
                 {amt === 0 ? 'No tip' : `$${amt}`}
@@ -480,7 +532,7 @@ export default function CheckoutPage() {
               }}
               placeholder="Custom amount"
               className="flex-1 px-4 py-2.5 rounded-xl border text-sm outline-none focus:border-red-400"
-              style={{ borderColor: customTip ? '#00A651' : '#E5E5E5' }}
+              style={{ borderColor: customTip ? '#FF3008' : '#E5E5E5' }}
             />
           </div>
         </div>
@@ -515,7 +567,7 @@ export default function CheckoutPage() {
                 <button type="button" onClick={applyPromo}
                   disabled={!promoInput.trim() || promoStatus === 'loading'}
                   className="px-5 py-3 rounded-xl text-sm font-semibold text-white disabled:opacity-50"
-                  style={{ background: '#00A651' }}>
+                  style={{ background: '#FF3008' }}>
                   {promoStatus === 'loading' ? '…' : 'Apply'}
                 </button>
               </div>
@@ -534,13 +586,13 @@ export default function CheckoutPage() {
               <label key={method.id}
                 className="flex items-center gap-3 p-3 rounded-xl border cursor-pointer transition-all"
                 style={paymentMethod === method.id
-                  ? { borderColor: '#00A651', background: '#EDFAF3' }
+                  ? { borderColor: '#FF3008', background: '#FFF0EE' }
                   : { borderColor: '#E5E5E5' }
                 }>
                 <input type="radio" name="payment" value={method.id}
                   checked={paymentMethod === method.id}
                   onChange={(e) => setPaymentMethod(e.target.value)}
-                  style={{ accentColor: '#00A651' }}
+                  style={{ accentColor: '#FF3008' }}
                 />
                 <div>
                   <p className="text-sm font-semibold text-gray-900">{method.label}</p>
@@ -618,7 +670,7 @@ export default function CheckoutPage() {
                   type="checkbox"
                   checked={paymentDetails.saveCard || false}
                   onChange={(e) => setPaymentDetails({ ...paymentDetails, saveCard: e.target.checked })}
-                  style={{ accentColor: '#00A651' }}
+                  style={{ accentColor: '#FF3008' }}
                 />
                 <span className="text-xs text-gray-600">Save this card for future orders</span>
               </label>
@@ -678,7 +730,7 @@ export default function CheckoutPage() {
       <div className="fixed bottom-20 left-1/2 -translate-x-1/2 w-full max-w-md px-4 z-30">
         <button onClick={handleSubmit} disabled={loading}
           className="w-full flex items-center justify-between px-5 py-4 rounded-2xl text-white font-bold active:scale-98 transition-transform disabled:opacity-70"
-          style={{ background: '#00A651', boxShadow: '0 8px 24px #00A65150' }}>
+          style={{ background: '#FF3008', boxShadow: '0 8px 24px #FF300850' }}>
           <span>{loading ? 'Placing order...' : (scheduleMode === 'later' ? 'Schedule order' : 'Place order')}</span>
           <span>{quote ? `$${total.toFixed(2)}` : `$${subtotal.toFixed(2)}`}</span>
         </button>

@@ -8,6 +8,8 @@ import Badge from '../../components/ui/Badge'
 import Button from '../../components/ui/Button'
 import useReorder from '../../hooks/useReorder'
 import imageUrl from '../../utils/imageUrl'
+import useSocketEvent from '../../hooks/useSocketEvent'
+import { negotiationAPI } from '../../api/api'
 
 const STATUS_STEPS = ['pending', 'accepted', 'picked_up', 'en_route', 'delivered']
 
@@ -24,7 +26,35 @@ export default function OrderDetail() {
   const { data, isLoading } = useQuery({
     queryKey: ['order', id],
     queryFn:  () => orderAPI.getOrder(id).then((r) => r.data.order),
-    refetchInterval: 15000,
+    refetchInterval: 20000, // fallback; real-time drives updates
+  })
+
+  // Real-time: refresh when this order's status changes.
+  useSocketEvent('order:updated', (payload) => {
+    if (payload?.orderId === id) queryClient.invalidateQueries(['order', id])
+  }, [id])
+
+  // ── Fare negotiation: incoming offers (only for negotiable, unassigned orders) ──
+  const isAwaitingOffers = data?.is_negotiable && !data?.rider_id && data?.status === 'pending'
+
+  const { data: offers } = useQuery({
+    queryKey: ['order-offers', id],
+    queryFn:  () => negotiationAPI.offers(id).then((r) => r.data.offers),
+    enabled:  !!isAwaitingOffers,
+    refetchInterval: isAwaitingOffers ? 15000 : false,
+  })
+
+  // Live: a new offer arrived, or one was chosen → refresh offers + order.
+  useSocketEvent('offer:new', (payload) => {
+    if (payload?.orderId === id) queryClient.invalidateQueries(['order-offers', id])
+  }, [id])
+
+  const chooseOffer = useMutation({
+    mutationFn: (offerId) => negotiationAPI.chooseOffer(id, offerId),
+    onSuccess:  () => {
+      queryClient.invalidateQueries(['order', id])
+      queryClient.invalidateQueries(['order-offers', id])
+    },
   })
 
   const cancelMutation = useMutation({
@@ -107,6 +137,52 @@ export default function OrderDetail() {
             </div>
           </div>
         </div>
+
+        {/* Fare negotiation — incoming rider offers */}
+        {isAwaitingOffers && (
+          <div className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100">
+            <div className="flex items-center justify-between mb-1">
+              <h2 className="text-sm font-bold text-gray-700">Rider offers</h2>
+              <span className="text-xs text-gray-400">Your fare: ${Number(order.offered_fare_usd).toFixed(2)}</span>
+            </div>
+            {!offers?.length ? (
+              <div className="py-6 text-center">
+                <div className="text-3xl mb-2 animate-pulse">📡</div>
+                <p className="text-sm text-gray-500">Waiting for riders to respond…</p>
+                <p className="text-xs text-gray-400 mt-1">They can accept your fare or propose a price.</p>
+              </div>
+            ) : (
+              <div className="flex flex-col gap-2 mt-2">
+                {offers.map((o) => (
+                  <div key={o.id} className="flex items-center justify-between p-3 rounded-xl border border-gray-100">
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <p className="font-bold text-gray-900">{o.rider?.name || 'Rider'}</p>
+                        {o.type === 'counter'
+                          ? <span className="text-[10px] font-bold uppercase px-1.5 py-0.5 rounded bg-amber-50 text-amber-600">Counter</span>
+                          : <span className="text-[10px] font-bold uppercase px-1.5 py-0.5 rounded bg-green-50" style={{ color: '#00A651' }}>Accepts</span>
+                        }
+                      </div>
+                      <p className="text-xs text-gray-400 mt-0.5">
+                        {o.rider_profile?.vehicle_type?.replace('_', ' ') || 'vehicle'}
+                        {o.rider_profile?.total_deliveries != null && ` · ${o.rider_profile.total_deliveries} trips`}
+                        {o.rider_profile?.rating > 0 && ` · ⭐ ${Number(o.rider_profile.rating).toFixed(1)}`}
+                      </p>
+                    </div>
+                    <div className="text-right">
+                      <p className="font-black text-gray-900">${Number(o.amount_usd).toFixed(2)}</p>
+                      <button onClick={() => chooseOffer.mutate(o.id)} disabled={chooseOffer.isPending}
+                        className="mt-1 px-4 py-1.5 rounded-lg text-white text-xs font-bold active:scale-95 disabled:opacity-50"
+                        style={{ background: '#00A651' }}>
+                        Choose
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Proof of delivery — shown once delivered */}
         {isDelivered && order.delivery_proof_url && (

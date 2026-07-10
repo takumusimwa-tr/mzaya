@@ -49,7 +49,9 @@ export const vendorAPI = {
   list:     (params) => api.get('/vendors', { params }),
   getById:  (id)     => api.get(`/vendors/${id}`),
   register: (data)   => api.post('/vendors', data),   // self-onboarding
-  my:       ()       => api.get('/vendors/my'),
+  my:       (branchId) => api.get('/vendors/my', { params: branchId ? { branch_id: branchId } : {} }),
+  branches:  ()       => api.get('/vendors/my/branches'),
+  addBranch: (data)   => api.post('/vendors/my/branches', data),
 };
 
 // ─── Cities ───────────────────────────────────────────────────────────────────
@@ -92,6 +94,16 @@ export const adminAPI = {
   riders:        (status) => api.get(`/admin/riders?status=${status || 'all'}`),
   approveRider:  (id) => api.patch(`/admin/riders/${id}/approve`),
   liveOrders:    () => api.get('/admin/orders/live'),
+}
+
+// ─── Fare negotiation ─────────────────────────────────────────────────────────
+export const negotiationAPI = {
+  // Customer
+  offers:      (orderId) => api.get(`/orders/${orderId}/offers`),
+  chooseOffer: (orderId, offerId) => api.post(`/orders/${orderId}/offers/${offerId}/choose`),
+  // Rider
+  negotiable:  () => api.get('/orders/negotiable'),
+  makeOffer:   (orderId, data) => api.post(`/orders/${orderId}/offers`, data),
 }
 
 // ─── Browse (customer home) ───────────────────────────────────────────────────

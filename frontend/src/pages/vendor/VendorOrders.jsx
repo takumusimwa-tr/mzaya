@@ -2,6 +2,8 @@ import { useState, useEffect, useRef, useMemo } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import api from '../../api/api'
 import useActiveBranch from '../../store/useActiveBranch'
+import useSocketEvent from '../../hooks/useSocketEvent'
+import { joinVendor, leaveVendor } from '../../realtime/socket'
 import Badge from '../../components/ui/Badge'
 import LoadingScreen from '../../components/ui/LoadingScreen'
 
@@ -72,8 +74,25 @@ export default function VendorOrders() {
   const { data: orders, isLoading } = useQuery({
     queryKey: ['vendor-orders', branchId],
     queryFn:  () => api.get('/orders/vendor', { params: branchId ? { branch_id: branchId } : {} }).then((r) => r.data.orders),
-    refetchInterval: 10000,
+    refetchInterval: 15000, // fallback; real-time drives most updates
   })
+
+  // Resolve the active branch id to join its real-time room.
+  const { data: vendorData } = useQuery({
+    queryKey: ['my-vendor', branchId],
+    queryFn:  () => api.get('/vendors/my', { params: branchId ? { branch_id: branchId } : {} }).then((r) => r.data.vendor),
+  })
+  const vendorId = vendorData?.id
+
+  useEffect(() => {
+    if (!vendorId) return
+    joinVendor(vendorId)
+    return () => leaveVendor(vendorId)
+  }, [vendorId])
+
+  // Real-time: refetch orders when this branch gets a new/updated order.
+  useSocketEvent('order:new', () => queryClient.invalidateQueries(['vendor-orders']), [])
+  useSocketEvent('order:updated', () => queryClient.invalidateQueries(['vendor-orders']), [])
 
   // Loud alert when the pending count rises.
   useEffect(() => {

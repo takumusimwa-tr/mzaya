@@ -4,9 +4,11 @@ require('dotenv').config({
   path: path.resolve(__dirname, '../.env')
 });
 
+const http    = require('http');
 const express = require('express');
 const cors    = require('cors');
 const helmet  = require('helmet');
+const { initSocket } = require('./realtime/socket');
 
 const { connectDB, sequelize }       = require('./config/db');
 const { startCurrencySyncJob }       = require('./jobs/currencySync.job');
@@ -30,6 +32,7 @@ const promoRoutes     = require('./routes/promo.routes');
 const vendorStatsRoutes = require('./routes/vendorStats.routes');
 const adminRoutes     = require('./routes/admin.routes');
 const browseRoutes    = require('./routes/browse.routes');
+const negotiationRoutes = require('./routes/negotiation.routes');
 
 const app = express();
 
@@ -42,6 +45,7 @@ app.use(helmet({ crossOriginResourcePolicy: false }));
 app.use('/uploads', express.static(path.join(__dirname, '..', 'uploads')));
 
 app.use('/api/auth',      authRoutes);
+app.use('/api/orders',    negotiationRoutes);
 app.use('/api/orders',    orderRoutes);
 app.use('/api/vendors',   vendorRoutes);
 app.use('/api/riders',    riderRoutes);
@@ -86,7 +90,9 @@ async function boot() {
   startScheduledReleaseJob();
 
   const PORT = process.env.PORT || 5000;
-  app.listen(PORT, () => {
+  const server = http.createServer(app);
+  initSocket(server);
+  server.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);
     console.log(`ML service expected at ${process.env.ML_SERVICE_URL || 'http://localhost:8000'}`);
   });
