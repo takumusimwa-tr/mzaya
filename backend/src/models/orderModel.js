@@ -146,6 +146,12 @@ const Order = sequelize.define('Order', {
   delivered_at: { type: DataTypes.DATE, allowNull: true },
   cancelled_at: { type: DataTypes.DATE, allowNull: true },
 
+  // Proof-of-delivery photo (uploaded by the rider at drop-off).
+  delivery_proof_url: {
+    type: DataTypes.STRING,
+    allowNull: true,
+  },
+
   // Optional cancellation reason
   cancel_reason: {
     type: DataTypes.STRING,

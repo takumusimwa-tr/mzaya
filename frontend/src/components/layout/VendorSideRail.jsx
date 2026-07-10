@@ -1,6 +1,9 @@
 import { NavLink, useNavigate } from 'react-router-dom'
+import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import useAuthStore from '../../store/useAuthStore'
+import useActiveBranch from '../../store/useActiveBranch'
+import { vendorAPI } from '../../api/api'
 import api from '../../api/api'
 import imageUrl from '../../utils/imageUrl'
 
@@ -16,11 +19,21 @@ export default function VendorSideRail() {
   const navigate = useNavigate()
   const logout   = useAuthStore((s) => s.logout)
   const user     = useAuthStore((s) => s.user)
+  const branchId = useActiveBranch((s) => s.branchId)
+  const setBranch = useActiveBranch((s) => s.setBranch)
 
   const { data: vendor } = useQuery({
-    queryKey: ['my-vendor'],
-    queryFn:  () => api.get('/vendors/my').then((r) => r.data.vendor),
+    queryKey: ['my-vendor', branchId],
+    queryFn:  () => api.get('/vendors/my', { params: branchId ? { branch_id: branchId } : {} }).then((r) => r.data.vendor),
   })
+
+  const { data: branches } = useQuery({
+    queryKey: ['my-branches'],
+    queryFn:  () => vendorAPI.branches().then((r) => r.data.branches),
+  })
+
+  const hasMultiple = (branches?.length || 0) > 1
+  const active = branches?.find((b) => b.id === branchId) || branches?.[0]
 
   const handleLogout = () => {
     logout?.()
@@ -30,12 +43,17 @@ export default function VendorSideRail() {
   return (
     <aside className="w-20 lg:w-24 shrink-0 h-screen bg-white border-r border-gray-200 flex flex-col items-center py-5">
       {/* Brand mark */}
-      <div className="mb-8">
+      <div className="mb-4">
         <div className="w-11 h-11 rounded-2xl flex items-center justify-center"
-          style={{ background: '#00A651' }}>
+          style={{ background: '#FF3008' }}>
           <span className="text-white font-black text-lg">M</span>
         </div>
       </div>
+
+      {/* Branch switcher (only when the brand has multiple branches) */}
+      {hasMultiple && (
+        <BranchSwitcher branches={branches} active={active} onSelect={setBranch} />
+      )}
 
       {/* Nav */}
       <nav className="flex-1 flex flex-col gap-2 w-full items-center">
@@ -67,6 +85,52 @@ export default function VendorSideRail() {
         </button>
       </div>
     </aside>
+  )
+}
+
+function BranchSwitcher({ branches, active, onSelect }) {
+  const [open, setOpen] = useState(false)
+  const navigate = useNavigate()
+
+  return (
+    <div className="relative mb-3 w-full flex flex-col items-center">
+      <button onClick={() => setOpen((o) => !o)}
+        className="w-16 lg:w-20 px-1 py-2 rounded-xl bg-gray-50 border border-gray-200 flex flex-col items-center gap-0.5 active:scale-95 transition-transform">
+        <span className="text-[9px] text-gray-400 uppercase tracking-wide">Branch</span>
+        <span className="text-[11px] font-bold text-gray-700 truncate max-w-full">
+          {active?.branch_name || 'Main'}
+        </span>
+        <span className="text-[8px] text-gray-400">▼</span>
+      </button>
+
+      {open && (
+        <>
+          <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
+          <div className="absolute left-full top-0 ml-2 z-50 w-52 bg-white rounded-xl shadow-xl border border-gray-100 py-1">
+            <p className="px-3 py-2 text-[10px] uppercase tracking-wide text-gray-400 font-semibold">Your branches</p>
+            {branches.map((b) => (
+              <button key={b.id}
+                onClick={() => { onSelect(b.id); setOpen(false) }}
+                className="w-full px-3 py-2.5 flex items-center justify-between text-left hover:bg-gray-50 transition-colors">
+                <div>
+                  <p className="text-sm font-semibold text-gray-800">{b.branch_name || 'Main'}</p>
+                  <p className="text-xs text-gray-400">{b.city?.name || ''}{!b.is_active ? ' · pending' : ''}</p>
+                </div>
+                {active?.id === b.id && <span style={{ color: '#00A651' }}>✓</span>}
+              </button>
+            ))}
+            <div className="border-t border-gray-100 mt-1 pt-1">
+              <button
+                onClick={() => { setOpen(false); navigate('/vendor/branches/new') }}
+                className="w-full px-3 py-2.5 text-left text-sm font-semibold hover:bg-gray-50 transition-colors"
+                style={{ color: '#00A651' }}>
+                + Add a branch
+              </button>
+            </div>
+          </div>
+        </>
+      )}
+    </div>
   )
 }
 

@@ -61,6 +61,9 @@ export default function ProfilePage() {
         {user?.role === 'customer' && (
           <ProfileMenuItem icon="❤️" label="Favorites" onClick={() => navigate('/favorites')} />
         )}
+        {user?.role === 'customer' && (
+          <ProfileMenuItem icon="🏪" label="Sell on Mzaya" onClick={() => navigate('/sell')} />
+        )}
         {user?.role === 'rider' && (
           <ProfileMenuItem icon="🛵" label="Vehicle & City" onClick={() => navigate('/rider/setup')} />
         )}

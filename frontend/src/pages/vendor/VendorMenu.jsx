@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import api from '../../api/api'
+import useActiveBranch from '../../store/useActiveBranch'
 import LoadingScreen from '../../components/ui/LoadingScreen'
 import Button from '../../components/ui/Button'
 import Input from '../../components/ui/Input'
@@ -9,14 +10,15 @@ import imageUrl from '../../utils/imageUrl'
 
 export default function VendorMenu() {
   const queryClient = useQueryClient()
+  const branchId = useActiveBranch((s) => s.branchId)
   const [showForm,  setShowForm]  = useState(false)
   const [editItem,  setEditItem]  = useState(null)
   const [form, setForm] = useState({ name: '', description: '', price_usd: '', category: '', image_url: '', prep_minutes: '' })
   const [error, setError] = useState('')
 
   const { data: vendorData, isLoading } = useQuery({
-    queryKey: ['my-vendor'],
-    queryFn:  () => api.get('/vendors/my').then((r) => r.data.vendor),
+    queryKey: ['my-vendor', branchId],
+    queryFn:  () => api.get('/vendors/my', { params: branchId ? { branch_id: branchId } : {} }).then((r) => r.data.vendor),
   })
 
   const handleChange = (e) => setForm({ ...form, [e.target.name]: e.target.value })

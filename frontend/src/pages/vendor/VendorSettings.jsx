@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import api from '../../api/api'
+import useActiveBranch from '../../store/useActiveBranch'
 import ImageUpload from '../../components/ImageUpload'
 import LoadingScreen from '../../components/ui/LoadingScreen'
 
@@ -18,14 +19,15 @@ const DEFAULT_HOURS = { open: '08:00', close: '22:00', closed: false }
 
 export default function VendorSettings() {
   const queryClient = useQueryClient()
+  const branchId = useActiveBranch((s) => s.branchId)
   const [form, setForm]   = useState(null)
   const [hours, setHours] = useState({})
   const [saved, setSaved] = useState(false)
   const [error, setError] = useState('')
 
   const { data: vendor, isLoading } = useQuery({
-    queryKey: ['my-vendor'],
-    queryFn:  () => api.get('/vendors/my').then((r) => r.data.vendor),
+    queryKey: ['my-vendor', branchId],
+    queryFn:  () => api.get('/vendors/my', { params: branchId ? { branch_id: branchId } : {} }).then((r) => r.data.vendor),
   })
 
   useEffect(() => {
@@ -158,7 +160,7 @@ export default function VendorSettings() {
                   <button onClick={() => setDay(d.key, { closed: !h.closed })}
                     className="text-xs font-semibold px-3 py-1.5 rounded-lg"
                     style={h.closed
-                      ? { background: '#EDFAF3', color: '#00A651' }
+                      ? { background: '#FFF0EE', color: '#FF3008' }
                       : { background: '#F3F4F6', color: '#6B7280' }
                     }>
                     {h.closed ? 'Set open' : 'Mark closed'}
@@ -171,7 +173,7 @@ export default function VendorSettings() {
 
         <button onClick={save} disabled={saveMut.isPending}
           className="w-full py-4 rounded-2xl text-white font-bold active:scale-98 transition-transform disabled:opacity-60"
-          style={{ background: '#00A651' }}>
+          style={{ background: '#FF3008' }}>
           {saveMut.isPending ? 'Saving…' : 'Save settings'}
         </button>
       </div>

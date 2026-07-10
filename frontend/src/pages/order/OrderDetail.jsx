@@ -7,6 +7,7 @@ import LoadingScreen from '../../components/ui/LoadingScreen'
 import Badge from '../../components/ui/Badge'
 import Button from '../../components/ui/Button'
 import useReorder from '../../hooks/useReorder'
+import imageUrl from '../../utils/imageUrl'
 
 const STATUS_STEPS = ['pending', 'accepted', 'picked_up', 'en_route', 'delivered']
 
@@ -107,6 +108,16 @@ export default function OrderDetail() {
           </div>
         </div>
 
+        {/* Proof of delivery — shown once delivered */}
+        {isDelivered && order.delivery_proof_url && (
+          <div className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100">
+            <h2 className="text-sm font-bold text-gray-700 mb-3">📸 Proof of delivery</h2>
+            <img src={imageUrl(order.delivery_proof_url)} alt="Delivery proof"
+              className="w-full rounded-xl object-cover max-h-72" />
+            <p className="text-xs text-gray-400 mt-2">Photo taken by your rider at drop-off.</p>
+          </div>
+        )}
+
         {/* Items */}
         {detail?.items?.length > 0 && (
           <div className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100">
@@ -121,7 +132,7 @@ export default function OrderDetail() {
             {(isDelivered || isCancelled) && (
               <button onClick={() => reorder(order)}
                 className="w-full mt-3 py-3 rounded-xl font-bold text-sm active:scale-98 transition-transform border-2"
-                style={{ borderColor: '#00A651', color: '#00A651', background: '#FFF8F7' }}>
+                style={{ borderColor: '#00A651', color: '#00A651', background: '#EDFAF3' }}>
                 🔄 Reorder these items
               </button>
             )}

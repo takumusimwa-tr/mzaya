@@ -46,8 +46,10 @@ export const orderAPI = {
 
 // ─── Vendors ──────────────────────────────────────────────────────────────────
 export const vendorAPI = {
-  list:    (params) => api.get('/vendors', { params }),
-  getById: (id)     => api.get(`/vendors/${id}`),
+  list:     (params) => api.get('/vendors', { params }),
+  getById:  (id)     => api.get(`/vendors/${id}`),
+  register: (data)   => api.post('/vendors', data),   // self-onboarding
+  my:       ()       => api.get('/vendors/my'),
 };
 
 // ─── Cities ───────────────────────────────────────────────────────────────────

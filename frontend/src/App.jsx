@@ -31,6 +31,8 @@ import VendorOrders  from './pages/vendor/VendorOrders'
 import VendorMenu    from './pages/vendor/VendorMenu'
 import VendorSettings from './pages/vendor/VendorSettings'
 import VendorAnalytics from './pages/vendor/VendorAnalytics'
+import VendorOnboarding from './pages/vendor/VendorOnboarding'
+import VendorAddBranch from './pages/vendor/VendorAddBranch'
 
 // Admin
 import AdminHome     from './pages/admin/AdminHome'
@@ -82,6 +84,7 @@ function AppShell() {
             <Route path="/vendor/menu"   element={<ProtectedRoute><VendorMenu /></ProtectedRoute>} />
             <Route path="/vendor/settings" element={<ProtectedRoute><VendorSettings /></ProtectedRoute>} />
             <Route path="/vendor/analytics" element={<ProtectedRoute><VendorAnalytics /></ProtectedRoute>} />
+            <Route path="/vendor/branches/new" element={<ProtectedRoute><VendorAddBranch /></ProtectedRoute>} />
             <Route path="*" element={<Navigate to="/vendor" replace />} />
           </Routes>
         </main>
@@ -111,6 +114,7 @@ function AppShell() {
         <Route path="/profile"    element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
         <Route path="/favorites"  element={<ProtectedRoute><FavoritesPage /></ProtectedRoute>} />
         <Route path="/addresses"  element={<ProtectedRoute><AddressesPage /></ProtectedRoute>} />
+        <Route path="/sell"       element={<ProtectedRoute><VendorOnboarding /></ProtectedRoute>} />
 
         {/* Rider */}
         <Route path="/rider"              element={<ProtectedRoute><RiderHome /></ProtectedRoute>} />

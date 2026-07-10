@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import api from '../../api/api'
+import useActiveBranch from '../../store/useActiveBranch'
 import LoadingScreen from '../../components/ui/LoadingScreen'
 
 const GREEN = '#00A651'
@@ -8,10 +9,11 @@ const GREEN_LIGHT = '#EDFAF3'
 
 export default function VendorAnalytics() {
   const [range, setRange] = useState('week')
+  const branchId = useActiveBranch((s) => s.branchId)
 
   const { data: stats, isLoading } = useQuery({
-    queryKey: ['vendor-stats', range],
-    queryFn:  () => api.get(`/vendor-stats?range=${range}`).then((r) => r.data.stats),
+    queryKey: ['vendor-stats', range, branchId],
+    queryFn:  () => api.get(`/vendor-stats?range=${range}${branchId ? `&branch_id=${branchId}` : ''}`).then((r) => r.data.stats),
     refetchInterval: 30000,
   })
 

@@ -246,9 +246,21 @@ async function upgradeVehicle(req, res) {
 // PATCH /api/orders/:id/status
 async function updateStatus(req, res) {
   try {
-    const { status } = req.body;
+    const { status, delivery_proof_url } = req.body;
     if (!status) return res.status(400).json({ error: 'status is required' });
+
+    // Require a proof photo to mark an order delivered.
+    if (status === 'delivered' && !delivery_proof_url) {
+      return res.status(400).json({ error: 'A delivery proof photo is required' });
+    }
+
     const order = await updateOrderStatus(req.params.id, status, req.user.id);
+
+    // Persist the proof photo on the order.
+    if (status === 'delivered' && delivery_proof_url) {
+      await order.update({ delivery_proof_url });
+    }
+
     return res.status(200).json({ message: 'Status updated', order });
   } catch (err) {
     const code = err.message === 'Access denied' ? 403 : 400;
@@ -274,7 +286,13 @@ async function vendorOrders(req, res) {
       require('../models/associations');
     const { Op } = require('sequelize');
 
-    const vendor = await Vendor.findOne({ where: { owner_id: req.user.id } });
+    const vendor = await Vendor.findOne({
+      where: {
+        owner_id: req.user.id,
+        ...(req.query.branch_id ? { id: req.query.branch_id } : {}),
+      },
+      order: [['createdAt', 'ASC']],
+    });
     if (!vendor) return res.status(404).json({ error: 'Vendor profile not found' });
 
     const [foodOrders, groceryOrders, materialOrders] = await Promise.all([
