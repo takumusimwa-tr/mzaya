@@ -122,8 +122,8 @@ export const browseAPI = {
 
 // ─── Payments ────────────────────────────────────────────────────────────────
 export const paymentAPI = {
-  initiate:    (id, data) => api.post(`/payments/${id}/pay`, data),
-  checkStatus: (id)       => api.get(`/payments/${id}/status`),
+  initiate: (id, data) => api.post(`/payments/${id}/pay`, data),
+  poll:     (id)       => api.get(`/payments/${id}/poll`),
 };
 
 export default api;

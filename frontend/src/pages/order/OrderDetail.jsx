@@ -1,7 +1,7 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { orderAPI } from '../../api/api'
+import { orderAPI, paymentAPI } from '../../api/api'
 import api from '../../api/api'
 import LoadingScreen from '../../components/ui/LoadingScreen'
 import Badge from '../../components/ui/Badge'
@@ -10,6 +10,7 @@ import useReorder from '../../hooks/useReorder'
 import imageUrl from '../../utils/imageUrl'
 import useSocketEvent from '../../hooks/useSocketEvent'
 import { negotiationAPI } from '../../api/api'
+import PaymentPanel from '../../components/PaymentPanel'
 
 const STATUS_STEPS = ['pending', 'accepted', 'picked_up', 'en_route', 'delivered']
 
@@ -56,6 +57,19 @@ export default function OrderDetail() {
       queryClient.invalidateQueries(['order-offers', id])
     },
   })
+
+  // Returning from a Paynow (or mock) card redirect → poll to confirm payment.
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+    if (params.get('mockpay') || params.get('paynow')) {
+      paymentAPI.poll(id).finally(() => {
+        queryClient.invalidateQueries(['order', id])
+        // clean the URL
+        window.history.replaceState({}, '', `/orders/${id}`)
+      })
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [id])
 
   const cancelMutation = useMutation({
     mutationFn: () => orderAPI.cancel(id, 'Cancelled by customer'),
@@ -137,6 +151,11 @@ export default function OrderDetail() {
             </div>
           </div>
         </div>
+
+        {/* Payment — show until the order is paid */}
+        {order.payment_status !== 'success' && order.status !== 'cancelled' && (
+          <PaymentPanel order={order} onPaid={() => queryClient.invalidateQueries(['order', id])} />
+        )}
 
         {/* Fare negotiation — incoming rider offers */}
         {isAwaitingOffers && (

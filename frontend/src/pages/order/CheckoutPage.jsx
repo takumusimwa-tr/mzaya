@@ -11,8 +11,6 @@ const PAYMENT_METHODS = [
   { id: 'onemoney',   label: 'OneMoney',   sub: 'NetOne mobile money' },
   { id: 'innbucks',   label: 'InnBucks',   sub: 'InnBucks wallet' },
   { id: 'zipit',      label: 'ZIPIT',      sub: 'Bank transfer (USD)' },
-  { id: 'visa',       label: 'Visa',       sub: 'Card payment' },
-  { id: 'mastercard', label: 'Mastercard', sub: 'Card payment' },
 ]
 
 // Build category-specific order detail. Includes total_weight_kg so the backend
@@ -74,9 +72,7 @@ export default function CheckoutPage() {
   const [error, setError]                 = useState('')
 
   const MOBILE_MONEY = ['ecocash', 'onemoney', 'innbucks', 'omari']
-  const CARDS        = ['visa', 'mastercard']
   const needsPhone   = MOBILE_MONEY.includes(paymentMethod)
-  const needsCard    = CARDS.includes(paymentMethod)
 
   const subtotal    = cart.totalPrice()
   const totalWeight = cart.totalWeight()
@@ -225,10 +221,6 @@ export default function CheckoutPage() {
       setError('Please enter your mobile money number')
       return
     }
-    if (needsCard && (!paymentDetails.cardNumber || !paymentDetails.expiry || !paymentDetails.cvv)) {
-      setError('Please enter your card details')
-      return
-    }
     if (scheduleMode === 'later') {
       if (!scheduledFor) { setError('Please pick a delivery time'); return }
       const when = new Date(scheduledFor).getTime()
@@ -318,7 +310,7 @@ export default function CheckoutPage() {
                   onClick={() => setDropoff(addr.address)}
                   className="flex-shrink-0 flex items-center gap-1.5 px-3 py-2 rounded-xl border text-sm active:scale-95 transition-transform"
                   style={dropoff === addr.address
-                    ? { borderColor: '#FF3008', background: '#FFF0EE', color: '#FF3008' }
+                    ? { borderColor: '#00A651', background: '#EDFAF3', color: '#00A651' }
                     : { borderColor: '#E5E5E5', color: '#444' }
                   }>
                   <span>📍</span>
@@ -334,7 +326,7 @@ export default function CheckoutPage() {
             value={dropoff}
             onChange={(e) => setDropoff(e.target.value)}
             placeholder="e.g. 15 Borrowdale Rd, Harare"
-            className="w-full mt-1 mb-3 px-4 py-3 rounded-xl border border-gray-200 text-sm outline-none focus:border-red-400"
+            className="w-full mt-1 mb-3 px-4 py-3 rounded-xl border border-gray-200 text-sm outline-none focus:border-green-500"
           />
 
           {/* Location — GPS first, paste second, WhatsApp request third */}
@@ -362,7 +354,7 @@ export default function CheckoutPage() {
               <button type="button" onClick={useCurrentLocation}
                 disabled={pinStatus === 'loading'}
                 className="w-full flex items-center justify-center gap-2 mt-1 mb-2 px-4 py-3 rounded-xl text-sm font-semibold text-white active:scale-98 transition-transform disabled:opacity-60"
-                style={{ background: '#FF3008' }}>
+                style={{ background: '#00A651' }}>
                 <span>📍</span>
                 {pinStatus === 'loading' ? 'Getting location…' : 'Use my current location'}
               </button>
@@ -373,7 +365,7 @@ export default function CheckoutPage() {
                 value={pinLink}
                 onChange={(e) => onPinPaste(e.target.value)}
                 placeholder="or paste a shared WhatsApp / Maps pin link"
-                className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm outline-none focus:border-red-400"
+                className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm outline-none focus:border-green-500"
               />
 
               {/* Tertiary: ask someone via WhatsApp */}
@@ -399,7 +391,7 @@ export default function CheckoutPage() {
             value={landmark}
             onChange={(e) => setLandmark(e.target.value)}
             placeholder="e.g. blue gate opposite Total garage, ask for tuckshop"
-            className="w-full mt-1 mb-3 px-4 py-3 rounded-xl border border-gray-200 text-sm outline-none focus:border-red-400"
+            className="w-full mt-1 mb-3 px-4 py-3 rounded-xl border border-gray-200 text-sm outline-none focus:border-green-500"
           />
 
           <label className="text-xs text-gray-500">Delivery instructions (optional)</label>
@@ -408,7 +400,7 @@ export default function CheckoutPage() {
             value={instructions}
             onChange={(e) => setInstructions(e.target.value)}
             placeholder="e.g. Call when you arrive, gate code 1234"
-            className="w-full mt-1 px-4 py-3 rounded-xl border border-gray-200 text-sm outline-none focus:border-red-400"
+            className="w-full mt-1 px-4 py-3 rounded-xl border border-gray-200 text-sm outline-none focus:border-green-500"
           />
         </div>
 
@@ -434,7 +426,7 @@ export default function CheckoutPage() {
             <button type="button" onClick={() => setScheduleMode('now')}
               className="flex-1 py-2.5 rounded-xl border text-sm font-semibold transition-all active:scale-95"
               style={scheduleMode === 'now'
-                ? { borderColor: '#FF3008', background: '#FFF0EE', color: '#FF3008' }
+                ? { borderColor: '#00A651', background: '#EDFAF3', color: '#00A651' }
                 : { borderColor: '#E5E5E5', color: '#444' }
               }>
               Deliver now
@@ -442,7 +434,7 @@ export default function CheckoutPage() {
             <button type="button" onClick={() => setScheduleMode('later')}
               className="flex-1 py-2.5 rounded-xl border text-sm font-semibold transition-all active:scale-95"
               style={scheduleMode === 'later'
-                ? { borderColor: '#FF3008', background: '#FFF0EE', color: '#FF3008' }
+                ? { borderColor: '#00A651', background: '#EDFAF3', color: '#00A651' }
                 : { borderColor: '#E5E5E5', color: '#444' }
               }>
               Schedule for later
@@ -455,7 +447,7 @@ export default function CheckoutPage() {
                 value={scheduledFor}
                 min={new Date(Date.now() + minLeadMinutes * 60 * 1000).toISOString().slice(0, 16)}
                 onChange={(e) => setScheduledFor(e.target.value)}
-                className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm outline-none focus:border-red-400"
+                className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm outline-none focus:border-green-500"
               />
               <p className="text-xs text-gray-400 mt-2">
                 {longestPrep > 30
@@ -512,7 +504,7 @@ export default function CheckoutPage() {
                 onClick={() => { setTip(amt); setCustomTip('') }}
                 className="flex-1 py-2.5 rounded-xl border text-sm font-semibold transition-all active:scale-95"
                 style={tip === amt && customTip === ''
-                  ? { borderColor: '#FF3008', background: '#FFF0EE', color: '#FF3008' }
+                  ? { borderColor: '#00A651', background: '#EDFAF3', color: '#00A651' }
                   : { borderColor: '#E5E5E5', color: '#444' }
                 }>
                 {amt === 0 ? 'No tip' : `$${amt}`}
@@ -531,8 +523,8 @@ export default function CheckoutPage() {
                 setTip(v ? Math.max(0, parseFloat(v) || 0) : 0)
               }}
               placeholder="Custom amount"
-              className="flex-1 px-4 py-2.5 rounded-xl border text-sm outline-none focus:border-red-400"
-              style={{ borderColor: customTip ? '#FF3008' : '#E5E5E5' }}
+              className="flex-1 px-4 py-2.5 rounded-xl border text-sm outline-none focus:border-green-500"
+              style={{ borderColor: customTip ? '#00A651' : '#E5E5E5' }}
             />
           </div>
         </div>
@@ -562,12 +554,12 @@ export default function CheckoutPage() {
                   value={promoInput}
                   onChange={(e) => { setPromoInput(e.target.value.toUpperCase()); setPromoStatus(''); setPromoError('') }}
                   placeholder="Enter code"
-                  className="flex-1 px-4 py-3 rounded-xl border border-gray-200 text-sm outline-none focus:border-red-400 uppercase"
+                  className="flex-1 px-4 py-3 rounded-xl border border-gray-200 text-sm outline-none focus:border-green-500 uppercase"
                 />
                 <button type="button" onClick={applyPromo}
                   disabled={!promoInput.trim() || promoStatus === 'loading'}
                   className="px-5 py-3 rounded-xl text-sm font-semibold text-white disabled:opacity-50"
-                  style={{ background: '#FF3008' }}>
+                  style={{ background: '#00A651' }}>
                   {promoStatus === 'loading' ? '…' : 'Apply'}
                 </button>
               </div>
@@ -586,13 +578,13 @@ export default function CheckoutPage() {
               <label key={method.id}
                 className="flex items-center gap-3 p-3 rounded-xl border cursor-pointer transition-all"
                 style={paymentMethod === method.id
-                  ? { borderColor: '#FF3008', background: '#FFF0EE' }
+                  ? { borderColor: '#00A651', background: '#EDFAF3' }
                   : { borderColor: '#E5E5E5' }
                 }>
                 <input type="radio" name="payment" value={method.id}
                   checked={paymentMethod === method.id}
                   onChange={(e) => setPaymentMethod(e.target.value)}
-                  style={{ accentColor: '#FF3008' }}
+                  style={{ accentColor: '#00A651' }}
                 />
                 <div>
                   <p className="text-sm font-semibold text-gray-900">{method.label}</p>
@@ -611,69 +603,11 @@ export default function CheckoutPage() {
                 value={paymentDetails.phone || ''}
                 onChange={(e) => setPaymentDetails({ ...paymentDetails, phone: e.target.value })}
                 placeholder="07X XXX XXXX"
-                className="w-full mt-1 px-4 py-3 rounded-xl border border-gray-200 text-sm outline-none focus:border-red-400"
+                className="w-full mt-1 px-4 py-3 rounded-xl border border-gray-200 text-sm outline-none focus:border-green-500"
               />
               <p className="text-xs text-gray-400 mt-2">
                 You'll receive a prompt on your phone to approve payment
               </p>
-            </div>
-          )}
-
-          {/* Payment details — card */}
-          {needsCard && (
-            <div className="mt-4 pt-4 border-t border-gray-100 flex flex-col gap-3">
-              <div>
-                <label className="text-xs text-gray-500">Card number <span className="text-red-500">*</span></label>
-                <input
-                  type="text"
-                  inputMode="numeric"
-                  value={paymentDetails.cardNumber || ''}
-                  onChange={(e) => {
-                    const v = e.target.value.replace(/\D/g, '').slice(0, 16)
-                    const formatted = v.replace(/(\d{4})(?=\d)/g, '$1 ')
-                    setPaymentDetails({ ...paymentDetails, cardNumber: formatted })
-                  }}
-                  placeholder="1234 5678 9012 3456"
-                  className="w-full mt-1 px-4 py-3 rounded-xl border border-gray-200 text-sm outline-none focus:border-red-400"
-                />
-              </div>
-              <div className="flex gap-3">
-                <div className="flex-1">
-                  <label className="text-xs text-gray-500">Expiry <span className="text-red-500">*</span></label>
-                  <input
-                    type="text"
-                    inputMode="numeric"
-                    value={paymentDetails.expiry || ''}
-                    onChange={(e) => {
-                      let v = e.target.value.replace(/\D/g, '').slice(0, 4)
-                      if (v.length >= 3) v = v.slice(0, 2) + '/' + v.slice(2)
-                      setPaymentDetails({ ...paymentDetails, expiry: v })
-                    }}
-                    placeholder="MM/YY"
-                    className="w-full mt-1 px-4 py-3 rounded-xl border border-gray-200 text-sm outline-none focus:border-red-400"
-                  />
-                </div>
-                <div className="flex-1">
-                  <label className="text-xs text-gray-500">CVV <span className="text-red-500">*</span></label>
-                  <input
-                    type="text"
-                    inputMode="numeric"
-                    value={paymentDetails.cvv || ''}
-                    onChange={(e) => setPaymentDetails({ ...paymentDetails, cvv: e.target.value.replace(/\D/g, '').slice(0, 4) })}
-                    placeholder="123"
-                    className="w-full mt-1 px-4 py-3 rounded-xl border border-gray-200 text-sm outline-none focus:border-red-400"
-                  />
-                </div>
-              </div>
-              <label className="flex items-center gap-2 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={paymentDetails.saveCard || false}
-                  onChange={(e) => setPaymentDetails({ ...paymentDetails, saveCard: e.target.checked })}
-                  style={{ accentColor: '#FF3008' }}
-                />
-                <span className="text-xs text-gray-600">Save this card for future orders</span>
-              </label>
             </div>
           )}
         </div>
@@ -730,7 +664,7 @@ export default function CheckoutPage() {
       <div className="fixed bottom-20 left-1/2 -translate-x-1/2 w-full max-w-md px-4 z-30">
         <button onClick={handleSubmit} disabled={loading}
           className="w-full flex items-center justify-between px-5 py-4 rounded-2xl text-white font-bold active:scale-98 transition-transform disabled:opacity-70"
-          style={{ background: '#FF3008', boxShadow: '0 8px 24px #FF300850' }}>
+          style={{ background: '#00A651', boxShadow: '0 8px 24px #00A65150' }}>
           <span>{loading ? 'Placing order...' : (scheduleMode === 'later' ? 'Schedule order' : 'Place order')}</span>
           <span>{quote ? `$${total.toFixed(2)}` : `$${subtotal.toFixed(2)}`}</span>
         </button>
