@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import api from '../../api/api'
 import useActiveBranch from '../../store/useActiveBranch'
@@ -19,6 +20,7 @@ const DEFAULT_HOURS = { open: '08:00', close: '22:00', closed: false }
 
 export default function VendorSettings() {
   const queryClient = useQueryClient()
+  const navigate = useNavigate()
   const branchId = useActiveBranch((s) => s.branchId)
   const [form, setForm]   = useState(null)
   const [hours, setHours] = useState({})
@@ -76,6 +78,19 @@ export default function VendorSettings() {
         <div className="flex items-center justify-between mb-6">
           <h1 className="text-2xl font-black text-gray-900">Business settings</h1>
           {saved && <span className="text-sm font-semibold text-green-600">Saved ✓</span>}
+        </div>
+
+        {/* Branches — always-visible entry to add another location */}
+        <div className="mb-6 p-4 rounded-2xl border border-gray-100 bg-white flex items-center justify-between">
+          <div>
+            <p className="font-bold text-gray-800 text-sm">Branches</p>
+            <p className="text-xs text-gray-400 mt-0.5">Add another location under your brand</p>
+          </div>
+          <button onClick={() => navigate('/vendor/branches/new')}
+            className="px-4 py-2 rounded-xl text-white text-sm font-semibold active:scale-95 transition-transform"
+            style={{ background: '#00A651' }}>
+            + Add branch
+          </button>
         </div>
 
         {error && (
@@ -160,7 +175,7 @@ export default function VendorSettings() {
                   <button onClick={() => setDay(d.key, { closed: !h.closed })}
                     className="text-xs font-semibold px-3 py-1.5 rounded-lg"
                     style={h.closed
-                      ? { background: '#FFF0EE', color: '#FF3008' }
+                      ? { background: '#EDFAF3', color: '#00A651' }
                       : { background: '#F3F4F6', color: '#6B7280' }
                     }>
                     {h.closed ? 'Set open' : 'Mark closed'}
@@ -173,7 +188,7 @@ export default function VendorSettings() {
 
         <button onClick={save} disabled={saveMut.isPending}
           className="w-full py-4 rounded-2xl text-white font-bold active:scale-98 transition-transform disabled:opacity-60"
-          style={{ background: '#FF3008' }}>
+          style={{ background: '#00A651' }}>
           {saveMut.isPending ? 'Saving…' : 'Save settings'}
         </button>
       </div>

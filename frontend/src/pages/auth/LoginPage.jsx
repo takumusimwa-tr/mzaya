@@ -4,6 +4,7 @@ import { authAPI } from '../../api/api'
 import useAuthStore from '../../store/useAuthStore'
 import Input from '../../components/ui/Input'
 import Button from '../../components/ui/Button'
+import { MzayaLockup } from '../../components/brand/MzayaLockup'
 
 export default function LoginPage() {
   const navigate  = useNavigate()
@@ -32,9 +33,9 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen flex flex-col bg-white">
       {/* Header */}
-      <div className="bg-green-600 px-6 pt-16 pb-12">
-        <h1 className="text-3xl font-bold text-white">Mzaya</h1>
-        <p className="text-green-100 mt-1 text-sm">Zimbabwe's delivery platform</p>
+      <div className="px-6 pt-16 pb-12" style={{ background: '#00A651' }}>
+        <MzayaLockup iconSize={48} stacked={false} tagline={false} onDark />
+        <p className="text-white/75 mt-3 text-sm">Zimbabwe's delivery platform</p>
       </div>
 
       {/* Form */}

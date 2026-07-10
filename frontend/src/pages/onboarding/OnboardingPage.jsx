@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import useAuthStore from '../../store/useAuthStore'
+import { MzayaLockup } from '../../components/brand/MzayaLockup'
 
 const SLIDES = [
   {
@@ -122,9 +123,9 @@ function RoleSelection({ navigate }) {
   return (
     <div className="min-h-screen flex flex-col bg-white">
       {/* Header */}
-      <div className="bg-green-600 px-6 pt-16 pb-10 text-center">
-        <h1 className="text-3xl font-bold text-white">Mzaya</h1>
-        <p className="text-green-100 text-sm mt-2">Zimbabwe's delivery platform</p>
+      <div className="px-6 pt-16 pb-10 flex flex-col items-center" style={{ background: '#00A651' }}>
+        <MzayaLockup iconSize={56} stacked tagline onDark />
+        <p className="text-white/75 text-sm mt-2">Zimbabwe's delivery platform</p>
       </div>
 
       <div className="flex-1 px-6 pt-8">

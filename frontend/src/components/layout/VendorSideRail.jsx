@@ -6,6 +6,7 @@ import useActiveBranch from '../../store/useActiveBranch'
 import { vendorAPI } from '../../api/api'
 import api from '../../api/api'
 import imageUrl from '../../utils/imageUrl'
+import MzayaIcon from '../brand/MzayaIcon'
 
 const tabs = [
   { to: '/vendor',           label: 'Home',      icon: HomeIcon,      end: true  },
@@ -44,10 +45,7 @@ export default function VendorSideRail() {
     <aside className="w-20 lg:w-24 shrink-0 h-screen bg-white border-r border-gray-200 flex flex-col items-center py-5">
       {/* Brand mark */}
       <div className="mb-4">
-        <div className="w-11 h-11 rounded-2xl flex items-center justify-center"
-          style={{ background: '#FF3008' }}>
-          <span className="text-white font-black text-lg">M</span>
-        </div>
+        <MzayaIcon size={44} bg="#00A651" />
       </div>
 
       {/* Branch switcher (only when the brand has multiple branches) */}

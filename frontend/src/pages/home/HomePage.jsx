@@ -8,6 +8,7 @@ import useLocation from '../../hooks/useLocation'
 import LoadingScreen from '../../components/ui/LoadingScreen'
 import imageUrl from '../../utils/imageUrl'
 import { useFavoriteIds } from '../../hooks/useFavorites'
+import { MzayaWordmark } from '../../components/brand/MzayaLockup'
 
 const CATEGORIES = [
   { id: 'food',      label: 'Food',      emoji: '🍽️' },
@@ -79,7 +80,7 @@ export default function HomePage() {
       <div className="sticky top-0 z-40 bg-white px-4 pt-12 pb-3" style={{ boxShadow: '0 1px 0 #F0F0F0' }}>
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-1">
-            <span className="font-black text-2xl tracking-tight" style={{ color: '#00A651' }}>mzaya</span>
+            <MzayaWordmark size="text-2xl" />
             {selectedCity && <span className="text-xs text-gray-400 font-medium ml-1 mt-0.5">· {selectedCity.name}</span>}
           </div>
           <div className="flex items-center gap-2">

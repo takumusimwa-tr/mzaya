@@ -72,7 +72,7 @@ export default function RiderProfilePage() {
   return (
     <div className="h-screen bg-white flex flex-col">
       {/* Header */}
-      <div className="px-6 pt-16 pb-8" style={{ background: '#0F172A' }}>
+      <div className="px-6 pt-16 pb-8" style={{ background: '#00A651' }}>
         <button onClick={() => navigate(-1)} className="bg-white/10 p-2 rounded-full mb-4 inline-block">
           <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
@@ -108,7 +108,7 @@ export default function RiderProfilePage() {
                 onClick={() => setVehicleType(v.value)}
                 className="flex items-center justify-between p-3 rounded-xl border text-left transition-all"
                 style={vehicleType === v.value
-                  ? { borderColor: '#2563EB', background: '#EFF4FF' }
+                  ? { borderColor: '#00A651', background: '#EDFAF3' }
                   : { borderColor: '#E5E5E5' }
                 }
               >
@@ -117,7 +117,7 @@ export default function RiderProfilePage() {
                   <p className="text-xs text-gray-400">{v.hint}</p>
                 </div>
                 {vehicleType === v.value && (
-                  <span className="text-blue-600 text-lg">✓</span>
+                  <span className="text-green-600 text-lg">✓</span>
                 )}
               </button>
             ))}
@@ -135,7 +135,7 @@ export default function RiderProfilePage() {
                 onClick={() => setCityId(c.id)}
                 className="flex-1 py-3 rounded-xl border text-sm font-semibold transition-all"
                 style={cityId === c.id
-                  ? { borderColor: '#2563EB', background: '#EFF4FF', color: '#2563EB' }
+                  ? { borderColor: '#00A651', background: '#EDFAF3', color: '#00A651' }
                   : { borderColor: '#E5E5E5', color: '#444' }
                 }
               >
@@ -153,7 +153,7 @@ export default function RiderProfilePage() {
               value={plate}
               onChange={(e) => setPlate(e.target.value)}
               placeholder="e.g. ABC 1234"
-              className="w-full mt-1 px-4 py-3 rounded-xl border border-gray-200 text-sm outline-none focus:border-blue-400"
+              className="w-full mt-1 px-4 py-3 rounded-xl border border-gray-200 text-sm outline-none focus:border-green-500"
             />
           </div>
           <div>
@@ -162,7 +162,7 @@ export default function RiderProfilePage() {
               value={model}
               onChange={(e) => setModel(e.target.value)}
               placeholder="e.g. Toyota Hilux, Honda CB125"
-              className="w-full mt-1 px-4 py-3 rounded-xl border border-gray-200 text-sm outline-none focus:border-blue-400"
+              className="w-full mt-1 px-4 py-3 rounded-xl border border-gray-200 text-sm outline-none focus:border-green-500"
             />
           </div>
           <div>
@@ -171,7 +171,7 @@ export default function RiderProfilePage() {
               value={nationalId}
               onChange={(e) => setNationalId(e.target.value)}
               placeholder="e.g. 63-1234567 A 00"
-              className="w-full mt-1 px-4 py-3 rounded-xl border border-gray-200 text-sm outline-none focus:border-blue-400"
+              className="w-full mt-1 px-4 py-3 rounded-xl border border-gray-200 text-sm outline-none focus:border-green-500"
             />
           </div>
         </div>
@@ -189,7 +189,7 @@ export default function RiderProfilePage() {
           onClick={handleSave}
           disabled={saveMut.isPending}
           className="w-full py-4 rounded-2xl text-white font-bold active:scale-98 transition-transform disabled:opacity-70"
-          style={{ background: '#2563EB' }}
+          style={{ background: '#00A651' }}
         >
           {saveMut.isPending ? 'Saving…' : 'Save & continue'}
         </button>
