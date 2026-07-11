@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 import api from '../../api/api'
 import LoadingScreen from '../../components/ui/LoadingScreen'
+import Icon from '../../components/ui/Icon'
 
 export default function RiderEarnings() {
   const { data: orders, isLoading } = useQuery({
@@ -45,7 +46,7 @@ export default function RiderEarnings() {
           <h2 className="text-sm font-bold text-gray-700 mb-3">Delivery history</h2>
           {completed.length === 0 ? (
             <div className="text-center py-12 bg-white rounded-2xl border border-gray-100">
-              <p className="text-4xl mb-3">📦</p>
+              <div className="mb-3 flex justify-center text-gray-300"><Icon name="parcel" size={40} /></div>
               <p className="text-gray-500 text-sm">No completed deliveries yet</p>
             </div>
           ) : (

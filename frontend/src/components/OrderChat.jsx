@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { chatAPI } from '../api/api'
 import useSocketEvent from '../hooks/useSocketEvent'
+import Icon from './ui/Icon'
 
 const ROLE_LABELS = { customer: 'Customer', rider: 'Rider', vendor: 'Store' }
 const ROLE_COLORS = { customer: '#00A651', rider: '#2563EB', vendor: '#D97706' }
@@ -62,7 +63,7 @@ export default function OrderChat({ orderId, onClose }) {
             <a key={c.role} href={`tel:${c.phone}`}
               className="flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white border border-gray-200 text-xs font-semibold active:scale-95"
               style={{ color: ROLE_COLORS[c.role] }}>
-              📞 {ROLE_LABELS[c.role]}
+              <Icon name="call" size={14} /> {ROLE_LABELS[c.role]}
             </a>
           ))}
         </div>
@@ -74,7 +75,7 @@ export default function OrderChat({ orderId, onClose }) {
           <p className="text-center text-sm text-gray-400 mt-8">Loading…</p>
         ) : messages.length === 0 ? (
           <div className="text-center mt-10">
-            <div className="text-4xl mb-2">💬</div>
+            <div className="mb-2 flex justify-center text-gray-300"><Icon name="chat" size={40} /></div>
             <p className="text-sm text-gray-500">No messages yet</p>
             <p className="text-xs text-gray-400 mt-1">Coordinate the delivery here.</p>
           </div>
@@ -115,7 +116,7 @@ export default function OrderChat({ orderId, onClose }) {
         <button onClick={submit} disabled={!text.trim() || send.isPending}
           className="w-10 h-10 rounded-full text-white flex items-center justify-center disabled:opacity-40"
           style={{ background: '#00A651' }}>
-          ➤
+          <Icon name="send" size={18} />
         </button>
       </div>
     </div>

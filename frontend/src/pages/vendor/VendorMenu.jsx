@@ -7,6 +7,7 @@ import Button from '../../components/ui/Button'
 import Input from '../../components/ui/Input'
 import ImageUpload from '../../components/ImageUpload'
 import imageUrl from '../../utils/imageUrl'
+import Icon from '../../components/ui/Icon'
 
 export default function VendorMenu() {
   const queryClient = useQueryClient()
@@ -120,7 +121,7 @@ export default function VendorMenu() {
       <div className="px-8 flex flex-col gap-6">
         {!menuItems.length ? (
           <div className="text-center py-16">
-            <p className="text-4xl mb-3">🍽️</p>
+            <div className="mb-3 flex justify-center text-gray-300"><Icon name="food" size={40} /></div>
             <p className="text-gray-500 text-sm">No menu items yet</p>
             <p className="text-gray-400 text-xs mt-1">Tap + Add item to get started</p>
           </div>
@@ -139,7 +140,7 @@ export default function VendorMenu() {
                       <div className="w-16 h-16 rounded-xl bg-gray-100 flex-shrink-0 overflow-hidden flex items-center justify-center">
                         {item.image_url
                           ? <img src={imageUrl(item.image_url, 300)} alt={item.name} className="w-full h-full object-cover" />
-                          : <span className="text-2xl opacity-30">🍽️</span>
+                          : <Icon name="food" size={24} className="opacity-30" />
                         }
                       </div>
                       <div className="flex-1 min-w-0">

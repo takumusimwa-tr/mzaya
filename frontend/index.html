@@ -17,12 +17,29 @@
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
     <script>
+      // Register the service worker in PRODUCTION ONLY.
+      //
+      // The SW caches JS/CSS cache-first. That's correct for a deployed app on a
+      // patchy Zimbabwean connection — and actively harmful against Vite's dev
+      // server, where it serves stale module bundles and you end up debugging
+      // code that isn't the code on disk.
+      //
+      // In dev we also actively unregister any SW left over from a previous run.
       if ('serviceWorker' in navigator) {
-        window.addEventListener('load', () => {
-          navigator.serviceWorker.register('/sw.js')
-            .then(() => console.log('Mzaya SW registered'))
-            .catch((err) => console.log('SW registration failed:', err))
-        })
+        if (location.hostname === 'localhost' || location.hostname === '127.0.0.1') {
+          navigator.serviceWorker.getRegistrations().then((regs) => {
+            regs.forEach((r) => r.unregister())
+          })
+          if (window.caches) {
+            caches.keys().then((keys) => keys.forEach((k) => caches.delete(k)))
+          }
+        } else {
+          window.addEventListener('load', () => {
+            navigator.serviceWorker.register('/sw.js')
+              .then(() => console.log('Mzaya SW registered'))
+              .catch((err) => console.log('SW registration failed:', err))
+          })
+        }
       }
     </script>
   </body>

@@ -5,14 +5,15 @@ import { orderAPI } from '../../api/api'
 import api from '../../api/api'
 import Badge from '../../components/ui/Badge'
 import LoadingScreen from '../../components/ui/LoadingScreen'
+import Icon from '../../components/ui/Icon'
 
 const STATUS_INFO = {
-  pending:   { label: 'Finding a rider',  icon: '🔍', desc: 'Looking for an available rider',  eta: '5-10 min'  },
-  accepted:  { label: 'Rider on the way', icon: '🏍️', desc: 'Heading to the pickup',           eta: '10-15 min' },
-  picked_up: { label: 'Order picked up',  icon: '📦', desc: 'Your order has been collected',    eta: '10-20 min' },
-  en_route:  { label: 'On the way',       icon: '🚀', desc: 'Heading to you now',               eta: '5-10 min'  },
-  delivered: { label: 'Delivered',        icon: '✅', desc: 'Enjoy!',                           eta: null        },
-  cancelled: { label: 'Cancelled',        icon: '❌', desc: 'This order was cancelled',         eta: null        },
+  pending:   { label: 'Finding a rider',  icon: 'searching', desc: 'Looking for an available rider',  eta: '5-10 min'  },
+  accepted:  { label: 'Rider on the way', icon: 'rider', desc: 'Heading to the pickup',           eta: '10-15 min' },
+  picked_up: { label: 'Order picked up',  icon: 'parcel', desc: 'Your order has been collected',    eta: '10-20 min' },
+  en_route:  { label: 'On the way',       icon: 'enroute', desc: 'Heading to you now',               eta: '5-10 min'  },
+  delivered: { label: 'Delivered',        icon: 'delivered', desc: 'Enjoy!',                           eta: null        },
+  cancelled: { label: 'Cancelled',        icon: 'cancelled', desc: 'This order was cancelled',         eta: null        },
 }
 
 const STATUS_STEPS = ['pending', 'accepted', 'picked_up', 'en_route', 'delivered']
@@ -76,7 +77,7 @@ export default function TrackingPage() {
 
     if (!riderMarker.current) {
       const icon = L.divIcon({
-        html: '<div style="font-size:28px;line-height:1">🏍️</div>',
+        html: '<div style="width:30px;height:30px;border-radius:50%;background:#00A651;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 8px rgba(0,0,0,.3)"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18.5" cy="17.5" r="3.5"/><circle cx="5.5" cy="17.5" r="3.5"/><circle cx="15" cy="5" r="1"/><path d="M12 17.5V14l-3-3 4-3 2 3h2"/></svg></div>',
         className: 'rider-marker',
         iconSize: [32, 32],
         iconAnchor: [16, 16],
@@ -119,7 +120,7 @@ export default function TrackingPage() {
             {!riderLoc && (
               <div className="absolute inset-0 flex items-center justify-center bg-gray-100/80 z-10">
                 <div className="text-center">
-                  <div className="text-3xl mb-2 animate-pulse">📍</div>
+                  <div className="mb-2 flex justify-center animate-pulse text-gray-400"><Icon name="location" size={30} /></div>
                   <p className="text-sm text-gray-500">Waiting for rider location...</p>
                 </div>
               </div>
@@ -129,7 +130,7 @@ export default function TrackingPage() {
           <div className="w-full h-full flex items-center justify-center"
             style={{ background: 'linear-gradient(135deg, #FFE8E3, #FFD0C7)' }}>
             <div className="text-center">
-              <div className="text-4xl mb-2">{info.icon}</div>
+              <div className="mb-2 flex justify-center"><Icon name={info.icon} size={40} /></div>
               <p className="text-sm font-medium text-gray-600">{info.label}</p>
             </div>
           </div>
@@ -139,7 +140,7 @@ export default function TrackingPage() {
       {/* Status card */}
       <div className="mx-4 -mt-6 bg-white rounded-2xl shadow-md p-5 relative z-20">
         <div className="flex items-center gap-4 mb-4">
-          <span className="text-4xl">{info.icon}</span>
+          <Icon name={info.icon} size={36} />
           <div className="flex-1">
             <div className="flex items-center justify-between">
               <p className="font-bold text-gray-900">{info.label}</p>

@@ -2,6 +2,7 @@ import { useNavigate } from 'react-router-dom'
 import { useFavoriteVendors, useFavoriteIds } from '../../hooks/useFavorites'
 import imageUrl from '../../utils/imageUrl'
 import LoadingScreen from '../../components/ui/LoadingScreen'
+import Icon from '../../components/ui/Icon'
 
 export default function FavoritesPage() {
   const navigate = useNavigate()
@@ -24,7 +25,7 @@ export default function FavoritesPage() {
 
       {!vendors || vendors.length === 0 ? (
         <div className="flex flex-col items-center justify-center px-6 pt-24">
-          <div className="text-6xl mb-4">❤️</div>
+          <div className="mb-4 flex justify-center text-gray-300"><Icon name="favorite" size={56} /></div>
           <h2 className="text-lg font-bold text-gray-900 mb-1">No favorites yet</h2>
           <p className="text-gray-400 text-sm text-center mb-6">
             Tap the heart on any vendor to save it here for quick reordering
@@ -38,24 +39,28 @@ export default function FavoritesPage() {
       ) : (
         <div className="px-4 mt-4 flex flex-col gap-4">
           {vendors.map((vendor) => (
-            <button key={vendor.id}
+            <div key={vendor.id}
+              role="button"
+              tabIndex={0}
               onClick={() => navigate(`/vendor/${vendor.id}`)}
-              className="w-full text-left bg-white rounded-2xl overflow-hidden active:scale-98 transition-transform"
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); navigate(`/vendor/${vendor.id}`) }
+              }}
+              className="w-full text-left bg-white rounded-2xl overflow-hidden active:scale-98 transition-transform cursor-pointer"
               style={{ boxShadow: '0 1px 8px rgba(0,0,0,0.06)' }}>
               <div className="relative h-40 overflow-hidden bg-gray-100">
                 {vendor.cover_url
                   ? <img src={imageUrl(vendor.cover_url)} alt={vendor.name} className="w-full h-full object-cover" />
                   : <div className="w-full h-full flex items-center justify-center"
                       style={{ background: 'linear-gradient(135deg, #f5f5f5, #e8e8e8)' }}>
-                      <span className="text-5xl opacity-20">🏪</span>
+                      <Icon name="store" size={48} className="opacity-20" />
                     </div>
                 }
-                <button
+                <button type="button"
+                  aria-label="Remove from favourites"
                   onClick={(e) => { e.stopPropagation(); toggle(vendor.id) }}
                   className="absolute top-3 right-3 w-8 h-8 rounded-full bg-white/90 flex items-center justify-center shadow-sm active:scale-90">
-                  <svg className="w-4 h-4" fill="#00A651" stroke="#00A651" strokeWidth={2} viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-                  </svg>
+                  <Icon name="favorite" size={16} style={{ fill: '#00A651', color: '#00A651' }} />
                 </button>
                 <div className="absolute bottom-3 left-3 w-11 h-11 bg-white rounded-xl shadow-md flex items-center justify-center border border-gray-100">
                   {vendor.logo_url
@@ -79,7 +84,7 @@ export default function FavoritesPage() {
                 </div>
                 <p className="text-xs text-gray-400 mt-1">{vendor.address}</p>
               </div>
-            </button>
+            </div>
           ))}
         </div>
       )}

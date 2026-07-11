@@ -7,6 +7,7 @@ import Badge from '../../components/ui/Badge'
 import ImageUpload from '../../components/ImageUpload'
 import OrderChat from '../../components/OrderChat'
 import useRiderTracking from '../../hooks/useRiderTracking'
+import Icon from '../../components/ui/Icon'
 
 const STATUS_FLOW = {
   accepted:  { next: 'picked_up',  label: 'Mark as Picked Up',  color: 'bg-purple-600' },
@@ -105,7 +106,7 @@ export default function RiderDelivery() {
             ))}
             {detail.special_instructions && (
               <div className="mt-3 p-3 bg-yellow-50 rounded-xl">
-                <p className="text-xs text-yellow-800">📝 {detail.special_instructions}</p>
+                <p className="text-xs text-yellow-800"><Icon name="note" size={12} className="inline" /> {detail.special_instructions}</p>
               </div>
             )}
           </div>
@@ -118,12 +119,12 @@ export default function RiderDelivery() {
             <p className="text-sm text-gray-700">{detail.task_description}</p>
             {detail.documents_required && (
               <div className="mt-3 p-3 bg-green-50 rounded-xl">
-                <p className="text-xs text-green-800">📄 Documents: {detail.document_description}</p>
+                <p className="text-xs text-green-800"><Icon name="document" size={12} className="inline" /> Documents: {detail.document_description}</p>
               </div>
             )}
             {detail.cash_float_required && (
               <div className="mt-2 p-3 bg-orange-50 rounded-xl">
-                <p className="text-xs text-orange-800">💵 Cash float: ${detail.cash_float_amount_usd}</p>
+                <p className="text-xs text-orange-800"><Icon name="cash" size={12} className="inline" /> Cash float: US${detail.cash_float_amount_usd}</p>
               </div>
             )}
           </div>
@@ -154,7 +155,7 @@ export default function RiderDelivery() {
         <button onClick={() => setShowChat(true)}
           className="w-full py-3 rounded-2xl font-bold flex items-center justify-center gap-2 active:scale-98"
           style={{ background: '#EDFAF3', color: '#00A651' }}>
-          💬 Message customer & store
+          <Icon name="chat" size={15} className="inline" /> Message customer & store
         </button>
       </div>
 
@@ -164,7 +165,7 @@ export default function RiderDelivery() {
           {/* Proof-of-delivery photo required at the final step */}
           {nextStep.next === 'delivered' && (
             <div className="mb-3 bg-white rounded-2xl p-3 border border-gray-100 shadow-sm">
-              <p className="text-xs font-bold text-gray-700 mb-2">📸 Delivery proof photo</p>
+              <p className="text-xs font-bold text-gray-700 mb-2"><Icon name="camera" size={13} className="inline" /> Delivery proof photo</p>
               <ImageUpload
                 currentUrl={proofUrl}
                 onUploaded={(url) => setProofUrl(url)}
@@ -187,7 +188,7 @@ export default function RiderDelivery() {
       {order.status === 'delivered' && (
         <div className="fixed bottom-16 left-1/2 -translate-x-1/2 w-full max-w-md px-4 pb-4 pt-4">
           <div className="w-full bg-green-50 border border-green-200 text-green-700 py-4 rounded-2xl text-sm font-bold text-center">
-            ✅ Delivery completed
+            <Icon name="delivered" size={15} className="inline" /> Delivery completed
           </div>
         </div>
       )}

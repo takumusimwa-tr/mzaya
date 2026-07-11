@@ -4,14 +4,15 @@ import { orderAPI } from '../../api/api'
 import useAuthStore from '../../store/useAuthStore'
 import Button from '../../components/ui/Button'
 import Input from '../../components/ui/Input'
+import Icon from '../../components/ui/Icon'
 
 const TASK_TYPES = [
-  { id: 'ZIMRA',        label: 'ZIMRA / Tax',        emoji: '🏛️' },
-  { id: 'bank_queue',   label: 'Bank Queue',          emoji: '🏦' },
-  { id: 'document',     label: 'Document Delivery',   emoji: '📄' },
-  { id: 'shopping',     label: 'Shopping Run',        emoji: '🛍️' },
-  { id: 'bill_payment', label: 'Bill Payment',        emoji: '💸' },
-  { id: 'other',        label: 'Other',               emoji: '📋' },
+  { id: 'ZIMRA',        label: 'ZIMRA / Tax',        icon: 'zimra' },
+  { id: 'bank_queue',   label: 'Bank Queue',          icon: 'bank' },
+  { id: 'document',     label: 'Document Delivery',   icon: 'document' },
+  { id: 'shopping',     label: 'Shopping Run',        icon: 'shopping' },
+  { id: 'bill_payment', label: 'Bill Payment',        icon: 'bill' },
+  { id: 'other',        label: 'Other',               icon: 'errand' },
 ]
 
 const PAYMENT_METHODS = [
@@ -135,7 +136,7 @@ export default function ErrandPage() {
                     : 'border-gray-200 bg-white'
                   }`}
               >
-                <span className="text-2xl">{t.emoji}</span>
+                <span className="text-2xl"><Icon name={t.icon} size={22} /></span>
                 <span className="text-xs font-medium text-gray-700 leading-tight">{t.label}</span>
               </button>
             ))}

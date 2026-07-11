@@ -5,6 +5,7 @@ import { adminAPI, promoAPI } from '../../api/api'
 import api from '../../api/api'
 import useAuthStore from '../../store/useAuthStore'
 import LoadingScreen from '../../components/ui/LoadingScreen'
+import Icon from '../../components/ui/Icon'
 
 const TABS = ['Overview', 'Vendors', 'Riders', 'Promos', 'Live', 'Mzaya AI']
 
@@ -363,7 +364,7 @@ function MzayaAI() {
     <div className="flex flex-col gap-4">
       {/* Intro */}
       <div className="rounded-2xl p-4" style={{ background: '#EDFAF3', border: '1px solid #BBF7D0' }}>
-        <p className="text-sm font-bold" style={{ color: '#00A651' }}>✨ Mzaya AI</p>
+        <p className="text-sm font-bold" style={{ color: '#00A651' }}><Icon name="ai" size={14} className="inline" /> Mzaya AI</p>
         <p className="text-xs mt-1" style={{ color: '#15803D' }}>
           Live intelligence from the ML service — order anomaly detection, demand signals, and spending trends.
         </p>
@@ -397,7 +398,7 @@ function MzayaAI() {
       {anomalies?.anomalies?.length > 0 && (
         <div className="bg-white rounded-2xl p-4 border border-gray-100">
           <h2 className="text-sm font-bold text-gray-700 mb-3">
-            ⚠️ Flagged orders ({anomalies.anomalies.length})
+            <Icon name="warning" size={14} className="inline" /> Flagged orders ({anomalies.anomalies.length})
           </h2>
           <div className="flex flex-col gap-2">
             {anomalies.anomalies.slice(0, 6).map((a) => (

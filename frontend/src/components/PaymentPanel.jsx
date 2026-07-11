@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { paymentAPI } from '../api/api'
+import Icon from './ui/Icon'
 
 const METHODS = [
   { id: 'ecocash',  label: 'EcoCash',   sub: 'Econet mobile money', kind: 'mobile' },
@@ -74,7 +75,7 @@ export default function PaymentPanel({ order, onPaid }) {
   if (stage === 'paid') {
     return (
       <div className="bg-white rounded-2xl p-5 border border-gray-100 text-center">
-        <div className="text-4xl mb-2">✅</div>
+        <div className="mb-2 flex justify-center" style={{ color: '#00A651' }}><Icon name="delivered" size={40} /></div>
         <p className="font-bold text-gray-900">Payment received</p>
         <p className="text-sm text-gray-400 mt-1">Your order is being processed.</p>
       </div>
@@ -95,13 +96,13 @@ export default function PaymentPanel({ order, onPaid }) {
 
       {stage === 'polling' ? (
         <div className="py-6 text-center">
-          <div className="text-3xl mb-2 animate-pulse">📲</div>
+          <div className="mb-2 flex justify-center animate-pulse text-gray-400"><Icon name="call" size={30} /></div>
           <p className="font-semibold text-gray-800">Waiting for confirmation…</p>
           <p className="text-xs text-gray-400 mt-1">{message}</p>
         </div>
       ) : stage === 'redirecting' ? (
         <div className="py-6 text-center">
-          <div className="text-3xl mb-2 animate-pulse">🔗</div>
+          <div className="mb-2 flex justify-center animate-pulse text-gray-400"><Icon name="enroute" size={30} /></div>
           <p className="font-semibold text-gray-800">Redirecting to Paynow…</p>
         </div>
       ) : (

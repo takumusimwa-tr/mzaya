@@ -7,6 +7,7 @@ import { joinVendor, leaveVendor } from '../../realtime/socket'
 import Badge from '../../components/ui/Badge'
 import LoadingScreen from '../../components/ui/LoadingScreen'
 import OrderChat from '../../components/OrderChat'
+import Icon from '../../components/ui/Icon'
 
 // Play a loud, distinct, repeating alert that cuts through a busy kitchen.
 // Uses the Web Audio API (no asset needed) — three rising beeps, repeated twice.
@@ -206,7 +207,7 @@ export default function VendorOrders() {
           ) : (
             <div className="h-full flex items-center justify-center text-gray-300">
               <div className="text-center">
-                <p className="text-5xl mb-3">📋</p>
+                <div className="mb-3 flex justify-center text-gray-300"><Icon name="orders" size={48} /></div>
                 <p className="text-sm">Select an order to see details</p>
               </div>
             </div>
@@ -283,7 +284,7 @@ function OrderDetailPane({ order, onAccept, accepting, onChat, vehicles, onUpgra
         </div>
         {detail?.special_instructions && (
           <div className="mt-3 text-sm rounded-xl px-3 py-2" style={{ background: '#FEF9E7', color: '#8A6D1B' }}>
-            📝 {detail.special_instructions}
+            <Icon name="note" size={12} className="inline" /> {detail.special_instructions}
           </div>
         )}
       </div>
@@ -318,7 +319,7 @@ function OrderDetailPane({ order, onAccept, accepting, onChat, vehicles, onUpgra
       <button onClick={onChat}
         className="w-full py-3 rounded-2xl font-bold flex items-center justify-center gap-2 active:scale-98 mb-3"
         style={{ background: '#EDFAF3', color: '#00A651' }}>
-        💬 Message customer & rider
+        <Icon name="chat" size={15} className="inline" /> Message customer & rider
       </button>
 
       {/* Action */}
@@ -363,7 +364,7 @@ function VehicleUpgrade({ order, vehicles, onUpgrade, upgrading, result, error }
         <button onClick={() => setOpen(true)}
           className="text-sm font-semibold px-4 py-2.5 rounded-xl"
           style={{ background: '#FFF4E5', color: '#B8860B' }}>
-          🚚 Needs a bigger vehicle?
+          <Icon name="vehicle" size={15} className="inline" /> Needs a bigger vehicle?
         </button>
       ) : (
         <div className="rounded-xl border border-gray-200 p-4">

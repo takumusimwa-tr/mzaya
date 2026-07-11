@@ -1,6 +1,7 @@
 import { useNavigate } from 'react-router-dom'
 import useAuthStore from '../../store/useAuthStore'
 import Button from '../../components/ui/Button'
+import Icon from '../../components/ui/Icon'
 
 const ROLE_HOME = {
   customer: '/home',
@@ -56,31 +57,31 @@ export default function ProfilePage() {
       {/* Menu items */}
       <div className="px-4 mt-4 flex flex-col gap-3">
         {user?.role === 'customer' && (
-          <ProfileMenuItem icon="📦" label="My Orders" onClick={() => navigate('/orders')} />
+          <ProfileMenuItem icon="parcel" label="My Orders" onClick={() => navigate('/orders')} />
         )}
         {user?.role === 'customer' && (
-          <ProfileMenuItem icon="❤️" label="Favorites" onClick={() => navigate('/favorites')} />
+          <ProfileMenuItem icon="favorite" label="Favorites" onClick={() => navigate('/favorites')} />
         )}
         {user?.role === 'customer' && (
-          <ProfileMenuItem icon="🏪" label="Sell on Mzaya" onClick={() => navigate('/sell')} />
+          <ProfileMenuItem icon="store" label="Sell on Mzaya" onClick={() => navigate('/sell')} />
         )}
         {user?.role === 'rider' && (
-          <ProfileMenuItem icon="🛵" label="Vehicle & City" onClick={() => navigate('/rider/setup')} />
+          <ProfileMenuItem icon="rider" label="Vehicle & City" onClick={() => navigate('/rider/setup')} />
         )}
         {user?.role === 'rider' && (
-          <ProfileMenuItem icon="💰" label="My Earnings" onClick={() => navigate('/rider/earnings')} />
+          <ProfileMenuItem icon="earnings" label="My Earnings" onClick={() => navigate('/rider/earnings')} />
         )}
         {user?.role === 'vendor' && (
-          <ProfileMenuItem icon="📋" label="My Orders" onClick={() => navigate('/vendor/orders')} />
+          <ProfileMenuItem icon="orders" label="My Orders" onClick={() => navigate('/vendor/orders')} />
         )}
         {user?.role === 'vendor' && (
-          <ProfileMenuItem icon="🍽️" label="My Menu" onClick={() => navigate('/vendor/menu')} />
+          <ProfileMenuItem icon="menu" label="My Menu" onClick={() => navigate('/vendor/menu')} />
         )}
         {user?.role === 'customer' && (
-          <ProfileMenuItem icon="📍" label="Saved Addresses" onClick={() => navigate('/addresses')} />
+          <ProfileMenuItem icon="location" label="Saved Addresses" onClick={() => navigate('/addresses')} />
         )}
-        <ProfileMenuItem icon="🔔" label="Notifications" onClick={() => {}} badge="Coming soon" />
-        <ProfileMenuItem icon="❓" label="Help & Support" onClick={() => {}} />
+        <ProfileMenuItem icon="notify" label="Notifications" onClick={() => {}} badge="Coming soon" />
+        <ProfileMenuItem icon="help" label="Help & Support" onClick={() => {}} />
       </div>
 
       <p className="text-center text-xs text-gray-400 mt-6">Mzaya v1.0.0 · Built for Zimbabwe</p>
@@ -101,7 +102,10 @@ function ProfileMenuItem({ icon, label, onClick, badge }) {
       className="w-full flex items-center justify-between bg-white p-4 rounded-2xl shadow-sm border border-gray-100 active:scale-98 transition-transform"
     >
       <div className="flex items-center gap-3">
-        <span className="text-xl">{icon}</span>
+        <span className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0"
+          style={{ background: '#EDFAF3', color: '#00A651' }}>
+          <Icon name={icon} size={18} />
+        </span>
         <span className="text-sm font-medium text-gray-800">{label}</span>
       </div>
       <div className="flex items-center gap-2">

@@ -2,22 +2,23 @@ import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import useAuthStore from '../../store/useAuthStore'
 import { MzayaLockup } from '../../components/brand/MzayaLockup'
+import Icon from '../../components/ui/Icon'
 
 const SLIDES = [
   {
-    emoji:    '🍽️',
+    icon:     'food',
     title:    'Food, groceries & more',
     subtitle: 'Order from restaurants, supermarkets, hardware stores — all in one app. Delivered to your door.',
     bg:       'from-green-500 to-green-700',
   },
   {
-    emoji:    '🏍️',
+    icon:     'rider',
     title:    'Fast delivery across Zimbabwe',
     subtitle: 'Riders in Harare, Bulawayo and Mutare ready to deliver. Track your order in real time.',
     bg:       'from-blue-500 to-blue-700',
   },
   {
-    emoji:    '💸',
+    icon:     'money',
     title:    'Pay with EcoCash & more',
     subtitle: 'EcoCash, OneMoney, InnBucks, ZIPIT, Visa and Mastercard all accepted. USD and ZiG supported.',
     bg:       'from-orange-500 to-orange-600',
@@ -60,7 +61,7 @@ export default function OnboardingPage() {
 
       {/* Slide content */}
       <div className="flex-1 flex flex-col items-center justify-center px-8 text-center">
-        <div className="text-8xl mb-8 animate-bounce">{current.emoji}</div>
+        <div className="mb-8 flex justify-center animate-bounce" style={{ color: '#00A651' }}><Icon name={current.icon} size={80} /></div>
         <h1 className="text-2xl font-bold text-white mb-4 leading-tight">{current.title}</h1>
         <p className="text-white/80 text-base leading-relaxed">{current.subtitle}</p>
       </div>
@@ -96,7 +97,7 @@ function RoleSelection({ navigate }) {
   const ROLES = [
     {
       role:    'customer',
-      emoji:   '🛒',
+      icon:    'grocery',
       title:   'I want to order',
       desc:    'Browse vendors, place orders, track deliveries',
       color:   'border-green-400 bg-green-50',
@@ -104,7 +105,7 @@ function RoleSelection({ navigate }) {
     },
     {
       role:    'rider',
-      emoji:   '🏍️',
+      icon:    'rider',
       title:   'I want to deliver',
       desc:    'Accept delivery jobs and earn money',
       color:   'border-blue-400 bg-blue-50',
@@ -112,7 +113,7 @@ function RoleSelection({ navigate }) {
     },
     {
       role:    'vendor',
-      emoji:   '🏪',
+      icon:    'store',
       title:   'I have a business',
       desc:    'List your restaurant, store or business',
       color:   'border-orange-400 bg-orange-50',
@@ -133,14 +134,14 @@ function RoleSelection({ navigate }) {
         <p className="text-sm text-gray-500 mb-6">Choose your role to get started</p>
 
         <div className="flex flex-col gap-3">
-          {ROLES.map(({ role, emoji, title, desc, color, badge }) => (
+          {ROLES.map(({ role, icon, title, desc, color, badge }) => (
             <button
               key={role}
               onClick={() => navigate(`/register?role=${role}`)}
               className={`w-full text-left border-2 rounded-2xl p-4 active:scale-98 transition-all ${color}`}
             >
               <div className="flex items-center gap-4">
-                <span className="text-3xl">{emoji}</span>
+                <span className="text-3xl"><Icon name={icon} size={26} /></span>
                 <div className="flex-1">
                   <p className="font-bold text-gray-900">{title}</p>
                   <p className="text-xs text-gray-500 mt-0.5">{desc}</p>

@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import api from '../../api/api'
 import LoadingScreen from '../../components/ui/LoadingScreen'
+import Icon from '../../components/ui/Icon'
 
 export default function AddressesPage() {
   const navigate    = useNavigate()
@@ -66,7 +67,7 @@ export default function AddressesPage() {
       <div className="px-4 mt-4 flex flex-col gap-3">
         {(!addresses || addresses.length === 0) ? (
           <div className="text-center py-16 bg-white rounded-2xl" style={{ boxShadow: '0 1px 8px rgba(0,0,0,0.06)' }}>
-            <div className="text-5xl mb-3">📍</div>
+            <div className="mb-3 flex justify-center text-gray-300"><Icon name="location" size={48} /></div>
             <p className="font-bold text-gray-800 mb-1">No saved addresses</p>
             <p className="text-gray-400 text-sm">Add one for faster checkout</p>
           </div>
@@ -83,7 +84,7 @@ export default function AddressesPage() {
                     )}
                   </div>
                   <p className="text-sm text-gray-600 mt-1">{addr.address}</p>
-                  {addr.notes && <p className="text-xs text-gray-400 mt-0.5">📝 {addr.notes}</p>}
+                  {addr.notes && <p className="text-xs text-gray-400 mt-0.5"><Icon name="note" size={12} className="inline" /> {addr.notes}</p>}
                 </div>
                 <div className="flex gap-2 ml-2">
                   <button onClick={() => openEdit(addr)}

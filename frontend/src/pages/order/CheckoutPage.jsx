@@ -5,6 +5,7 @@ import { orderAPI, geoAPI, promoAPI } from '../../api/api'
 import useCartStore from '../../store/useCartStore'
 import useAuthStore from '../../store/useAuthStore'
 import api from '../../api/api'
+import Icon from '../../components/ui/Icon'
 
 const PAYMENT_METHODS = [
   { id: 'ecocash',    label: 'EcoCash',    sub: 'Econet mobile money' },
@@ -313,7 +314,7 @@ export default function CheckoutPage() {
                     ? { borderColor: '#00A651', background: '#EDFAF3', color: '#00A651' }
                     : { borderColor: '#E5E5E5', color: '#444' }
                   }>
-                  <span>📍</span>
+                  <Icon name="location" size={16} />
                   <span className="font-semibold">{addr.label}</span>
                 </button>
               ))}
@@ -337,7 +338,7 @@ export default function CheckoutPage() {
             <div className="flex items-center justify-between mt-1 mb-2 px-4 py-3 rounded-xl"
               style={{ background: '#F0FDF4', border: '1px solid #BBF7D0' }}>
               <div className="flex items-center gap-2">
-                <span>📍</span>
+                <Icon name="location" size={16} />
                 <span className="text-sm font-semibold" style={{ color: '#16A34A' }}>
                   Location pinned
                 </span>
@@ -355,7 +356,7 @@ export default function CheckoutPage() {
                 disabled={pinStatus === 'loading'}
                 className="w-full flex items-center justify-center gap-2 mt-1 mb-2 px-4 py-3 rounded-xl text-sm font-semibold text-white active:scale-98 transition-transform disabled:opacity-60"
                 style={{ background: '#00A651' }}>
-                <span>📍</span>
+                <Icon name="location" size={16} />
                 {pinStatus === 'loading' ? 'Getting location…' : 'Use my current location'}
               </button>
 
@@ -372,7 +373,7 @@ export default function CheckoutPage() {
               <button type="button" onClick={requestViaWhatsApp}
                 className="w-full flex items-center justify-center gap-2 mt-2 mb-2 px-4 py-2.5 rounded-xl text-sm font-semibold active:scale-98 transition-transform"
                 style={{ background: '#F0FDF4', color: '#128C7E', border: '1px solid #A7F3D0' }}>
-                <span>💬</span>
+                <Icon name="chat" size={16} />
                 Request location via WhatsApp
               </button>
             </>
@@ -407,7 +408,7 @@ export default function CheckoutPage() {
         {/* Required vehicle note — materials / heavy loads */}
         {showVehicleNote && (
           <div className="flex items-start gap-3 p-3 rounded-xl border" style={{ borderColor: '#FFD9A0', background: '#FFF8EE' }}>
-            <span className="text-lg">🚚</span>
+            <Icon name="vehicle" size={18} />
             <div>
               <p className="text-sm font-semibold" style={{ color: '#8A5A00' }}>
                 This load needs a {quote.vehicle.name}
@@ -536,7 +537,7 @@ export default function CheckoutPage() {
             <div className="flex items-center justify-between px-4 py-3 rounded-xl"
               style={{ background: '#F0FDF4', border: '1px solid #BBF7D0' }}>
               <div className="flex items-center gap-2">
-                <span>🎟️</span>
+                <Icon name="promo" size={16} />
                 <span className="text-sm font-semibold" style={{ color: '#16A34A' }}>{promo.code}</span>
                 <span className="text-xs" style={{ color: '#15803D' }}>
                   {promo.free_delivery ? 'Free delivery' : `−$${promo.discount_usd.toFixed(2)}`}

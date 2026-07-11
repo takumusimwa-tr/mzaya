@@ -8,6 +8,7 @@ import LoadingScreen from '../../components/ui/LoadingScreen'
 import { sendNotification } from '../../hooks/useNotifications'
 import useSocketEvent from '../../hooks/useSocketEvent'
 import { joinCity, leaveCity } from '../../realtime/socket'
+import Icon from '../../components/ui/Icon'
 
 const QUOTES = [
   "The mzaya never refuses.",
@@ -186,7 +187,7 @@ export default function RiderHome() {
             className="w-full text-left rounded-2xl p-4 active:scale-98 transition-all"
             style={{ background: '#FEF3C7', border: '1.5px solid #FCD34D' }}>
             <div className="flex items-center gap-3">
-              <span className="text-2xl">🛵</span>
+              <Icon name="rider" size={22} />
               <div className="flex-1">
                 <p className="font-bold text-sm" style={{ color: '#92400E' }}>
                   Complete your rider setup
@@ -235,7 +236,7 @@ export default function RiderHome() {
             className="w-full mb-4 p-4 rounded-2xl flex items-center justify-between active:scale-98 transition-transform"
             style={{ background: '#EDFAF3', border: '1px solid #BBF7D0' }}>
             <div className="text-left">
-              <p className="font-bold text-sm" style={{ color: '#00A651' }}>🤝 Name-your-fare jobs</p>
+              <p className="font-bold text-sm" style={{ color: '#00A651' }}><Icon name="negotiate" size={15} className="inline" /> Name-your-fare jobs</p>
               <p className="text-xs mt-0.5" style={{ color: '#15803D' }}>Bargain on materials & errands</p>
             </div>
             <span style={{ color: '#00A651' }}>→</span>
@@ -246,7 +247,7 @@ export default function RiderHome() {
         {!online ? (
           <div className="bg-white rounded-3xl p-8 text-center"
             style={{ boxShadow: '0 1px 8px rgba(0,0,0,0.06)' }}>
-            <div className="text-6xl mb-4">🏍️</div>
+            <div className="mb-4 flex justify-center text-gray-500"><Icon name="rider" size={56} /></div>
             <h2 className="font-black text-gray-900 text-xl mb-1">You're off duty</h2>
             <p className="text-gray-400 text-sm mb-6 max-w-xs mx-auto">
               Go online to start receiving delivery requests from Harare and beyond

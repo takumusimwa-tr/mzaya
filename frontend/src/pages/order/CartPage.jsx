@@ -1,5 +1,6 @@
 import { useNavigate } from 'react-router-dom'
 import useCartStore from '../../store/useCartStore'
+import Icon from '../../components/ui/Icon'
 
 export default function CartPage() {
   const navigate = useNavigate()
@@ -19,7 +20,7 @@ export default function CartPage() {
           <h1 className="text-lg font-bold text-gray-900">Cart</h1>
         </div>
         <div className="flex-1 flex flex-col items-center justify-center px-6">
-          <div className="text-6xl mb-4">🛒</div>
+          <div className="mb-4 flex justify-center text-gray-300"><Icon name="grocery" size={56} /></div>
           <h2 className="text-lg font-bold text-gray-900 mb-1">Your cart is empty</h2>
           <p className="text-gray-400 text-sm text-center mb-6">Add items from a vendor to get started</p>
           <button onClick={() => navigate('/home')}
@@ -58,7 +59,7 @@ export default function CartPage() {
               <div className="flex-1">
                 <h3 className="font-bold text-gray-900">{item.name}</h3>
                 {item.special_instructions && (
-                  <p className="text-xs text-gray-400 mt-0.5">📝 {item.special_instructions}</p>
+                  <p className="text-xs text-gray-400 mt-0.5"><Icon name="note" size={12} className="inline" /> {item.special_instructions}</p>
                 )}
                 <p className="text-sm font-black text-gray-900 mt-1">
                   ${(item.unit_price_usd * item.qty).toFixed(2)}

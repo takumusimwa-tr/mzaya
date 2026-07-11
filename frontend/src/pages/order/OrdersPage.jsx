@@ -4,6 +4,7 @@ import { orderAPI } from '../../api/api'
 import LoadingScreen from '../../components/ui/LoadingScreen'
 import Badge from '../../components/ui/Badge'
 import useReorder from '../../hooks/useReorder'
+import Icon from '../../components/ui/Icon'
 
 export default function OrdersPage() {
   const navigate = useNavigate()
@@ -25,7 +26,7 @@ export default function OrdersPage() {
 
       {!orders?.length ? (
         <div className="flex flex-col items-center justify-center py-24 px-6">
-          <p className="text-5xl mb-4">📦</p>
+          <div className="mb-4 flex justify-center text-gray-300"><Icon name="parcel" size={48} /></div>
           <p className="text-gray-600 font-semibold">No orders yet</p>
           <p className="text-gray-400 text-sm text-center mt-1">Your orders will appear here</p>
         </div>
@@ -60,7 +61,7 @@ export default function OrdersPage() {
                 <button onClick={() => reorder(order)}
                   className="w-full mt-3 py-2.5 rounded-xl font-bold text-sm active:scale-98 transition-transform border"
                   style={{ borderColor: '#00A651', color: '#00A651' }}>
-                  🔄 Reorder
+                  <Icon name="reorder" size={14} className="inline" /> Reorder
                 </button>
               )}
             </div>

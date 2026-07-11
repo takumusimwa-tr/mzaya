@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import useCartStore from '../store/useCartStore'
 import imageUrl from '../utils/imageUrl'
+import Icon from './ui/Icon'
 
 export default function ItemModal({ item, vendor, onClose }) {
   const cart = useCartStore()
@@ -54,7 +55,7 @@ export default function ItemModal({ item, vendor, onClose }) {
           <div className="relative h-48 bg-gray-100 flex items-center justify-center">
             {item.image_url
               ? <img src={imageUrl(item.image_url, 600)} alt={item.name} className="w-full h-full object-cover" />
-              : <span className="text-6xl opacity-30">🍽️</span>
+              : <Icon name="food" size={56} className="opacity-30" />
             }
             <button onClick={onClose}
               className="absolute top-3 right-3 w-9 h-9 rounded-full bg-white flex items-center justify-center shadow-md active:scale-95">

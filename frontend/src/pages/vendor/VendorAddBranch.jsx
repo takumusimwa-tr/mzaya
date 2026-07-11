@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { vendorAPI, cityAPI } from '../../api/api'
+import Icon from '../../components/ui/Icon'
 
 export default function VendorAddBranch() {
   const navigate = useNavigate()
@@ -38,7 +39,7 @@ export default function VendorAddBranch() {
   if (status === 'done') {
     return (
       <div className="min-h-screen bg-white flex flex-col items-center justify-center px-8 text-center">
-        <div className="text-6xl mb-4">🏬</div>
+        <div className="mb-4 flex justify-center" style={{ color: '#00A651' }}><Icon name="store" size={56} /></div>
         <h1 className="text-2xl font-black text-gray-900 mb-2">Branch added</h1>
         <p className="text-gray-500 text-sm mb-8 max-w-sm">
           Your new branch is pending approval. Once approved it'll appear in your branch switcher

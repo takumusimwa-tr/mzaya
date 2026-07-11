@@ -7,6 +7,7 @@ import LoadingScreen from '../../components/ui/LoadingScreen'
 import ItemModal from '../../components/ItemModal'
 import imageUrl from '../../utils/imageUrl'
 import { useFavoriteIds } from '../../hooks/useFavorites'
+import Icon from '../../components/ui/Icon'
 
 export default function VendorPage() {
   const { id }   = useParams()
@@ -137,7 +138,7 @@ export default function VendorPage() {
 
         {categories.length === 0 ? (
           <div className="text-center py-16">
-            <p className="text-4xl mb-3">🍽️</p>
+            <div className="mb-3 flex justify-center text-gray-300"><Icon name="food" size={40} /></div>
             <p className="text-gray-500 text-sm">No menu items available yet</p>
           </div>
         ) : (
@@ -167,7 +168,7 @@ export default function VendorPage() {
                     <div className="w-24 h-24 flex-shrink-0 bg-gray-100 flex items-center justify-center relative">
                       {item.image_url
                         ? <img src={imageUrl(item.image_url, 300)} alt={item.name} className="w-full h-full object-cover" />
-                        : <span className="text-3xl opacity-30">🍽️</span>
+                        : <Icon name="food" size={30} className="opacity-30" />
                       }
                       {vendor.is_open && (
                         <div className="absolute bottom-2 right-2 w-7 h-7 rounded-full bg-white shadow-md flex items-center justify-center">

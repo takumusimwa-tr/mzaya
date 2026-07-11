@@ -9,12 +9,13 @@ import LoadingScreen from '../../components/ui/LoadingScreen'
 import imageUrl from '../../utils/imageUrl'
 import { useFavoriteIds } from '../../hooks/useFavorites'
 import { MzayaWordmark } from '../../components/brand/MzayaLockup'
+import Icon from '../../components/ui/Icon'
 
 const CATEGORIES = [
-  { id: 'food',      label: 'Food',      emoji: '🍽️' },
-  { id: 'grocery',   label: 'Grocery',   emoji: '🛒' },
-  { id: 'materials', label: 'Materials', emoji: '🏗️' },
-  { id: 'errand',    label: 'Errands',   emoji: '📋' },
+  { id: 'food',      label: 'Food',      icon: 'food' },
+  { id: 'grocery',   label: 'Grocery',   icon: 'grocery' },
+  { id: 'materials', label: 'Materials', icon: 'materials' },
+  { id: 'errand',    label: 'Errands',   icon: 'errand' },
 ]
 
 // Product-first verticals browse by product; the rest browse by brand/store.
@@ -131,13 +132,14 @@ export default function HomePage() {
                 if (cat.id === 'errand') navigate('/errand')
               }}
               className="flex-shrink-0 flex flex-col items-center gap-1.5 active:opacity-70">
-              <div className="w-14 h-14 rounded-2xl flex items-center justify-center text-2xl transition-all"
+              <div className="w-14 h-14 rounded-2xl flex items-center justify-center transition-all"
                 style={{
                   background: category === cat.id ? '#00A651' : '#F5F5F5',
                   boxShadow: category === cat.id ? '0 4px 12px #00A65140' : 'none',
                   transform: category === cat.id ? 'scale(1.05)' : 'scale(1)',
+                  color: category === cat.id ? '#FFFFFF' : '#6B7280',
                 }}>
-                {cat.emoji}
+                <Icon name={cat.icon} size={24} />
               </div>
               <span className="text-xs font-semibold" style={{ color: category === cat.id ? '#00A651' : '#888' }}>
                 {cat.label}
@@ -220,25 +222,37 @@ function BrandFirst({ brands, loading, search, category, navigate, isFavorite, t
 }
 
 function BrandCard({ brand, onClick, isFavorite, onToggleFavorite }) {
+  // The card is a <div>, not a <button>. It contains the favourite button, and
+  // HTML forbids nesting interactive elements — a <button> inside a <button>
+  // gives unpredictable click behaviour. We keep the card keyboard-accessible
+  // with role/tabIndex and an Enter/Space handler.
   return (
-    <button onClick={onClick}
-      className="w-full text-left bg-white rounded-2xl overflow-hidden active:scale-98 transition-transform"
+    <div
+      role="button"
+      tabIndex={0}
+      onClick={onClick}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onClick?.() }
+      }}
+      className="w-full text-left bg-white rounded-2xl overflow-hidden active:scale-98 transition-transform cursor-pointer"
       style={{ boxShadow: '0 1px 8px rgba(0,0,0,0.06)' }}>
       <div className="relative h-44 overflow-hidden bg-gray-100">
         {brand.cover_url
           ? <img src={imageUrl(brand.cover_url, 800)} alt={brand.name} className="w-full h-full object-cover" />
-          : <div className="w-full h-full flex items-center justify-center" style={{ background: 'linear-gradient(135deg, #f5f5f5, #e8e8e8)' }}><span className="text-6xl opacity-20">🏪</span></div>
+          : <div className="w-full h-full flex items-center justify-center" style={{ background: 'linear-gradient(135deg, #f5f5f5, #e8e8e8)' }}><Icon name="store" size={56} className="opacity-20" /></div>
         }
         {!brand.is_open && (
           <div className="absolute inset-0 bg-white/70 flex items-center justify-center">
             <span className="text-xs font-black text-gray-500 bg-white px-4 py-2 rounded-full border border-gray-200">Closed</span>
           </div>
         )}
-        <button onClick={(e) => { e.stopPropagation(); onToggleFavorite?.() }}
+        <button type="button"
+          aria-label={isFavorite ? 'Remove from favourites' : 'Add to favourites'}
+          onClick={(e) => { e.stopPropagation(); onToggleFavorite?.() }}
           className="absolute top-3 right-3 w-8 h-8 rounded-full bg-white/90 flex items-center justify-center shadow-sm active:scale-90 transition-transform">
-          <svg className="w-4 h-4" fill={isFavorite ? '#00A651' : 'none'} stroke={isFavorite ? '#00A651' : '#6b7280'} strokeWidth={2} viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-          </svg>
+          <Icon name="favorite" size={16}
+            className={isFavorite ? '' : 'text-gray-500'}
+            style={isFavorite ? { fill: '#00A651', color: '#00A651' } : undefined} />
         </button>
         <div className="absolute bottom-3 left-3 w-12 h-12 bg-white rounded-xl shadow-md flex items-center justify-center border border-gray-100">
           {brand.logo_url
@@ -253,18 +267,21 @@ function BrandCard({ brand, onClick, isFavorite, onToggleFavorite }) {
           {brand.is_open && <span className="text-xs font-semibold text-green-600 bg-green-50 px-2 py-0.5 rounded-full">Open</span>}
         </div>
         <div className="flex items-center gap-2 mt-1">
-          <span className="text-xs font-semibold text-gray-600">⭐ {Number(brand.rating || 0).toFixed(1)}</span>
+          <span className="text-xs font-semibold text-gray-600 inline-flex items-center gap-1">
+            <Icon name="rate" size={12} style={{ fill: '#F59E0B', color: '#F59E0B' }} />
+            {Number(brand.rating || 0).toFixed(1)}
+          </span>
           <span className="text-gray-200">·</span>
           <span className="text-xs text-gray-500">15–25 min</span>
           <span className="text-gray-200">·</span>
-          <span className="text-xs text-gray-500">$2–4 delivery</span>
+          <span className="text-xs text-gray-500">US$2–4 delivery</span>
         </div>
         {/* Brand — no branch address shown to the customer */}
         {brand.branch_count > 1 && (
           <p className="text-xs text-gray-400 mt-1">{brand.branch_count} branches near you</p>
         )}
       </div>
-    </button>
+    </div>
   )
 }
 
@@ -338,7 +355,7 @@ function ProductTile({ product, onClick }) {
       <div className="h-28 bg-gray-100 flex items-center justify-center overflow-hidden">
         {product.image_url
           ? <img src={imageUrl(product.image_url, 300)} alt={product.name} className="w-full h-full object-cover" />
-          : <span className="text-3xl opacity-30">📦</span>
+          : <Icon name="parcel" size={30} className="opacity-30" />
         }
       </div>
       <div className="p-2.5">
@@ -362,7 +379,7 @@ function ProductRow({ product, onClick }) {
       <div className="w-20 h-20 rounded-xl bg-gray-100 flex-shrink-0 overflow-hidden flex items-center justify-center">
         {product.image_url
           ? <img src={imageUrl(product.image_url, 300)} alt={product.name} className="w-full h-full object-cover" />
-          : <span className="text-2xl opacity-30">📦</span>
+          : <Icon name="parcel" size={24} className="opacity-30" />
         }
       </div>
       <div className="flex-1 min-w-0">
@@ -412,7 +429,7 @@ function SkeletonList() {
 function EmptyState({ search, productMode }) {
   return (
     <div className="text-center py-16 bg-white rounded-2xl" style={{ boxShadow: '0 1px 8px rgba(0,0,0,0.06)' }}>
-      <div className="text-5xl mb-3">{productMode ? '📦' : '🏪'}</div>
+      <div className="mb-3 flex justify-center text-gray-300"><Icon name={productMode ? 'parcel' : 'store'} size={48} /></div>
       <p className="font-bold text-gray-800 mb-1">
         {search ? 'No results found' : productMode ? 'No products here yet' : 'No vendors here yet'}
       </p>

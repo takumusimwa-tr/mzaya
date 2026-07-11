@@ -12,6 +12,7 @@ import useSocketEvent from '../../hooks/useSocketEvent'
 import { negotiationAPI } from '../../api/api'
 import PaymentPanel from '../../components/PaymentPanel'
 import OrderChat from '../../components/OrderChat'
+import Icon from '../../components/ui/Icon'
 
 const STATUS_STEPS = ['pending', 'accepted', 'picked_up', 'en_route', 'delivered']
 
@@ -159,7 +160,7 @@ export default function OrderDetail() {
           <button onClick={() => setShowChat(true)}
             className="w-full py-3 rounded-2xl font-bold text-white flex items-center justify-center gap-2 active:scale-98"
             style={{ background: '#00A651' }}>
-            💬 Message rider & store
+            <Icon name="chat" size={15} className="inline" /> Message rider & store
           </button>
         )}
 
@@ -177,7 +178,7 @@ export default function OrderDetail() {
             </div>
             {!offers?.length ? (
               <div className="py-6 text-center">
-                <div className="text-3xl mb-2 animate-pulse">📡</div>
+                <div className="mb-2 flex justify-center animate-pulse text-gray-400"><Icon name="waiting" size={30} /></div>
                 <p className="text-sm text-gray-500">Waiting for riders to respond…</p>
                 <p className="text-xs text-gray-400 mt-1">They can accept your fare or propose a price.</p>
               </div>
@@ -217,7 +218,7 @@ export default function OrderDetail() {
         {/* Proof of delivery — shown once delivered */}
         {isDelivered && order.delivery_proof_url && (
           <div className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100">
-            <h2 className="text-sm font-bold text-gray-700 mb-3">📸 Proof of delivery</h2>
+            <h2 className="text-sm font-bold text-gray-700 mb-3"><Icon name="camera" size={14} className="inline" /> Proof of delivery</h2>
             <img src={imageUrl(order.delivery_proof_url, 800)} alt="Delivery proof"
               className="w-full rounded-xl object-cover max-h-72" />
             <p className="text-xs text-gray-400 mt-2">Photo taken by your rider at drop-off.</p>
@@ -239,7 +240,7 @@ export default function OrderDetail() {
               <button onClick={() => reorder(order)}
                 className="w-full mt-3 py-3 rounded-xl font-bold text-sm active:scale-98 transition-transform border-2"
                 style={{ borderColor: '#00A651', color: '#00A651', background: '#EDFAF3' }}>
-                🔄 Reorder these items
+                <Icon name="reorder" size={15} className="inline" /> Reorder these items
               </button>
             )}
           </div>

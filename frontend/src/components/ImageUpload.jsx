@@ -1,5 +1,6 @@
 import { useState, useRef } from 'react'
 import api from '../api/api'
+import Icon from './ui/Icon'
 
 // Reusable image uploader. Calls onUploaded(url) when done.
 export default function ImageUpload({ currentUrl, onUploaded, label = 'Upload image', shape = 'square' }) {
@@ -74,7 +75,7 @@ export default function ImageUpload({ currentUrl, onUploaded, label = 'Upload im
           </>
         ) : (
           <div className="text-center">
-            <div className="text-3xl mb-1">📷</div>
+            <div className="mb-1 flex justify-center text-gray-400"><Icon name="camera" size={28} /></div>
             <p className="text-xs text-gray-400 font-medium">{label}</p>
           </div>
         )}

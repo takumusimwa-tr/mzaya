@@ -4,6 +4,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { negotiationAPI } from '../../api/api'
 import useSocketEvent from '../../hooks/useSocketEvent'
 import LoadingScreen from '../../components/ui/LoadingScreen'
+import Icon from '../../components/ui/Icon'
 
 export default function RiderNegotiate() {
   const navigate = useNavigate()
@@ -37,7 +38,7 @@ export default function RiderNegotiate() {
       <div className="px-4 mt-4">
         {!orders?.length ? (
           <div className="bg-white rounded-2xl p-8 text-center border border-gray-100">
-            <div className="text-5xl mb-3">🤝</div>
+            <div className="mb-3 flex justify-center text-gray-300"><Icon name="negotiate" size={48} /></div>
             <p className="font-bold text-gray-800 mb-1">No open offers right now</p>
             <p className="text-sm text-gray-400">New name-your-fare jobs will appear here.</p>
           </div>

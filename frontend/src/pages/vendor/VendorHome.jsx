@@ -8,6 +8,7 @@ import LoadingScreen from '../../components/ui/LoadingScreen'
 import Badge from '../../components/ui/Badge'
 import { sendNotification } from '../../hooks/useNotifications'
 import imageUrl from '../../utils/imageUrl'
+import Icon from '../../components/ui/Icon'
 
 // Generate a consistent accent color from vendor name
 function vendorColor(name = '') {
@@ -145,7 +146,7 @@ export default function VendorHome() {
             className="w-full rounded-2xl p-4 flex items-center justify-between active:scale-98"
             style={{ background: '#00A651', boxShadow: '0 4px 20px #00A65130' }}>
             <div className="flex items-center gap-3">
-              <span className="text-2xl animate-bounce">🔔</span>
+              <span className="animate-bounce"><Icon name="notify" size={22} /></span>
               <div className="text-left">
                 <p className="font-black text-white text-base">
                   {pending.length} new order{pending.length > 1 ? 's' : ''}
@@ -162,15 +163,15 @@ export default function VendorHome() {
         {/* Quick actions */}
         <div className="grid grid-cols-2 gap-3">
           {[
-            { label: 'Orders', sub: `${pending.length + active.length} active`, emoji: '📋', path: '/vendor/orders', accent: color },
-            { label: 'Menu',   sub: `${menuItems.length} items`,                emoji: '🍽️', path: '/vendor/menu',   accent: color },
+            { label: 'Orders', sub: `${pending.length + active.length} active`, icon: 'orders', path: '/vendor/orders', accent: color },
+            { label: 'Menu',   sub: `${menuItems.length} items`,                icon: 'menu', path: '/vendor/menu',   accent: color },
           ].map((item) => (
             <button key={item.label} onClick={() => navigate(item.path)}
               className="bg-white rounded-2xl p-4 text-left active:scale-98 border border-gray-100"
               style={{ boxShadow: '0 1px 6px rgba(0,0,0,0.06)' }}>
               <div className="w-10 h-10 rounded-xl flex items-center justify-center mb-3"
                 style={{ background: item.accent.light }}>
-                <span className="text-xl">{item.emoji}</span>
+                <span className="flex items-center justify-center"><Icon name={item.icon} size={22} /></span>
               </div>
               <p className="font-bold text-gray-900">{item.label}</p>
               <p className="text-xs text-gray-400 mt-0.5">{item.sub}</p>
@@ -196,7 +197,7 @@ export default function VendorHome() {
                     style={{ background: color.light }}>
                     {item.image_url
                       ? <img src={imageUrl(item.image_url, 300)} alt={item.name} className="w-full h-full object-cover" />
-                      : <span className="text-3xl">🍽️</span>
+                      : <Icon name="food" size={28} className="opacity-40" />
                     }
                   </div>
                   <div className="p-3">

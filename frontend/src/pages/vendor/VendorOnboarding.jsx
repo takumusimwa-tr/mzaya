@@ -3,11 +3,12 @@ import { useNavigate } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { vendorAPI, cityAPI } from '../../api/api'
 import useAuthStore from '../../store/useAuthStore'
+import Icon from '../../components/ui/Icon'
 
 const CATEGORIES = [
-  { id: 'food',      label: 'Food / Restaurant', emoji: '🍽️' },
-  { id: 'grocery',   label: 'Grocery / Store',   emoji: '🛒' },
-  { id: 'materials', label: 'Building Materials', emoji: '🏗️' },
+  { id: 'food',      label: 'Food / Restaurant', icon: 'food' },
+  { id: 'grocery',   label: 'Grocery / Store',   icon: 'grocery' },
+  { id: 'materials', label: 'Building Materials', icon: 'materials' },
 ]
 
 export default function VendorOnboarding() {
@@ -92,7 +93,7 @@ export default function VendorOnboarding() {
                   ? { borderColor: '#00A651', background: '#EDFAF3' }
                   : { borderColor: '#E5E7EB' }
                 }>
-                <span className="text-xl">{c.emoji}</span>
+                <span className="text-xl"><Icon name={c.icon} size={22} /></span>
                 <span className="text-sm font-semibold text-gray-800">{c.label}</span>
               </button>
             ))}
