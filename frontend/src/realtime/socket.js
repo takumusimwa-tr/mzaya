@@ -3,7 +3,11 @@
 // user's JWT, and lets screens subscribe to events.
 import { io } from 'socket.io-client'
 
-const API_ORIGIN = import.meta.env.VITE_API_ORIGIN || 'http://localhost:5000'
+// Derive the socket origin from the SAME env var the REST client uses.
+// Previously this read VITE_API_ORIGIN — a second env var for the same backend,
+// which is an easy thing to forget in a production config (the app would work
+// while real-time silently failed to connect).
+const API_ORIGIN = (import.meta.env.VITE_API_URL || 'http://localhost:5000/api').replace('/api', '')
 
 let socket = null
 

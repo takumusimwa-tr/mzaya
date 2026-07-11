@@ -39,7 +39,19 @@ const app = express();
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true })); // Paynow webhooks are form-encoded
-app.use(cors());
+// CORS. In development we allow anything (convenient). In production we allow
+// only the origins listed in CLIENT_ORIGINS — an open CORS policy on a live API
+// lets any site make authenticated requests on your users' behalf.
+const allowedOrigins = (process.env.CLIENT_ORIGINS || '')
+  .split(',')
+  .map((o) => o.trim())
+  .filter(Boolean);
+
+app.use(cors(
+  process.env.NODE_ENV === 'production' && allowedOrigins.length
+    ? { origin: allowedOrigins, credentials: true }
+    : {}
+));
 // helmet with crossOriginResourcePolicy disabled so uploaded images load cross-origin (frontend on :5173)
 app.use(helmet({ crossOriginResourcePolicy: false }));
 
@@ -86,8 +98,19 @@ app.use((err, req, res, next) => {
 
 async function boot() {
   await connectDB();
-  await sequelize.sync({ alter: true });
-  console.log('Models synced');
+  // Schema sync.
+  //
+  // In development, `alter: true` conveniently adds new columns/tables as the
+  // models evolve. In PRODUCTION this is dangerous: it inspects and mutates the
+  // live schema on every restart, and on a table with real data it can lock,
+  // hang, or drop a column it believes is stale. A routine redeploy would become
+  // an unintended migration.
+  //
+  // So: alter in dev, never in production. Production schema changes go through
+  // explicit, reviewed migrations.
+  const isProd = process.env.NODE_ENV === 'production';
+  await sequelize.sync({ alter: !isProd });
+  console.log(`Models synced${isProd ? ' (production: no alter)' : ' (dev: alter on)'}`);
 
   startCurrencySyncJob();
   startScheduledReleaseJob();

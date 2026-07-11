@@ -94,14 +94,24 @@ async function chooseOffer(req, res) {
     if (!offer || offer.order_id !== order.id) return res.status(404).json({ error: 'Offer not found' });
     if (offer.status !== 'pending') return res.status(400).json({ error: 'That offer is no longer available' });
 
-    // Assign the rider + lock the fare. rider_id references users(id).
-    await order.update({
-      rider_id:         offer.rider_id,
-      agreed_fare_usd:  offer.amount_usd,
-      delivery_fee_usd: offer.amount_usd,   // the negotiated fare IS the delivery fee
-      status:           'accepted',
-      accepted_at:      new Date(),
-    });
+    // Atomic assign: only if the order is still unclaimed (guards against the
+    // order being taken between our check and this write).
+    const [updatedCount] = await Order.update(
+      {
+        rider_id:         offer.rider_id,
+        agreed_fare_usd:  offer.amount_usd,
+        delivery_fee_usd: offer.amount_usd,   // the negotiated fare IS the delivery fee
+        status:           'accepted',
+        accepted_at:      new Date(),
+      },
+      { where: { id: order.id, rider_id: null } },
+    );
+
+    if (updatedCount === 0) {
+      return res.status(409).json({ error: 'This order already has a rider' });
+    }
+
+    await order.reload();
 
     // Mark offers: chosen one wins, the rest are declined.
     await OrderOffer.update({ status: 'chosen' },   { where: { id: offer.id } });

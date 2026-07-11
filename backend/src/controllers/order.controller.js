@@ -146,9 +146,21 @@ async function claimOrder(req, res) {
       });
     }
 
-    // rider_id references users(id)
-    await order.update({ rider_id: req.user.id, status: 'accepted', accepted_at: new Date() });
-    return res.status(200).json({ message: 'Order claimed', order });
+    // Atomic claim: only succeeds if the order is STILL unclaimed. Without the
+    // rider_id: null guard in the WHERE clause, two riders tapping Accept at the
+    // same moment can both pass the check above and both write — one silently
+    // stealing the other's order. The DB decides the winner, not the race.
+    const [updatedCount] = await Order.update(
+      { rider_id: req.user.id, status: 'accepted', accepted_at: new Date() },
+      { where: { id: order.id, rider_id: null, status: 'pending' } },
+    );
+
+    if (updatedCount === 0) {
+      return res.status(409).json({ error: 'This order was already taken by another rider' });
+    }
+
+    const claimed = await Order.findByPk(order.id);
+    return res.status(200).json({ message: 'Order claimed', order: claimed });
   } catch (err) {
     console.error('claimOrder error:', err.message);
     return res.status(500).json({ error: 'Failed to claim order' });
