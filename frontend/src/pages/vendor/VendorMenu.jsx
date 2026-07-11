@@ -138,7 +138,7 @@ export default function VendorMenu() {
                     <div className="flex items-start gap-3">
                       <div className="w-16 h-16 rounded-xl bg-gray-100 flex-shrink-0 overflow-hidden flex items-center justify-center">
                         {item.image_url
-                          ? <img src={imageUrl(item.image_url)} alt={item.name} className="w-full h-full object-cover" />
+                          ? <img src={imageUrl(item.image_url, 300)} alt={item.name} className="w-full h-full object-cover" />
                           : <span className="text-2xl opacity-30">🍽️</span>
                         }
                       </div>

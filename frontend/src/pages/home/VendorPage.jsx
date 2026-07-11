@@ -52,7 +52,7 @@ export default function VendorPage() {
       {/* ── Hero cover ── */}
       <div className="relative h-52">
         {vendor.cover_url
-          ? <img src={imageUrl(vendor.cover_url)} alt={vendor.name} className="w-full h-full object-cover" />
+          ? <img src={imageUrl(vendor.cover_url, 800)} alt={vendor.name} className="w-full h-full object-cover" />
           : <div className="w-full h-full" style={{ background: 'linear-gradient(135deg, #FF6B00, #00A651)' }} />
         }
         {/* Back button */}
@@ -80,7 +80,7 @@ export default function VendorPage() {
           <div className="flex items-start gap-3">
             <div className="w-14 h-14 rounded-xl bg-gray-100 flex items-center justify-center flex-shrink-0 -mt-8 border-4 border-white shadow-sm">
               {vendor.logo_url
-                ? <img src={imageUrl(vendor.logo_url)} alt="" className="w-full h-full object-cover rounded-lg" />
+                ? <img src={imageUrl(vendor.logo_url, 150)} alt="" className="w-full h-full object-cover rounded-lg" />
                 : <span className="text-xl font-black text-gray-500">{vendor.name?.charAt(0)}</span>
               }
             </div>
@@ -166,7 +166,7 @@ export default function VendorPage() {
                     {/* Item image */}
                     <div className="w-24 h-24 flex-shrink-0 bg-gray-100 flex items-center justify-center relative">
                       {item.image_url
-                        ? <img src={imageUrl(item.image_url)} alt={item.name} className="w-full h-full object-cover" />
+                        ? <img src={imageUrl(item.image_url, 300)} alt={item.name} className="w-full h-full object-cover" />
                         : <span className="text-3xl opacity-30">🍽️</span>
                       }
                       {vendor.is_open && (

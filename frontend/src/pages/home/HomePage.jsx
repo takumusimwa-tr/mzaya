@@ -226,7 +226,7 @@ function BrandCard({ brand, onClick, isFavorite, onToggleFavorite }) {
       style={{ boxShadow: '0 1px 8px rgba(0,0,0,0.06)' }}>
       <div className="relative h-44 overflow-hidden bg-gray-100">
         {brand.cover_url
-          ? <img src={imageUrl(brand.cover_url)} alt={brand.name} className="w-full h-full object-cover" />
+          ? <img src={imageUrl(brand.cover_url, 800)} alt={brand.name} className="w-full h-full object-cover" />
           : <div className="w-full h-full flex items-center justify-center" style={{ background: 'linear-gradient(135deg, #f5f5f5, #e8e8e8)' }}><span className="text-6xl opacity-20">🏪</span></div>
         }
         {!brand.is_open && (
@@ -242,7 +242,7 @@ function BrandCard({ brand, onClick, isFavorite, onToggleFavorite }) {
         </button>
         <div className="absolute bottom-3 left-3 w-12 h-12 bg-white rounded-xl shadow-md flex items-center justify-center border border-gray-100">
           {brand.logo_url
-            ? <img src={imageUrl(brand.logo_url)} alt="" className="w-full h-full object-cover rounded-xl" />
+            ? <img src={imageUrl(brand.logo_url, 120)} alt="" className="w-full h-full object-cover rounded-xl" />
             : <span className="text-lg font-black text-gray-500">{brand.name?.charAt(0)}</span>
           }
         </div>
@@ -337,7 +337,7 @@ function ProductTile({ product, onClick }) {
       style={{ boxShadow: '0 1px 8px rgba(0,0,0,0.06)' }}>
       <div className="h-28 bg-gray-100 flex items-center justify-center overflow-hidden">
         {product.image_url
-          ? <img src={imageUrl(product.image_url)} alt={product.name} className="w-full h-full object-cover" />
+          ? <img src={imageUrl(product.image_url, 300)} alt={product.name} className="w-full h-full object-cover" />
           : <span className="text-3xl opacity-30">📦</span>
         }
       </div>
@@ -361,7 +361,7 @@ function ProductRow({ product, onClick }) {
       style={{ boxShadow: '0 1px 8px rgba(0,0,0,0.06)' }}>
       <div className="w-20 h-20 rounded-xl bg-gray-100 flex-shrink-0 overflow-hidden flex items-center justify-center">
         {product.image_url
-          ? <img src={imageUrl(product.image_url)} alt={product.name} className="w-full h-full object-cover" />
+          ? <img src={imageUrl(product.image_url, 300)} alt={product.name} className="w-full h-full object-cover" />
           : <span className="text-2xl opacity-30">📦</span>
         }
       </div>

@@ -218,7 +218,7 @@ export default function OrderDetail() {
         {isDelivered && order.delivery_proof_url && (
           <div className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100">
             <h2 className="text-sm font-bold text-gray-700 mb-3">📸 Proof of delivery</h2>
-            <img src={imageUrl(order.delivery_proof_url)} alt="Delivery proof"
+            <img src={imageUrl(order.delivery_proof_url, 800)} alt="Delivery proof"
               className="w-full rounded-xl object-cover max-h-72" />
             <p className="text-xs text-gray-400 mt-2">Photo taken by your rider at drop-off.</p>
           </div>

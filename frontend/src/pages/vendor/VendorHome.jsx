@@ -80,7 +80,7 @@ export default function VendorHome() {
           <div className="w-16 h-16 rounded-2xl flex items-center justify-center flex-shrink-0 shadow-sm"
             style={{ background: color.light, border: `1.5px solid ${color.bg}22` }}>
             {vendorData?.logo_url
-              ? <img src={imageUrl(vendorData.logo_url)} alt="" className="w-full h-full object-cover rounded-2xl" />
+              ? <img src={imageUrl(vendorData.logo_url, 150)} alt="" className="w-full h-full object-cover rounded-2xl" />
               : <span className="text-2xl font-black" style={{ color: color.bg }}>
                   {vendorData?.name?.charAt(0)}
                 </span>
@@ -195,7 +195,7 @@ export default function VendorHome() {
                   <div className="h-24 flex items-center justify-center overflow-hidden"
                     style={{ background: color.light }}>
                     {item.image_url
-                      ? <img src={imageUrl(item.image_url)} alt={item.name} className="w-full h-full object-cover" />
+                      ? <img src={imageUrl(item.image_url, 300)} alt={item.name} className="w-full h-full object-cover" />
                       : <span className="text-3xl">🍽️</span>
                     }
                   </div>

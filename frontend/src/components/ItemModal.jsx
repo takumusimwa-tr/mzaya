@@ -53,7 +53,7 @@ export default function ItemModal({ item, vendor, onClose }) {
           {/* Image header */}
           <div className="relative h-48 bg-gray-100 flex items-center justify-center">
             {item.image_url
-              ? <img src={imageUrl(item.image_url)} alt={item.name} className="w-full h-full object-cover" />
+              ? <img src={imageUrl(item.image_url, 600)} alt={item.name} className="w-full h-full object-cover" />
               : <span className="text-6xl opacity-30">🍽️</span>
             }
             <button onClick={onClose}

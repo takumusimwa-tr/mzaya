@@ -72,7 +72,7 @@ export default function VendorSideRail() {
       <div className="mt-auto flex flex-col items-center gap-3">
         <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center text-gray-600 font-bold overflow-hidden">
           {vendor?.logo_url
-            ? <img src={imageUrl(vendor.logo_url)} alt="" className="w-full h-full object-cover" />
+            ? <img src={imageUrl(vendor.logo_url, 120)} alt="" className="w-full h-full object-cover" />
             : (user?.name?.charAt(0)?.toUpperCase() || 'V')
           }
         </div>
