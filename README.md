@@ -1,72 +1,64 @@
 # Mzaya
 
-> Zimbabwe's on-demand logistics and procurement intelligence platform.
+> Zimbabwe's on-demand logistics platform — food, groceries, building materials, and errands in one app.
 
-Mzaya is a full-stack delivery platform built for the Zimbabwean market — combining food delivery, grocery, building materials, and errand services into a single app, powered by a machine learning engine that detects anomalies, forecasts demand, scores performance, and optimizes pricing in real time.
+Mzaya is a full-stack delivery platform built for the Zimbabwean market. One role-based PWA serves customers, riders, vendors, and admins; a Node backend runs operations in real time; a Python microservice handles the machine learning.
 
 ---
 
 ## What makes Mzaya different
 
-Most delivery platforms are built for markets with stable currencies, reliable card infrastructure, and high internet penetration. Zimbabwe has none of those. Mzaya is built from the ground up for:
+Most delivery platforms assume stable currency, reliable cards, and cheap data. Zimbabwe has none of those. Every significant design decision here follows from that:
 
-- **Mobile money first** — EcoCash, OneMoney, InnBucks, and ZIPIT via ContiPay. No card required.
-- **Dual currency** — all prices stored in USD, displayed in ZiG at the live RBZ rate
-- **Low bandwidth** — PWA frontend with aggressive caching, WebP images under 50KB
-- **Multi-category** — food, groceries, building materials, and errands in one platform
-- **Intelligent dispatch** — automatic vehicle assignment based on order weight (bike / bakkie / truck)
+- **Mobile money first** — EcoCash, OneMoney, InnBucks via Paynow. USSD push, no card needed.
+- **Dual currency** — prices stored in USD, ZiG shown alongside at the live rate.
+- **Data is expensive, so we don't waste it** — images are served as CDN thumbnails sized to their display slot (a 4MB photo reaches a phone as a ~20KB WebP); navigation deep-links to the rider's existing Google Maps rather than streaming map tiles; calling uses the device dialer, not VoIP.
+- **Fare negotiation** — for materials and errands, customers name a price and riders accept or counter (inDrive model). Food and grocery stay fixed-price.
+- **Multi-category, one platform** — a sadza order and a truck of cement run through the same dispatch engine.
+- **Weight-aware dispatch** — bike / bakkie / truck assigned automatically from order weight.
 
 ---
 
-## Platform overview
+## Structure
 
 ```
 mzaya/
-├── backend/        Node.js + Express + PostgreSQL + Sequelize
-└── ml-service/     Python + FastAPI + scikit-learn + Prophet
+├── frontend/     React PWA (customer · rider · vendor · admin)
+├── backend/      Node + Express + PostgreSQL + Sequelize + Socket.IO
+└── ml-service/   Python + FastAPI + scikit-learn + Prophet
 ```
 
-The backend handles all delivery operations. The ML service runs alongside it as an independent microservice — if it goes down, deliveries keep working.
+The ML service is independent. If it goes down, deliveries keep running.
 
 ---
 
-## Backend — what's built
+## What's built
 
-**Auth** — JWT-based authentication with four roles: customer, rider, vendor, admin
+### Frontend — one app, four roles
+A single React PWA that adapts to the logged-in role.
 
-**Orders** — polymorphic order system supporting four categories:
-- Food (restaurants)
-- Grocery (supermarkets)
-- Materials (hardware suppliers — bikes for <20kg, bakkies up to 500kg, trucks above)
-- Errands (queuing, form submissions, document delivery)
+- **Customer** — browse brands (nearest branch resolved silently) or products, cart, checkout, scheduling, promos, live order tracking, in-app chat, ratings, favourites, saved addresses.
+- **Rider** — job board, claim orders, name-your-fare bargaining, turn-by-turn navigation (Google Maps deep-link), delivery proof photo, earnings.
+- **Vendor** — tablet-optimised console: live order queue, menu management, opening hours, branch switching, analytics.
+- **Admin** — approvals (vendor/rider), live order monitor, promo CRUD, and **Mzaya AI** (ML insights).
 
-**Dispatch** — automatic vehicle assignment, rider matching, Haversine distance calculation, fee calculation with weight surcharges
+### Backend
+- **Auth** — JWT, four roles: customer, rider, vendor, admin.
+- **Brands → branches** — a brand (e.g. Chicken Inn) has many branches; the customer sees the brand, the system resolves the nearest branch. Menus live on the branch.
+- **Orders** — polymorphic across food, grocery, materials, errands.
+- **Dispatch** — vehicle assignment by weight, rider matching, haversine distance, fee calculation with surcharges.
+- **Fare negotiation** — offers/counters on an `order_offers` table; customer picks the winner; the agreed fare becomes the delivery fee.
+- **Real-time (Socket.IO)** — JWT-authenticated sockets, room-based (`user:` / `vendor:` / `city:` / `admins`). Order events push live to every role. Polling remains only as a slow fallback.
+- **Chat** — one shared thread per order across customer, rider, and vendor, plus click-to-call via the device dialer.
+- **Payments (Paynow)** — Express Checkout (USSD push + poll) for mobile money; hosted redirect for cards and diaspora. Runs in **mock mode** until merchant credentials are set.
+- **Uploads** — Cloudinary in production (auto-optimised, CDN), local disk in dev. Same `{ url }` response either way.
 
-**Payments** — ContiPay gateway integration covering all Zimbabwe digital payment methods. USSD push for mobile money, redirect flow for card and ZIPIT
-
-**Vendors** — full menu management, opening hours, location, approval workflow
-
-**Riders** — profile registration, GPS location updates, online/offline toggle, city scoping
-
-**Cities** — multi-city support with GPS bounds for zone validation (Harare, Bulawayo, Mutare at launch)
-
-**Currency** — daily ZiG/USD sync job, rate snapshot stored on every order
-
----
-
-## ML service — what's built
-
-**Feature store** — every order automatically extracts 12 engineered features into PostgreSQL + Redis cache
-
-**Anomaly detection** — Isolation Forest model flags suspicious transactions in real time. Scheduled retraining daily at 02:00 CAT
-
-**Demand forecasting** — Prophet time-series model per city/category. Falls back to statistical forecast until 24+ hours of data accumulates, then auto-upgrades
-
-**Performance scoring** — riders and vendors scored A–F on completion rate, delivery time, acceptance speed, and cancellation rate
-
-**Spend optimization** — fee efficiency analysis, surge pricing engine (4 levels: low / normal / high / peak), revenue optimization report
-
-**Scheduler** — APScheduler runs feature extraction every 30 mins, anomaly detection hourly, model retraining daily
+### ML service
+- **Feature store** — engineered features per order into PostgreSQL, cached in Redis.
+- **Anomaly detection** — Isolation Forest flags suspicious orders; retrains daily.
+- **Demand forecasting** — Prophet per city/category, with a statistical fallback until enough history exists.
+- **Performance scoring** — riders and vendors graded A–F.
+- **Spend optimisation** — fee efficiency and a 4-level surge engine.
 
 ---
 
@@ -74,73 +66,44 @@ The backend handles all delivery operations. The ML service runs alongside it as
 
 | Layer | Technology |
 |---|---|
-| Backend runtime | Node.js 24 + Express |
-| ORM | Sequelize + PostgreSQL 18 |
-| Auth | JWT (jsonwebtoken) |
-| ML runtime | Python 3.14 + FastAPI |
-| ML models | scikit-learn (Isolation Forest), Prophet |
-| Feature store | PostgreSQL + Redis |
-| Scheduler | APScheduler (Python), node-cron (Node) |
-| Payments | ContiPay (EcoCash, OneMoney, InnBucks, ZIPIT, Visa, Mastercard) |
-| Security | helmet, bcrypt, JWT role guards |
-
----
-
-## API
-
-Full documentation: see `Mzaya_API_Documentation.docx`
-
-**Backend** runs on `http://localhost:5000`
-
-**ML service** runs on `http://localhost:8000` with Swagger UI at `http://localhost:8000/docs`
-
-Quick reference:
-
-```
-POST   /api/auth/register
-POST   /api/auth/login
-POST   /api/orders
-GET    /api/orders/my
-GET    /api/vendors
-GET    /api/cities
-POST   /api/payments/:id/pay
-
-GET    /analytics/model-metrics
-POST   /anomaly/train
-GET    /forecast/predict
-GET    /performance/riders
-GET    /optimization/report
-```
+| Frontend | React 18 · Vite · Tailwind · TanStack Query · Zustand · PWA |
+| Real-time | Socket.IO |
+| Backend | Node.js · Express · Sequelize · PostgreSQL 18 |
+| Auth | JWT + bcrypt, role guards |
+| Payments | Paynow (EcoCash · OneMoney · InnBucks · card · diaspora) |
+| Images | Cloudinary (CDN + on-the-fly optimisation) |
+| ML | Python · FastAPI · scikit-learn · Prophet · Redis |
+| Security | helmet, CORS allowlist, hashed webhooks |
 
 ---
 
 ## Running locally
 
-**Prerequisites:** Node.js 18+, Python 3.11+, PostgreSQL 18, Redis
+**Prerequisites:** Node.js 18+, PostgreSQL 18, Redis, Python 3.11+ (for the ML service)
 
-**Backend:**
 ```bash
-cd backend
-npm install
-npm run dev
-```
+# Backend  → http://localhost:5000
+cd backend && npm install && npm run dev
 
-**ML service:**
-```bash
+# Frontend → http://localhost:5173
+cd frontend && npm install && npm run dev
+
+# ML service → http://localhost:8000  (docs at /docs)
 cd ml-service
-.\venv\Scripts\Activate.ps1      # Windows
-source venv/bin/activate          # Mac/Linux
+source venv/bin/activate        # .\venv\Scripts\Activate.ps1 on Windows
 pip install -r requirements.txt
-uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+uvicorn main:app --reload --port 8000
 ```
 
-**First-time setup:**
+Schema is created automatically on backend boot (`sync({ alter: true })` in development only — see *Production notes*).
+
+**First-time setup**
 ```bash
-# 1. Register admin user via POST /api/auth/register
-# 2. Manually set role: UPDATE users SET role = 'admin' WHERE phone = '...'
-# 3. Seed cities: POST /api/cities/seed (admin token required)
-# 4. Backfill ML features: POST /features/bulk-extract
-# 5. Train anomaly model: POST /anomaly/train
+# 1. Register a user, then promote them:
+#    UPDATE users SET role = 'admin' WHERE phone = '...';
+# 2. Seed cities:            POST /api/cities/seed   (admin token)
+# 3. Backfill ML features:   POST /features/bulk-extract
+# 4. Train anomaly model:    POST /anomaly/train
 ```
 
 ---
@@ -150,14 +113,30 @@ uvicorn main:app --host 0.0.0.0 --port 8000 --reload
 **backend/.env**
 ```
 PORT=5000
-DB_URL=postgresql://postgres:password@localhost:5432/mzaya
-JWT_SECRET=<min 32 chars>
 NODE_ENV=development
-APP_URL=http://localhost:5000
-ZIG_RATE=27.50
+DB_URL=postgresql://postgres:password@localhost:5432/mzaya
+JWT_SECRET=<32+ random chars — no fallback exists, this MUST be set>
 ML_SERVICE_URL=http://localhost:8000
-CONTIPAY_API_KEY=<from contipay.co.zw>
-CONTIPAY_MERCHANT_CODE=<from contipay.co.zw>
+ZIG_RATE=27.50
+
+# Public URLs (Paynow webhooks + returns)
+APP_URL=http://localhost:5000
+CLIENT_URL=http://localhost:5173
+CLIENT_ORIGINS=http://localhost:5173      # CORS + socket allowlist
+
+# Paynow — omit to run payments in MOCK mode
+PAYNOW_INTEGRATION_ID=
+PAYNOW_INTEGRATION_KEY=
+
+# Cloudinary — omit to store uploads on local disk (dev only)
+CLOUDINARY_CLOUD_NAME=
+CLOUDINARY_API_KEY=
+CLOUDINARY_API_SECRET=
+```
+
+**frontend/.env**
+```
+VITE_API_URL=http://localhost:5000/api
 ```
 
 **ml-service/.env**
@@ -170,20 +149,26 @@ NODE_BACKEND_URL=http://localhost:5000
 
 ---
 
-## Before going live
+## Production notes
 
-- [ ] ContiPay merchant account and sandbox testing
-- [ ] Automated RBZ rate feed (replace manual ZIG_RATE)
-- [ ] Integration tests for payment flow and fee calculator
-- [ ] WebSocket real-time order tracking
-- [ ] Frontend PWA (customer, vendor dashboard, rider app, admin panel)
+Behaviour deliberately differs in production (`NODE_ENV=production`):
 
----
-
-## Built with
-
-Inspired by DoorDash's business model, adapted for Zimbabwe's economic reality — mobile money, dual currency, variable connectivity, and the need for a platform that handles everything from a sadza order to a truck full of cement.
+- **Schema is not auto-altered.** `sync({ alter: true })` runs in development only. In production it would mutate live schema on every restart — a redeploy would become an unintended migration. Production schema changes go through explicit migrations.
+- **Database uses SSL.** Managed Postgres (Render, Railway, Supabase, Neon) requires it.
+- **CORS is locked** to `CLIENT_ORIGINS`. In development it's open.
+- **Payments and uploads go live** the moment their credentials are present — no code change. Absent credentials, both fall back safely (mock payments, local uploads).
 
 ---
 
-*Mzaya — Built for Zimbabwe*
+## Roadmap
+
+- [ ] Deployment + Capacitor wrap (`zw.co.mzaya`)
+- [ ] PostGIS migration (haversine is fine at current scale)
+- [ ] Paynow merchant account (currently mock mode)
+- [ ] Number masking for in-app calls
+- [ ] Offer expiry on fare negotiation
+- [ ] Favicon / PWA icon export from the brand SVG
+
+---
+
+*Mzaya — Tumai Mzaya.*
