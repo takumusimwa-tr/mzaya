@@ -5,6 +5,7 @@ import api from '../../api/api'
 import LoadingScreen from '../../components/ui/LoadingScreen'
 import Badge from '../../components/ui/Badge'
 import ImageUpload from '../../components/ImageUpload'
+import OrderChat from '../../components/OrderChat'
 import useRiderTracking from '../../hooks/useRiderTracking'
 
 const STATUS_FLOW = {
@@ -18,6 +19,7 @@ export default function RiderDelivery() {
   const navigate      = useNavigate()
   const queryClient   = useQueryClient()
   const [proofUrl, setProofUrl] = useState(null)
+  const [showChat, setShowChat] = useState(false)
 
   const { data, isLoading } = useQuery({
     queryKey: ['rider-order', id],
@@ -147,6 +149,15 @@ export default function RiderDelivery() {
         </div>
       </div>
 
+      {/* Chat with customer & store */}
+      <div className="px-4 mt-3">
+        <button onClick={() => setShowChat(true)}
+          className="w-full py-3 rounded-2xl font-bold flex items-center justify-center gap-2 active:scale-98"
+          style={{ background: '#EDFAF3', color: '#00A651' }}>
+          💬 Message customer & store
+        </button>
+      </div>
+
       {/* Action button */}
       {nextStep && (
         <div className="fixed bottom-16 left-1/2 -translate-x-1/2 w-full max-w-md px-4 pb-4 bg-gradient-to-t from-white via-white to-transparent pt-4">
@@ -180,6 +191,8 @@ export default function RiderDelivery() {
           </div>
         </div>
       )}
+
+      {showChat && <OrderChat orderId={order.id} onClose={() => setShowChat(false)} />}
     </div>
   )
 }

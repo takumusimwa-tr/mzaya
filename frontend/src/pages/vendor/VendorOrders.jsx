@@ -6,6 +6,7 @@ import useSocketEvent from '../../hooks/useSocketEvent'
 import { joinVendor, leaveVendor } from '../../realtime/socket'
 import Badge from '../../components/ui/Badge'
 import LoadingScreen from '../../components/ui/LoadingScreen'
+import OrderChat from '../../components/OrderChat'
 
 // Play a loud, distinct, repeating alert that cuts through a busy kitchen.
 // Uses the Web Audio API (no asset needed) — three rising beeps, repeated twice.
@@ -67,6 +68,7 @@ export default function VendorOrders() {
   const branchId = useActiveBranch((s) => s.branchId)
   const [group, setGroup]       = useState('new')
   const [selectedId, setSelectedId] = useState(null)
+  const [chatOrderId, setChatOrderId] = useState(null)
   const prevPending = useRef(null)
 
   useWakeLock()
@@ -193,6 +195,7 @@ export default function VendorOrders() {
         <div className="flex-1 min-w-0 overflow-y-auto bg-white">
           {selected ? (
             <OrderDetailPane order={selected}
+              onChat={() => setChatOrderId(selected.id)}
               onAccept={() => acceptOrder.mutate(selected.id)}
               accepting={acceptOrder.isPending}
               vehicles={vehicles}
@@ -210,6 +213,11 @@ export default function VendorOrders() {
           )}
         </div>
       </div>
+
+      {/* Chat sheet */}
+      {chatOrderId && (
+        <OrderChat orderId={chatOrderId} onClose={() => setChatOrderId(null)} />
+      )}
     </div>
   )
 }
@@ -241,7 +249,7 @@ function OrderListItem({ order, selected, onClick }) {
   )
 }
 
-function OrderDetailPane({ order, onAccept, accepting, vehicles, onUpgrade, upgrading, upgradeResult, upgradeError }) {
+function OrderDetailPane({ order, onAccept, accepting, onChat, vehicles, onUpgrade, upgrading, upgradeResult, upgradeError }) {
   const detail = orderDetail(order)
   const placed = new Date(order.createdAt)
 
@@ -305,6 +313,13 @@ function OrderDetailPane({ order, onAccept, accepting, vehicles, onUpgrade, upgr
           <Row label="Method" value={order.payment_method} />
         </div>
       </div>
+
+      {/* Message the customer & rider */}
+      <button onClick={onChat}
+        className="w-full py-3 rounded-2xl font-bold flex items-center justify-center gap-2 active:scale-98 mb-3"
+        style={{ background: '#EDFAF3', color: '#00A651' }}>
+        💬 Message customer & rider
+      </button>
 
       {/* Action */}
       {order.status === 'pending' && (

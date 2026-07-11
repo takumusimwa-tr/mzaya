@@ -60,7 +60,7 @@ export default function VendorAddBranch() {
         <p className="text-white/80 text-sm mt-1">A new location under your existing brand.</p>
       </div>
 
-      <div className="px-6 py-6 flex flex-col gap-4 max-w-lg">
+      <div className="w-full px-8 py-6 flex flex-col gap-4">
         {error && <div className="p-3 bg-red-50 border border-red-100 rounded-xl text-sm text-red-600">{error}</div>}
 
         <Field label="Branch name" value={form.branch_name} onChange={(v) => set('branch_name', v)} placeholder="e.g. Borrowdale, Bulawayo" />

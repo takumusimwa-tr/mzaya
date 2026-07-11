@@ -129,7 +129,7 @@ export default function RiderHome() {
         <div className="relative flex items-start justify-between mb-1">
           <div className="flex-1">
             <p className="text-xs tracking-widest font-bold uppercase mb-1"
-              style={{ color: online ? '#60A5FA' : '#64748B', letterSpacing: '0.15em' }}>
+              style={{ color: online ? '#34D399' : '#64748B', letterSpacing: '0.15em' }}>
               MZAYA
             </p>
             <h1 className="text-white font-black text-3xl leading-none">
@@ -145,7 +145,7 @@ export default function RiderHome() {
               disabled={toggleOnline.isPending}
               className="flex items-center gap-2 px-4 py-2.5 rounded-full font-bold text-sm transition-all active:scale-95"
               style={online
-                ? { background: '#3B82F6', color: '#fff', boxShadow: '0 0 20px #3B82F640' }
+                ? { background: '#00A651', color: '#fff', boxShadow: '0 0 20px #00A65140' }
                 : { background: '#1E293B', color: '#64748B', border: '1.5px solid #334155' }
               }>
               <span className={`w-2 h-2 rounded-full ${online ? 'bg-white animate-pulse' : 'bg-slate-600'}`} />
@@ -165,8 +165,8 @@ export default function RiderHome() {
         {/* Stats */}
         <div className="grid grid-cols-3 gap-2 mt-5">
           {[
-            { label: 'On delivery', value: active.length,  accent: online ? '#60A5FA' : '#475569' },
-            { label: 'Available',   value: pending.length, accent: pending.length > 0 && online ? '#FCD34D' : (online ? '#60A5FA' : '#475569') },
+            { label: 'On delivery', value: active.length,  accent: online ? '#34D399' : '#475569' },
+            { label: 'Available',   value: pending.length, accent: pending.length > 0 && online ? '#FCD34D' : (online ? '#34D399' : '#475569') },
             { label: 'Completed',   value: completed,      accent: online ? '#34D399' : '#475569' },
           ].map((s) => (
             <div key={s.label} className="rounded-2xl p-3 text-center"

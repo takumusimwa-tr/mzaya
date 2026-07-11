@@ -96,6 +96,13 @@ export const adminAPI = {
   liveOrders:    () => api.get('/admin/orders/live'),
 }
 
+// ─── Order chat ───────────────────────────────────────────────────────────────
+export const chatAPI = {
+  messages: (orderId) => api.get(`/orders/${orderId}/messages`),
+  send:     (orderId, body) => api.post(`/orders/${orderId}/messages`, { body }),
+  contacts: (orderId) => api.get(`/orders/${orderId}/contacts`),
+}
+
 // ─── Fare negotiation ─────────────────────────────────────────────────────────
 export const negotiationAPI = {
   // Customer

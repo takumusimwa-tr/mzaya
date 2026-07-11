@@ -33,6 +33,7 @@ const vendorStatsRoutes = require('./routes/vendorStats.routes');
 const adminRoutes     = require('./routes/admin.routes');
 const browseRoutes    = require('./routes/browse.routes');
 const negotiationRoutes = require('./routes/negotiation.routes');
+const chatRoutes      = require('./routes/chat.routes');
 
 const app = express();
 
@@ -47,6 +48,7 @@ app.use('/uploads', express.static(path.join(__dirname, '..', 'uploads')));
 
 app.use('/api/auth',      authRoutes);
 app.use('/api/orders',    negotiationRoutes);
+app.use('/api/orders',    chatRoutes);
 app.use('/api/orders',    orderRoutes);
 app.use('/api/vendors',   vendorRoutes);
 app.use('/api/riders',    riderRoutes);

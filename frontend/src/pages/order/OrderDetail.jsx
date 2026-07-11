@@ -11,6 +11,7 @@ import imageUrl from '../../utils/imageUrl'
 import useSocketEvent from '../../hooks/useSocketEvent'
 import { negotiationAPI } from '../../api/api'
 import PaymentPanel from '../../components/PaymentPanel'
+import OrderChat from '../../components/OrderChat'
 
 const STATUS_STEPS = ['pending', 'accepted', 'picked_up', 'en_route', 'delivered']
 
@@ -21,6 +22,7 @@ export default function OrderDetail() {
   const [rating, setRating]     = useState(0)
   const [hovered, setHovered]   = useState(0)
   const [review, setReview]     = useState('')
+  const [showChat, setShowChat] = useState(false)
   const [rated,  setRated]      = useState(false)
   const reorder = useReorder()
 
@@ -151,6 +153,15 @@ export default function OrderDetail() {
             </div>
           </div>
         </div>
+
+        {/* Chat with rider/store while the order is active */}
+        {!isCancelled && !isDelivered && order.status !== 'pending' && (
+          <button onClick={() => setShowChat(true)}
+            className="w-full py-3 rounded-2xl font-bold text-white flex items-center justify-center gap-2 active:scale-98"
+            style={{ background: '#00A651' }}>
+            💬 Message rider & store
+          </button>
+        )}
 
         {/* Payment — show until the order is paid */}
         {order.payment_status !== 'success' && order.status !== 'cancelled' && (
@@ -314,6 +325,8 @@ export default function OrderDetail() {
           </Button>
         )}
       </div>
+
+      {showChat && <OrderChat orderId={id} onClose={() => setShowChat(false)} />}
     </div>
   )
 }

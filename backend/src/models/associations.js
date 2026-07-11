@@ -11,6 +11,7 @@ const City            = require('./cityModel');
 const Promo           = require('./promoModel');
 const Brand           = require('./brandModel');
 const OrderOffer      = require('./orderOfferModel');
+const OrderMessage    = require('./orderMessageModel');
 
 // ─── City associations ────────────────────────────────────────────────────────
 City.hasMany(Vendor, { foreignKey: 'city_id', as: 'vendors' });
@@ -64,6 +65,11 @@ Order.hasMany(OrderOffer, { foreignKey: 'order_id', as: 'offers' });
 OrderOffer.belongsTo(Order, { foreignKey: 'order_id', as: 'order' });
 OrderOffer.belongsTo(User, { foreignKey: 'rider_id', as: 'rider' });
 
+// ─── Order messages (per-order chat) ──────────────────────────────────────────
+Order.hasMany(OrderMessage, { foreignKey: 'order_id', as: 'messages' });
+OrderMessage.belongsTo(Order, { foreignKey: 'order_id', as: 'order' });
+OrderMessage.belongsTo(User, { foreignKey: 'sender_id', as: 'sender' });
+
 module.exports = {
   User,
   Order,
@@ -78,4 +84,5 @@ module.exports = {
   Promo,
   Brand,
   OrderOffer,
+  OrderMessage,
 };
