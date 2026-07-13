@@ -362,7 +362,7 @@ function ProductTile({ product, onClick }) {
         <p className="text-sm font-bold text-gray-900 truncate">{product.name}</p>
         <p className="text-xs text-gray-400 truncate">{product.brand_name}</p>
         <div className="flex items-center justify-between mt-1">
-          <span className="font-black text-gray-900 text-sm">${Number(product.price_usd).toFixed(2)}</span>
+          <span className="font-black text-gray-900 text-sm">US${Number(product.price_usd).toFixed(2)}</span>
           {product.distance_km != null && <span className="text-[10px] text-gray-400">{product.distance_km}km</span>}
         </div>
       </div>
@@ -393,7 +393,7 @@ function ProductRow({ product, onClick }) {
         </div>
       </div>
       <div className="text-right flex-shrink-0">
-        <p className="font-black text-gray-900">${Number(product.price_usd).toFixed(2)}</p>
+        <p className="font-black text-gray-900">US${Number(product.price_usd).toFixed(2)}</p>
       </div>
     </button>
   )

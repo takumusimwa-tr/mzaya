@@ -7,12 +7,6 @@ import useAuthStore from '../../store/useAuthStore'
 import api from '../../api/api'
 import Icon from '../../components/ui/Icon'
 
-const PAYMENT_METHODS = [
-  { id: 'ecocash',    label: 'EcoCash',    sub: 'Econet mobile money' },
-  { id: 'onemoney',   label: 'OneMoney',   sub: 'NetOne mobile money' },
-  { id: 'innbucks',   label: 'InnBucks',   sub: 'InnBucks wallet' },
-  { id: 'zipit',      label: 'ZIPIT',      sub: 'Bank transfer (USD)' },
-]
 
 // Build category-specific order detail. Includes total_weight_kg so the backend
 // can size the vehicle correctly (grocery/materials); harmless for food.
@@ -67,13 +61,9 @@ export default function CheckoutPage() {
   const [promoError, setPromoError]       = useState('')
   const [scheduleMode, setScheduleMode]   = useState('now') // 'now' | 'later'
   const [scheduledFor, setScheduledFor]   = useState('')
-  const [paymentMethod, setPaymentMethod] = useState('ecocash')
-  const [paymentDetails, setPaymentDetails] = useState({})
   const [loading, setLoading]             = useState(false)
   const [error, setError]                 = useState('')
 
-  const MOBILE_MONEY = ['ecocash', 'onemoney', 'innbucks', 'omari']
-  const needsPhone   = MOBILE_MONEY.includes(paymentMethod)
 
   const subtotal    = cart.totalPrice()
   const totalWeight = cart.totalWeight()
@@ -218,10 +208,6 @@ export default function CheckoutPage() {
       setError('Please enter your delivery address')
       return
     }
-    if (needsPhone && !paymentDetails.phone) {
-      setError('Please enter your mobile money number')
-      return
-    }
     if (scheduleMode === 'later') {
       if (!scheduledFor) { setError('Please pick a delivery time'); return }
       const when = new Date(scheduledFor).getTime()
@@ -241,8 +227,9 @@ export default function CheckoutPage() {
         dropoff_address: dropoff,
         dropoff_location: pinCoords || null,
         dropoff_landmark: landmark || null,
-        payment_method:  paymentMethod,
-        payment_details: paymentDetails,
+        // A placeholder. The customer picks the real method on the pay step,
+        // which overwrites this — the orders table needs a non-null value here.
+        payment_method:  'ecocash',
         tip_usd:         tip,
         promo_code:      promo?.code || null,
         scheduled_for:   scheduleMode === 'later' && scheduledFor ? new Date(scheduledFor).toISOString() : null,
@@ -571,46 +558,24 @@ export default function CheckoutPage() {
           )}
         </div>
 
-        {/* Payment method */}
+        {/* Payment.
+            The method is chosen at PAY time, not here. Previously checkout asked
+            for a payment method AND the payment panel asked again on the order
+            page — the customer picked twice, and the two could disagree. One
+            question, asked once, at the moment it's actually needed. */}
         <div className="bg-white rounded-2xl p-4 border border-gray-100">
-          <h2 className="text-sm font-bold text-gray-700 mb-3">Payment method</h2>
-          <div className="flex flex-col gap-2">
-            {PAYMENT_METHODS.map((method) => (
-              <label key={method.id}
-                className="flex items-center gap-3 p-3 rounded-xl border cursor-pointer transition-all"
-                style={paymentMethod === method.id
-                  ? { borderColor: '#00A651', background: '#EDFAF3' }
-                  : { borderColor: '#E5E5E5' }
-                }>
-                <input type="radio" name="payment" value={method.id}
-                  checked={paymentMethod === method.id}
-                  onChange={(e) => setPaymentMethod(e.target.value)}
-                  style={{ accentColor: '#00A651' }}
-                />
-                <div>
-                  <p className="text-sm font-semibold text-gray-900">{method.label}</p>
-                  <p className="text-xs text-gray-400">{method.sub}</p>
-                </div>
-              </label>
-            ))}
-          </div>
-
-          {/* Payment details — mobile money */}
-          {needsPhone && (
-            <div className="mt-4 pt-4 border-t border-gray-100">
-              <label className="text-xs text-gray-500">Mobile money number <span className="text-red-500">*</span></label>
-              <input
-                type="tel"
-                value={paymentDetails.phone || ''}
-                onChange={(e) => setPaymentDetails({ ...paymentDetails, phone: e.target.value })}
-                placeholder="07X XXX XXXX"
-                className="w-full mt-1 px-4 py-3 rounded-xl border border-gray-200 text-sm outline-none focus:border-green-500"
-              />
-              <p className="text-xs text-gray-400 mt-2">
-                You'll receive a prompt on your phone to approve payment
+          <div className="flex items-center gap-3">
+            <span className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0"
+              style={{ background: '#EDFAF3', color: '#00A651' }}>
+              <Icon name="money" size={18} />
+            </span>
+            <div>
+              <p className="text-sm font-semibold text-gray-800">Pay after you place the order</p>
+              <p className="text-xs text-gray-400 mt-0.5">
+                EcoCash, OneMoney, InnBucks, card or diaspora — choose on the next screen.
               </p>
             </div>
-          )}
+          </div>
         </div>
 
         {/* Order summary */}

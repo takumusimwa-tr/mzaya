@@ -135,7 +135,7 @@ export default function VendorSettings() {
                 onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
                 rows={2}
                 placeholder="Short description customers will see"
-                className="w-full mt-1 px-4 py-3 rounded-xl border border-gray-200 text-sm outline-none focus:border-orange-400 resize-none"
+                className="w-full mt-1 px-4 py-3 rounded-xl border border-gray-200 text-sm outline-none focus:border-green-500 resize-none"
               />
             </div>
             <div className="grid grid-cols-2 gap-3">
@@ -165,11 +165,11 @@ export default function VendorSettings() {
                     <div className="flex-1 flex items-center gap-2">
                       <input type="time" value={h.open}
                         onChange={(e) => setDay(d.key, { open: e.target.value })}
-                        className="px-3 py-2 rounded-lg border border-gray-200 text-sm outline-none focus:border-orange-400" />
+                        className="px-3 py-2 rounded-lg border border-gray-200 text-sm outline-none focus:border-green-500" />
                       <span className="text-gray-400 text-sm">to</span>
                       <input type="time" value={h.close}
                         onChange={(e) => setDay(d.key, { close: e.target.value })}
-                        className="px-3 py-2 rounded-lg border border-gray-200 text-sm outline-none focus:border-orange-400" />
+                        className="px-3 py-2 rounded-lg border border-gray-200 text-sm outline-none focus:border-green-500" />
                     </div>
                   )}
                   <button onClick={() => setDay(d.key, { closed: !h.closed })}
@@ -205,7 +205,7 @@ function Field({ label, value, onChange, placeholder }) {
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
-        className="w-full mt-1 px-4 py-3 rounded-xl border border-gray-200 text-sm outline-none focus:border-orange-400"
+        className="w-full mt-1 px-4 py-3 rounded-xl border border-gray-200 text-sm outline-none focus:border-green-500"
       />
     </div>
   )

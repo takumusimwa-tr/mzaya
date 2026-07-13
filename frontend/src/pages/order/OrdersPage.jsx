@@ -48,7 +48,7 @@ export default function OrdersPage() {
                 </div>
                 <div className="flex items-center justify-between mt-3">
                   <p className="text-xs text-gray-500">{order.pickup_address}</p>
-                  <p className="font-bold text-green-600">${Number(order.total_usd).toFixed(2)}</p>
+                  <p className="font-bold text-green-600">US${Number(order.total_usd).toFixed(2)}</p>
                 </div>
                 <p className="text-xs text-gray-400 mt-1">
                   {new Date(order.createdAt).toLocaleDateString('en-ZW', {

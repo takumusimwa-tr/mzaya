@@ -244,7 +244,7 @@ function OrderListItem({ order, selected, onClick }) {
       <p className="text-sm text-gray-700 truncate">→ {order.dropoff_address}</p>
       <div className="flex items-center justify-between mt-1">
         <span className="text-xs text-gray-400">{itemCount} item{itemCount !== 1 ? 's' : ''}</span>
-        <span className="text-sm font-bold text-gray-900">${Number(order.subtotal_usd).toFixed(2)}</span>
+        <span className="text-sm font-bold text-gray-900">US${Number(order.subtotal_usd).toFixed(2)}</span>
       </div>
     </button>
   )

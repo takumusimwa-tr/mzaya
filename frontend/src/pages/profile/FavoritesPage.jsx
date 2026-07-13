@@ -1,12 +1,12 @@
 import { useNavigate } from 'react-router-dom'
-import { useFavoriteVendors, useFavoriteIds } from '../../hooks/useFavorites'
+import { useFavoriteBrands, useFavoriteIds } from '../../hooks/useFavorites'
 import imageUrl from '../../utils/imageUrl'
 import LoadingScreen from '../../components/ui/LoadingScreen'
 import Icon from '../../components/ui/Icon'
 
 export default function FavoritesPage() {
   const navigate = useNavigate()
-  const { data: vendors, isLoading } = useFavoriteVendors()
+  const { data: brands, isLoading } = useFavoriteBrands()
   const { toggle } = useFavoriteIds()
 
   if (isLoading) return <LoadingScreen message="Loading favorites..." />
@@ -23,7 +23,7 @@ export default function FavoritesPage() {
         <h1 className="text-lg font-bold text-gray-900">Your favorites</h1>
       </div>
 
-      {!vendors || vendors.length === 0 ? (
+      {!brands || brands.length === 0 ? (
         <div className="flex flex-col items-center justify-center px-6 pt-24">
           <div className="mb-4 flex justify-center text-gray-300"><Icon name="favorite" size={56} /></div>
           <h2 className="text-lg font-bold text-gray-900 mb-1">No favorites yet</h2>
@@ -38,13 +38,13 @@ export default function FavoritesPage() {
         </div>
       ) : (
         <div className="px-4 mt-4 flex flex-col gap-4">
-          {vendors.map((vendor) => (
+          {brands.map((vendor) => (
             <div key={vendor.id}
               role="button"
               tabIndex={0}
-              onClick={() => navigate(`/vendor/${vendor.id}`)}
+              onClick={() => navigate(`/vendor/${vendor.branch_id}?brand=${vendor.id}`)}
               onKeyDown={(e) => {
-                if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); navigate(`/vendor/${vendor.id}`) }
+                if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); navigate(`/vendor/${vendor.branch_id}?brand=${vendor.id}`) }
               }}
               className="w-full text-left bg-white rounded-2xl overflow-hidden active:scale-98 transition-transform cursor-pointer"
               style={{ boxShadow: '0 1px 8px rgba(0,0,0,0.06)' }}>
@@ -82,7 +82,9 @@ export default function FavoritesPage() {
                   <span className="text-gray-200">·</span>
                   <span className="text-xs text-gray-500">15–25 min</span>
                 </div>
-                <p className="text-xs text-gray-400 mt-1">{vendor.address}</p>
+                {vendor.branch_count > 1 && (
+                  <p className="text-xs text-gray-400 mt-1">{vendor.branch_count} branches near you</p>
+                )}
               </div>
             </div>
           ))}

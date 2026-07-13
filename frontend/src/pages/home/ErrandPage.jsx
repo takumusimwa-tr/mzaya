@@ -106,12 +106,12 @@ export default function ErrandPage() {
   return (
     <div className="pb-48">
       {/* Header */}
-      <div className="bg-blue-600 px-4 pt-12 pb-6">
+      <div className="bg-[#00A651] px-4 pt-12 pb-6">
         <button onClick={() => navigate(-1)} className="bg-white/20 p-2 rounded-full mb-4 inline-block">
           <BackIcon />
         </button>
         <h1 className="text-xl font-bold text-white">Book an Errand</h1>
-        <p className="text-blue-100 text-sm mt-1">We'll send a rider to handle it for you</p>
+        <p className="text-white/80 text-sm mt-1">We'll send a rider to handle it for you</p>
       </div>
 
       <form onSubmit={handleSubmit} className="px-4 mt-4 flex flex-col gap-4">
@@ -132,7 +132,7 @@ export default function ErrandPage() {
                 onClick={() => handleTaskType(t.id)}
                 className={`flex flex-col items-center gap-1.5 p-3 rounded-xl border text-center transition-all
                   ${form.task_type === t.id
-                    ? 'border-blue-500 bg-blue-50'
+                    ? 'border-green-500 bg-green-50'
                     : 'border-gray-200 bg-white'
                   }`}
               >
@@ -157,7 +157,7 @@ export default function ErrandPage() {
               onChange={handleChange}
               placeholder="e.g. Submit VAT returns at ZIMRA Harare CBD office. Forms are in a brown envelope."
               rows={3}
-              className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 resize-none"
+              className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm outline-none focus:border-green-500 focus:ring-2 focus:ring-blue-100 resize-none"
             />
           </div>
 
@@ -185,7 +185,7 @@ export default function ErrandPage() {
               name="estimated_duration_minutes"
               value={form.estimated_duration_minutes}
               onChange={handleChange}
-              className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm outline-none focus:border-blue-500 bg-white"
+              className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm outline-none focus:border-green-500 bg-white"
             >
               <option value="30">30 minutes</option>
               <option value="60">1 hour</option>
@@ -268,7 +268,7 @@ export default function ErrandPage() {
                 key={method.id}
                 className={`flex items-center gap-3 p-3 rounded-xl border cursor-pointer transition-all
                   ${form.payment_method === method.id
-                    ? 'border-blue-500 bg-blue-50'
+                    ? 'border-green-500 bg-green-50'
                     : 'border-gray-200 bg-white'
                   }`}
               >
@@ -296,7 +296,7 @@ export default function ErrandPage() {
           size="lg"
           loading={loading}
           onClick={handleSubmit}
-          className="bg-blue-600 hover:bg-blue-700"
+          className="bg-[#00A651] hover:bg-[#00873F]"
         >
           Book errand
         </Button>

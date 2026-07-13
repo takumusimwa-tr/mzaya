@@ -214,7 +214,7 @@ export default function RiderHome() {
                     <Badge label={order.status.replace('_', ' ')} type={order.status} />
                     <p className="font-bold text-white capitalize mt-1.5">{order.category_type}</p>
                   </div>
-                  <p className="font-black text-white text-xl">${Number(order.total_usd).toFixed(2)}</p>
+                  <p className="font-black text-white text-xl">US${Number(order.total_usd).toFixed(2)}</p>
                 </div>
                 <div className="rounded-xl p-3" style={{ background: 'rgba(255,255,255,0.06)' }}>
                   <p className="text-xs text-slate-400 flex gap-2 mb-1">
@@ -280,9 +280,9 @@ export default function RiderHome() {
                       <p className="font-bold text-gray-900 capitalize mt-0.5">{order.category_type}</p>
                     </div>
                     <div className="text-right">
-                      <p className="font-black text-gray-900 text-xl">${Number(order.total_usd).toFixed(2)}</p>
+                      <p className="font-black text-gray-900 text-xl">US${Number(order.total_usd).toFixed(2)}</p>
                       <p className="text-xs text-green-600 font-semibold">
-                        +${Number(order.delivery_fee_usd || 0).toFixed(2)} fee
+                        +US${Number(order.delivery_fee_usd || 0).toFixed(2)} fee
                       </p>
                     </div>
                   </div>

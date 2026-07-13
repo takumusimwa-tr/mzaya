@@ -97,7 +97,7 @@ export default function CartPage() {
         <div className="bg-white rounded-2xl p-4 border border-gray-100">
           <div className="flex justify-between text-sm text-gray-600 mb-2">
             <span>Subtotal ({totalItems} items)</span>
-            <span className="font-semibold">${subtotal.toFixed(2)}</span>
+            <span className="font-semibold">US${subtotal.toFixed(2)}</span>
           </div>
           <div className="flex justify-between text-sm text-gray-400">
             <span>Delivery fee</span>
@@ -112,7 +112,7 @@ export default function CartPage() {
           className="w-full flex items-center justify-between px-5 py-4 rounded-2xl text-white font-bold active:scale-98 transition-transform"
           style={{ background: '#00A651', boxShadow: '0 8px 24px #00A65150' }}>
           <span>Go to checkout</span>
-          <span>${subtotal.toFixed(2)}</span>
+          <span>US${subtotal.toFixed(2)}</span>
         </button>
       </div>
     </div>

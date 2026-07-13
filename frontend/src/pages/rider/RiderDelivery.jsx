@@ -10,8 +10,8 @@ import useRiderTracking from '../../hooks/useRiderTracking'
 import Icon from '../../components/ui/Icon'
 
 const STATUS_FLOW = {
-  accepted:  { next: 'picked_up',  label: 'Mark as Picked Up',  color: 'bg-purple-600' },
-  picked_up: { next: 'en_route',   label: 'Start Delivery',     color: 'bg-indigo-600' },
+  accepted:  { next: 'picked_up',  label: 'Mark as Picked Up',  color: 'bg-[#00A651]' },
+  picked_up: { next: 'en_route',   label: 'Start Delivery',     color: 'bg-[#00A651]' },
   en_route:  { next: 'delivered',  label: 'Mark as Delivered',  color: 'bg-green-600'  },
 }
 
@@ -123,8 +123,8 @@ export default function RiderDelivery() {
               </div>
             )}
             {detail.cash_float_required && (
-              <div className="mt-2 p-3 bg-orange-50 rounded-xl">
-                <p className="text-xs text-orange-800"><Icon name="cash" size={12} className="inline" /> Cash float: US${detail.cash_float_amount_usd}</p>
+              <div className="mt-2 p-3 bg-green-50 rounded-xl">
+                <p className="text-xs text-green-800"><Icon name="cash" size={12} className="inline" /> Cash float: US${detail.cash_float_amount_usd}</p>
               </div>
             )}
           </div>
@@ -135,7 +135,7 @@ export default function RiderDelivery() {
           <h2 className="text-sm font-bold text-gray-700 mb-2">Payment</h2>
           <div className="flex justify-between text-sm">
             <span className="text-gray-500">Order total</span>
-            <span className="font-bold text-gray-900">${Number(order.total_usd).toFixed(2)}</span>
+            <span className="font-bold text-gray-900">US${Number(order.total_usd).toFixed(2)}</span>
           </div>
           <div className="flex justify-between text-sm mt-1">
             <span className="text-gray-500">Payment method</span>

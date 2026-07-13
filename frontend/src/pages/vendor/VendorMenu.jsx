@@ -82,7 +82,7 @@ export default function VendorMenu() {
         <h1 className="text-xl font-bold text-gray-900">Menu</h1>
         <button
           onClick={() => { setShowForm(true); setEditItem(null); setForm({ name: '', description: '', price_usd: '', category: '', image_url: '', prep_minutes: '' }) }}
-          className="bg-orange-500 text-white px-4 py-2 rounded-xl text-sm font-semibold active:scale-95"
+          className="bg-[#00A651] text-white px-4 py-2 rounded-xl text-sm font-semibold active:scale-95"
         >
           + Add item
         </button>
@@ -109,7 +109,7 @@ export default function VendorMenu() {
               <Input label="Price (USD)" name="price_usd" type="number" value={form.price_usd} onChange={handleChange} placeholder="e.g. 3.50" required />
               <Input label="Category" name="category" value={form.category} onChange={handleChange} placeholder="e.g. Chicken, Burgers, Drinks" />
               <Input label="Prep time (minutes)" name="prep_minutes" type="number" value={form.prep_minutes} onChange={handleChange} placeholder="e.g. 15 — leave 0 if ready immediately" />
-              <Button type="submit" size="lg" loading={saveItem.isPending} className="mt-2 bg-orange-500 hover:bg-orange-600">
+              <Button type="submit" size="lg" loading={saveItem.isPending} className="mt-2 bg-[#00A651] hover:bg-[#00873F]">
                 {editItem ? 'Save changes' : 'Add to menu'}
               </Button>
             </form>
@@ -154,7 +154,7 @@ export default function VendorMenu() {
                         </div>
                         {item.description && <p className="text-xs text-gray-400 mt-0.5 truncate">{item.description}</p>}
                         <div className="flex items-center gap-2 mt-1">
-                          <p className="text-orange-500 font-bold">${Number(item.price_usd).toFixed(2)}</p>
+                          <p className="text-green-600 font-bold">US${Number(item.price_usd).toFixed(2)}</p>
                           {item.prep_minutes > 0 && (
                             <span className="text-[11px] text-gray-400">· ~{item.prep_minutes} min prep</span>
                           )}

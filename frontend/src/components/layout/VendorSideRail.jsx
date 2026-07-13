@@ -59,7 +59,7 @@ export default function VendorSideRail() {
           <NavLink key={to} to={to} end={end}
             className={({ isActive }) =>
               `w-16 lg:w-20 py-3 rounded-2xl flex flex-col items-center gap-1 text-[11px] font-semibold transition-all
-               ${isActive ? 'bg-orange-50 text-orange-600' : 'text-gray-400 hover:text-gray-600 hover:bg-gray-50'}`
+               ${isActive ? 'bg-green-50 text-green-600' : 'text-gray-400 hover:text-gray-600 hover:bg-gray-50'}`
             }
           >
             <Icon />

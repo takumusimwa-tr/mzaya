@@ -14,7 +14,7 @@ export default function VendorBottomNav() {
         <NavLink key={to} to={to} end
           className={({ isActive }) =>
             `flex-1 flex flex-col items-center py-3 gap-1 text-xs font-semibold transition-colors
-             ${isActive ? 'text-orange-500' : 'text-gray-400'}`
+             ${isActive ? 'text-green-600' : 'text-gray-400'}`
           }
         >
           <Icon />

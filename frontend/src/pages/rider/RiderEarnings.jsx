@@ -22,21 +22,21 @@ export default function RiderEarnings() {
   return (
     <div className="pb-24">
       {/* Header */}
-      <div className="bg-blue-600 px-4 pt-12 pb-6">
-        <p className="text-blue-100 text-xs">Your earnings</p>
-        <h1 className="text-white font-bold text-2xl mt-1">${totalEarnings.toFixed(2)}</h1>
-        <p className="text-blue-200 text-xs mt-0.5">All time · {completed.length} deliveries</p>
+      <div className="bg-[#00A651] px-4 pt-12 pb-6">
+        <p className="text-white/80 text-xs">Your earnings</p>
+        <h1 className="text-white font-bold text-2xl mt-1">US${totalEarnings.toFixed(2)}</h1>
+        <p className="text-white/70 text-xs mt-0.5">All time · {completed.length} deliveries</p>
       </div>
 
       <div className="px-4 mt-4 flex flex-col gap-4">
         {/* Today summary */}
         <div className="grid grid-cols-2 gap-3">
           <div className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100 text-center">
-            <p className="text-2xl font-bold text-blue-600">${todayEarnings.toFixed(2)}</p>
+            <p className="text-2xl font-bold text-green-600">US${todayEarnings.toFixed(2)}</p>
             <p className="text-xs text-gray-500 mt-1">Today's earnings</p>
           </div>
           <div className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100 text-center">
-            <p className="text-2xl font-bold text-blue-600">{todayOrders.length}</p>
+            <p className="text-2xl font-bold text-green-600">{todayOrders.length}</p>
             <p className="text-xs text-gray-500 mt-1">Today's deliveries</p>
           </div>
         </div>
@@ -63,7 +63,7 @@ export default function RiderEarnings() {
                     </p>
                   </div>
                   <div className="text-right">
-                    <p className="font-bold text-blue-600">${Number(order.delivery_fee_usd || 0).toFixed(2)}</p>
+                    <p className="font-bold text-green-600">US${Number(order.delivery_fee_usd || 0).toFixed(2)}</p>
                     <p className="text-xs text-green-500 mt-0.5">✓ Delivered</p>
                   </div>
                 </div>

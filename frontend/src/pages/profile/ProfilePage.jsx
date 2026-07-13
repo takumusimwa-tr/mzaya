@@ -12,8 +12,8 @@ const ROLE_HOME = {
 
 const ROLE_COLOR = {
   customer: 'bg-green-100 text-green-700',
-  rider:    'bg-blue-100 text-blue-700',
-  vendor:   'bg-orange-100 text-orange-700',
+  rider:    'bg-green-100 text-green-700',
+  vendor:   'bg-green-100 text-green-700',
   admin:    'bg-gray-100 text-gray-700',
 }
 

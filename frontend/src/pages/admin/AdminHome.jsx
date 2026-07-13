@@ -331,7 +331,7 @@ function LiveOrders() {
               style={{ background: '#EDFAF3', color: '#00A651' }}>
               {o.status.replace('_', ' ')}
             </span>
-            <p className="text-sm font-bold text-gray-900 mt-1">${Number(o.total_usd).toFixed(2)}</p>
+            <p className="text-sm font-bold text-gray-900 mt-1">US${Number(o.total_usd).toFixed(2)}</p>
           </div>
         </div>
       ))}
@@ -407,7 +407,7 @@ function MzayaAI() {
                   <p className="text-xs font-mono text-gray-500">#{a.order_id.slice(0, 8).toUpperCase()}</p>
                   <p className="text-xs text-gray-500 capitalize">{a.category_type} · {a.city}</p>
                 </div>
-                <span className="text-sm font-bold text-red-500">${Number(a.total_usd || 0).toFixed(2)}</span>
+                <span className="text-sm font-bold text-red-500">US${Number(a.total_usd || 0).toFixed(2)}</span>
               </div>
             ))}
           </div>

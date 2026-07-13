@@ -5,7 +5,7 @@ import useSocketEvent from '../hooks/useSocketEvent'
 import Icon from './ui/Icon'
 
 const ROLE_LABELS = { customer: 'Customer', rider: 'Rider', vendor: 'Store' }
-const ROLE_COLORS = { customer: '#00A651', rider: '#2563EB', vendor: '#D97706' }
+const ROLE_COLORS = { customer: '#00A651', rider: '#00A651', vendor: '#D97706' }
 
 // Full-screen-ish chat sheet for one order. Any participant (customer/rider/
 // vendor) can open it. Includes click-to-call for the other parties.

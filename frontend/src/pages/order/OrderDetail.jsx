@@ -174,7 +174,7 @@ export default function OrderDetail() {
           <div className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100">
             <div className="flex items-center justify-between mb-1">
               <h2 className="text-sm font-bold text-gray-700">Rider offers</h2>
-              <span className="text-xs text-gray-400">Your fare: ${Number(order.offered_fare_usd).toFixed(2)}</span>
+              <span className="text-xs text-gray-400">Your fare: US${Number(order.offered_fare_usd).toFixed(2)}</span>
             </div>
             {!offers?.length ? (
               <div className="py-6 text-center">
@@ -197,11 +197,11 @@ export default function OrderDetail() {
                       <p className="text-xs text-gray-400 mt-0.5">
                         {o.rider_profile?.vehicle_type?.replace('_', ' ') || 'vehicle'}
                         {o.rider_profile?.total_deliveries != null && ` · ${o.rider_profile.total_deliveries} trips`}
-                        {o.rider_profile?.rating > 0 && ` · ⭐ ${Number(o.rider_profile.rating).toFixed(1)}`}
+                        {o.rider_profile?.rating > 0 && ` · ⭐ US${Number(o.rider_profile.rating).toFixed(1)}`}
                       </p>
                     </div>
                     <div className="text-right">
-                      <p className="font-black text-gray-900">${Number(o.amount_usd).toFixed(2)}</p>
+                      <p className="font-black text-gray-900">US${Number(o.amount_usd).toFixed(2)}</p>
                       <button onClick={() => chooseOffer.mutate(o.id)} disabled={chooseOffer.isPending}
                         className="mt-1 px-4 py-1.5 rounded-lg text-white text-xs font-bold active:scale-95 disabled:opacity-50"
                         style={{ background: '#00A651' }}>
@@ -232,7 +232,7 @@ export default function OrderDetail() {
             {detail.items.map((item, i) => (
               <div key={i} className="flex justify-between text-sm text-gray-600 mb-1">
                 <span>{item.name} × {item.qty}</span>
-                <span>${(item.unit_price_usd * item.qty).toFixed(2)}</span>
+                <span>US${(item.unit_price_usd * item.qty).toFixed(2)}</span>
               </div>
             ))}
             {/* Reorder — show for finished orders */}
@@ -250,13 +250,13 @@ export default function OrderDetail() {
         <div className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100">
           <h2 className="text-sm font-bold text-gray-700 mb-3">Payment</h2>
           <div className="flex justify-between text-sm text-gray-600 mb-1">
-            <span>Subtotal</span><span>${Number(order.subtotal_usd).toFixed(2)}</span>
+            <span>Subtotal</span><span>US${Number(order.subtotal_usd).toFixed(2)}</span>
           </div>
           <div className="flex justify-between text-sm text-gray-600 mb-3">
-            <span>Delivery fee</span><span>${Number(order.delivery_fee_usd).toFixed(2)}</span>
+            <span>Delivery fee</span><span>US${Number(order.delivery_fee_usd).toFixed(2)}</span>
           </div>
           <div className="border-t border-gray-100 pt-3 flex justify-between font-bold text-gray-900">
-            <span>Total</span><span>${Number(order.total_usd).toFixed(2)}</span>
+            <span>Total</span><span>US${Number(order.total_usd).toFixed(2)}</span>
           </div>
           {order.total_zig && (
             <p className="text-xs text-gray-400 mt-1 text-right">≈ ZiG {Number(order.total_zig).toFixed(2)}</p>

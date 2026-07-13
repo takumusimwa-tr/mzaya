@@ -12,15 +12,19 @@ import Icon from '../../components/ui/Icon'
 
 // Generate a consistent accent color from vendor name
 function vendorColor(name = '') {
+  // Each vendor gets a slightly different accent so branches feel distinct —
+  // but all of them live in the Mzaya green family. The old palette was a
+  // rainbow (red / blue / purple / amber) that fought the brand everywhere it
+  // appeared.
   const colors = [
-    { bg: '#00A651', light: '#EDFAF3', text: '#00A651' }, // red
-    { bg: '#FF6B00', light: '#FFF4EC', text: '#FF6B00' }, // orange
-    { bg: '#00A651', light: '#EDFAF3', text: '#00A651' }, // green
-    { bg: '#0052CC', light: '#EEF4FF', text: '#0052CC' }, // blue
-    { bg: '#6B21A8', light: '#F5F0FF', text: '#6B21A8' }, // purple
-    { bg: '#B45309', light: '#FEF8EC', text: '#B45309' }, // amber
+    { bg: '#00A651', light: '#EDFAF3', text: '#00A651' }, // brand green
+    { bg: '#00873F', light: '#E7F6EE', text: '#00873F' }, // deep green
+    { bg: '#0F9D58', light: '#EAF7F0', text: '#0F9D58' }, // leaf
+    { bg: '#12B76A', light: '#E8FAF1', text: '#0B8A50' }, // emerald
+    { bg: '#047857', light: '#E6F4F0', text: '#047857' }, // pine
+    { bg: '#15803D', light: '#E9F6EC', text: '#15803D' }, // forest
   ]
-  const idx = name.charCodeAt(0) % colors.length
+  const idx = (name.charCodeAt(0) || 0) % colors.length
   return colors[idx]
 }
 
@@ -59,7 +63,7 @@ export default function VendorHome() {
     onSuccess:  () => queryClient.invalidateQueries(['my-vendor']),
   })
 
-  const DEFAULT_COLOR = { bg: '#FF6B00', light: '#FFF4EC', text: '#FF6B00' }
+  const DEFAULT_COLOR = { bg: '#00873F', light: '#E7F6EE', text: '#00873F' }
   const color = vendorData ? vendorColor(vendorData.name || '') : DEFAULT_COLOR
 
   if (isLoading || !vendorData) return <LoadingScreen message="Loading..." />
@@ -127,7 +131,7 @@ export default function VendorHome() {
         <div className="grid grid-cols-4 gap-0 mt-5 bg-gray-50 rounded-2xl overflow-hidden">
           {[
             { label: 'New',      value: pending.length,   color: pending.length > 0 ? '#00A651' : '#111' },
-            { label: 'Active',   value: active.length,    color: '#0052CC'                               },
+            { label: 'Active',   value: active.length,    color: '#0F9D58'                               },
             { label: 'Done',     value: delivered.length, color: '#111'                                  },
             { label: 'Revenue',  value: `$${revenue.toFixed(0)}`, color: '#00A651'                      },
           ].map((stat, i) => (
@@ -203,7 +207,7 @@ export default function VendorHome() {
                   <div className="p-3">
                     <p className="font-semibold text-gray-900 text-sm truncate">{item.name}</p>
                     <p className="text-sm font-black mt-0.5" style={{ color: color.bg }}>
-                      ${Number(item.price_usd).toFixed(2)}
+                      US${Number(item.price_usd).toFixed(2)}
                     </p>
                   </div>
                 </div>
@@ -231,7 +235,7 @@ export default function VendorHome() {
                 </div>
                 <div className="text-right">
                   <Badge label={order.status.replace('_', ' ')} type={order.status} />
-                  <p className="font-black text-gray-900 mt-1.5">${Number(order.subtotal_usd).toFixed(2)}</p>
+                  <p className="font-black text-gray-900 mt-1.5">US${Number(order.subtotal_usd).toFixed(2)}</p>
                 </div>
               </div>
             ))}

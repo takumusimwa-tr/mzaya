@@ -54,7 +54,7 @@ export default function VendorPage() {
       <div className="relative h-52">
         {vendor.cover_url
           ? <img src={imageUrl(vendor.cover_url, 800)} alt={vendor.name} className="w-full h-full object-cover" />
-          : <div className="w-full h-full" style={{ background: 'linear-gradient(135deg, #FF6B00, #00A651)' }} />
+          : <div className="w-full h-full" style={{ background: 'linear-gradient(135deg, #00A651, #047857)' }} />
         }
         {/* Back button */}
         <button onClick={() => navigate(-1)}
@@ -158,7 +158,7 @@ export default function VendorPage() {
                         <p className="text-xs text-gray-400 mt-1 line-clamp-2">{item.description}</p>
                       )}
                       <div className="flex items-center gap-2 mt-2">
-                        <p className="text-sm font-black text-gray-900">${Number(item.price_usd).toFixed(2)}</p>
+                        <p className="text-sm font-black text-gray-900">US${Number(item.price_usd).toFixed(2)}</p>
                         {item.prep_minutes > 0 && (
                           <span className="text-[11px] text-gray-400">· Ready in ~{item.prep_minutes} min</span>
                         )}
@@ -196,7 +196,7 @@ export default function VendorPage() {
               <span className="bg-white/25 w-6 h-6 rounded-full flex items-center justify-center text-sm">{cartCount}</span>
               View cart
             </span>
-            <span>${cartTotal.toFixed(2)}</span>
+            <span>US${cartTotal.toFixed(2)}</span>
           </button>
         </div>
       )}

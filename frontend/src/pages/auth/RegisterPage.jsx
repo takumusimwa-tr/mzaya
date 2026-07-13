@@ -13,8 +13,8 @@ const ROLE_LABELS = {
 
 const ROLE_COLORS = {
   customer: 'bg-green-600',
-  rider:    'bg-blue-600',
-  vendor:   'bg-orange-500',
+  rider:    'bg-[#00A651]',
+  vendor:   'bg-[#00A651]',
 }
 
 export default function RegisterPage() {

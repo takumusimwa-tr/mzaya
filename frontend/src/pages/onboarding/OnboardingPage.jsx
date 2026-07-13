@@ -15,7 +15,7 @@ const SLIDES = [
     icon:     'rider',
     title:    'Fast delivery across Zimbabwe',
     subtitle: 'Riders in Harare, Bulawayo and Mutare ready to deliver. Track your order in real time.',
-    bg:       'from-blue-500 to-blue-700',
+    bg:       'from-blue-500 to-[#00873F]',
   },
   {
     icon:     'money',
@@ -108,16 +108,16 @@ function RoleSelection({ navigate }) {
       icon:    'rider',
       title:   'I want to deliver',
       desc:    'Accept delivery jobs and earn money',
-      color:   'border-blue-400 bg-blue-50',
-      badge:   'bg-blue-100 text-blue-700',
+      color:   'border-green-500 bg-green-50',
+      badge:   'bg-green-100 text-green-700',
     },
     {
       role:    'vendor',
       icon:    'store',
       title:   'I have a business',
       desc:    'List your restaurant, store or business',
-      color:   'border-orange-400 bg-orange-50',
-      badge:   'bg-orange-100 text-orange-700',
+      color:   'border-orange-400 bg-green-50',
+      badge:   'bg-green-100 text-green-700',
     },
   ]
 
