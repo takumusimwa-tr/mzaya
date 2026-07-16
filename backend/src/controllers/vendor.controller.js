@@ -1,5 +1,6 @@
 const { Vendor, MenuItem, City } = require('../models/associations');
 const { withLiveOpen } = require('../utils/vendorHours');
+const { logger } = require('../utils/logger');
 
 // GET /api/vendors
 async function listVendors(req, res) {
@@ -29,67 +30,17 @@ async function listVendors(req, res) {
 
     return res.status(200).json({ vendors });
   } catch (err) {
-    console.error('listVendors error:', err.message);
+    logger.error('listvendors_error', { error: err.message });
     return res.status(500).json({ error: 'Failed to fetch vendors' });
   }
 }
+// NOTE: myBranches and addBranch were each DEFINED TWICE in this file — a bad
+// paste. Node tolerated it and silently used the second definition; Babel does
+// not, which is how the first test run caught it. The duplicates are removed;
+// the surviving versions are the ones that were actually running.
 
-// GET /api/vendors/my
-// GET /api/vendors/my/branches — all branches under this owner's brand.
-async function myBranches(req, res) {
-  try {
-    const { Brand } = require('../models/associations');
-    const brand = await Brand.findOne({ where: { owner_id: req.user.id } });
-    if (!brand) return res.status(200).json({ branches: [] });
 
-    const branches = await Vendor.findAll({
-      where: { brand_id: brand.id },
-      include: [{ model: City, as: 'city', required: false }],
-      order: [['createdAt', 'ASC']],
-    });
-    return res.status(200).json({
-      brand: { id: brand.id, name: brand.name, category: brand.category, logo_url: brand.logo_url },
-      branches: branches.map((b) => withLiveOpen(b.toJSON())),
-    });
-  } catch (err) {
-    console.error('myBranches error:', err.message);
-    return res.status(500).json({ error: 'Failed to load branches' });
-  }
-}
-
-// POST /api/vendors/my/branches — add a new branch to the owner's brand.
-async function addBranch(req, res) {
-  try {
-    const { Brand } = require('../models/associations');
-    const brand = await Brand.findOne({ where: { owner_id: req.user.id } });
-    if (!brand) return res.status(404).json({ error: 'No brand found for this account' });
-
-    const { branch_name, city_id, address, phone } = req.body;
-    if (!branch_name || !city_id || !address || !phone) {
-      return res.status(400).json({ error: 'branch name, city, address and phone are required' });
-    }
-
-    const branch = await Vendor.create({
-      owner_id:    req.user.id,
-      brand_id:    brand.id,
-      branch_name,
-      name:        brand.name,        // branch inherits the brand name
-      category:    brand.category,
-      phone,
-      address,
-      city_id,
-      description: brand.description,
-      logo_url:    brand.logo_url,
-      is_active:   false,             // new branches need approval too
-      is_open:     false,
-    });
-    return res.status(201).json({ message: 'Branch added — pending approval', branch });
-  } catch (err) {
-    console.error('addBranch error:', err.message);
-    return res.status(500).json({ error: 'Failed to add branch' });
-  }
-}
-
+// GET /api/vendors/my — the console's own branch (optionally a specific one).
 async function getMyVendor(req, res) {
   try {
     // Optional ?branch_id — the console can target a specific branch. Falls back
@@ -106,7 +57,7 @@ async function getMyVendor(req, res) {
     if (!vendor) return res.status(404).json({ error: 'Vendor profile not found' });
     return res.status(200).json({ vendor: withLiveOpen(vendor.toJSON()) });
   } catch (err) {
-    console.error('getMyVendor error:', err.message);
+    logger.error('get_my_vendor_error', { error: err.message });
     return res.status(500).json({ error: 'Failed to fetch vendor profile' });
   }
 }
@@ -131,7 +82,7 @@ async function myBranches(req, res) {
       }),
     });
   } catch (err) {
-    console.error('myBranches error:', err.message);
+    logger.error('mybranches_error', { error: err.message });
     return res.status(500).json({ error: 'Failed to fetch branches' });
   }
 }
@@ -163,7 +114,7 @@ async function addBranch(req, res) {
     });
     return res.status(201).json({ message: 'Branch added — pending approval', branch });
   } catch (err) {
-    console.error('addBranch error:', err.message);
+    logger.error('addbranch_error', { error: err.message });
     return res.status(500).json({ error: 'Failed to add branch' });
   }
 }
@@ -180,7 +131,7 @@ async function getVendor(req, res) {
     if (!vendor) return res.status(404).json({ error: 'Vendor not found' });
     return res.status(200).json({ vendor: withLiveOpen(vendor.toJSON()) });
   } catch (err) {
-    console.error(err);
+    logger.error('vendor_error', { error: err.message });
     return res.status(500).json({ error: 'Failed to fetch vendor' });
   }
 }
@@ -240,7 +191,7 @@ async function createVendor(req, res) {
     });
   } catch (err) {
     await t.rollback();
-    console.error('createVendor error:', err.message);
+    logger.error('createvendor_error', { error: err.message });
     return res.status(500).json({ error: 'Failed to register business' });
   }
 }
@@ -267,7 +218,7 @@ async function updateVendor(req, res) {
     await vendor.update(patch);
     return res.status(200).json({ vendor: withLiveOpen(vendor.toJSON()) });
   } catch (err) {
-    console.error('updateVendor error:', err.message);
+    logger.error('updatevendor_error', { error: err.message });
     return res.status(500).json({ error: 'Failed to update vendor' });
   }
 }
@@ -286,7 +237,7 @@ async function addMenuItem(req, res) {
     });
     return res.status(201).json({ item });
   } catch (err) {
-    console.error('addMenuItem error:', err.message);
+    logger.error('addmenuitem_error', { error: err.message });
     return res.status(500).json({ error: 'Failed to add menu item' });
   }
 }
@@ -299,7 +250,7 @@ async function updateMenuItem(req, res) {
     await item.update(req.body);
     return res.status(200).json({ item });
   } catch (err) {
-    console.error(err);
+    logger.error('vendor_error', { error: err.message });
     return res.status(500).json({ error: 'Failed to update item' });
   }
 }
@@ -312,7 +263,7 @@ async function deleteMenuItem(req, res) {
     await item.destroy();
     return res.status(200).json({ message: 'Item deleted' });
   } catch (err) {
-    console.error(err);
+    logger.error('vendor_error', { error: err.message });
     return res.status(500).json({ error: 'Failed to delete item' });
   }
 }

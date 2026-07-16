@@ -2,6 +2,7 @@
 const { Promo } = require('../models/associations');
 const { evaluatePromo } = require('../utils/promoEval');
 const { quoteOrder } = require('../services/order.service');
+const { logger } = require('../utils/logger');
 
 // POST /api/promos/validate  { code, category_type, detail }
 // Customer-facing: checks a code against the current cart and returns the
@@ -31,7 +32,7 @@ async function validateCode(req, res) {
       free_delivery: result.freeDelivery,
     });
   } catch (err) {
-    console.error('validateCode error:', err.message);
+    logger.error('validatecode_error', { error: err.message });
     return res.status(500).json({ error: 'Could not validate code' });
   }
 }
@@ -76,7 +77,7 @@ async function createPromo(req, res) {
     if (err.name === 'SequelizeUniqueConstraintError') {
       return res.status(409).json({ error: 'That code already exists' });
     }
-    console.error('createPromo error:', err.message);
+    logger.error('createpromo_error', { error: err.message });
     return res.status(500).json({ error: 'Failed to create promo' });
   }
 }
@@ -91,7 +92,7 @@ async function updatePromo(req, res) {
     await promo.update(patch);
     return res.status(200).json({ promo });
   } catch (err) {
-    console.error('updatePromo error:', err.message);
+    logger.error('updatepromo_error', { error: err.message });
     return res.status(500).json({ error: 'Failed to update promo' });
   }
 }

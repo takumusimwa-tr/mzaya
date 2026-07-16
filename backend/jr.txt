@@ -1,0 +1,452 @@
+﻿
+> backend@1.0.0 test
+> jest --runInBand
+
+node.exe : FAIL tests/payments.test.js
+At line:1 char:1
++ & "C:\Program Files\nodejs/node.exe" "C:\Program Files\nodejs/node_mo ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (FAIL tests/payments.test.js:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+  ΓùÅ Console
+
+    console.log
+      [dotenv@17.3.1] injecting env (8) from .env -- tip: ΓÜÖ∩╕Å  suppress all logs with { quiet: true }
+
+      at _log (node_modules/dotenv/lib/main.js:139:11)
+
+    console.log
+      [dotenv@17.3.1] injecting env (0) from .env -- tip: ΓÜÖ∩╕Å  enable debug logging with { debug: 
+true }
+
+      at _log (node_modules/dotenv/lib/main.js:139:11)
+
+    console.warn
+      ΓÜá∩╕Å  PAYMENTS ARE SIMULATED (ALLOW_MOCK_PAYMENTS=true). No money will move.
+
+    [0m [90m 56 |[39m }
+     [90m 57 |[39m [36mif[39m ([33mMOCK[39m) {
+    [31m[1m>[22m[39m[90m 58 |[39m   console[33m.[39mwarn([32m'ΓÜá∩╕Å  PAYMENTS ARE SIMULATED 
+(ALLOW_MOCK_PAYMENTS=true). No money will move.'[39m)[33m;[39m
+     [90m    |[39m           [31m[1m^[22m[39m
+     [90m 59 |[39m }
+     [90m 60 |[39m
+     [90m 61 |[39m [90m// Paynow endpoints[39m[0m
+
+      at Object.warn (src/services/payment.service.js:58:11)
+      at Object.require (src/controllers/payment.controller.js:17:5)
+      at Object.require (src/routes/payment.routes.js:8:5)
+      at Object.require (src/app.js:43:25)
+      at Object.require (tests/payments.test.js:2:13)
+
+  ΓùÅ Payment idempotency ΓÇ║ survives two concurrent pay requests
+
+    makeCity failed: duplicate key value violates unique constraint "cities_name_key" | name: name must 
+be unique
+
+    [0m [90m 76 |[39m     [36mconst[39m detail [33m=[39m 
+err[33m.[39mparent[33m?[39m[33m.[39mmessage [33m||[39m 
+err[33m.[39moriginal[33m?[39m[33m.[39mmessage [33m||[39m err[33m.[39mmessage[33m;[39m
+     [90m 77 |[39m     [36mconst[39m fields [33m=[39m 
+err[33m.[39merrors[33m?[39m[33m.[39mmap((e) [33m=>[39m [32m`${e.path}: 
+${e.message}`[39m)[33m.[39mjoin([32m'; '[39m)[33m;[39m
+    [31m[1m>[22m[39m[90m 78 |[39m     [36mthrow[39m [36mnew[39m [33mError[39m([32m`makeCity 
+failed: ${detail}${fields ? ' | ' + fields : ''}`[39m)[33m;[39m
+     [90m    |[39m           [31m[1m^[22m[39m
+     [90m 79 |[39m   }
+     [90m 80 |[39m }
+     [90m 81 |[39m[0m
+
+      at makeCity (tests/setup.js:78:11)
+      at Object.<anonymous> (tests/payments.test.js:39:18)
+
+  ΓùÅ Payment phone ΓÇ║ sends the prompt to the number the customer entered, not their profile number
+
+    makeCity failed: duplicate key value violates unique constraint "cities_name_key" | name: name must 
+be unique
+
+    [0m [90m 76 |[39m     [36mconst[39m detail [33m=[39m 
+err[33m.[39mparent[33m?[39m[33m.[39mmessage [33m||[39m 
+err[33m.[39moriginal[33m?[39m[33m.[39mmessage [33m||[39m err[33m.[39mmessage[33m;[39m
+     [90m 77 |[39m     [36mconst[39m fields [33m=[39m 
+err[33m.[39merrors[33m?[39m[33m.[39mmap((e) [33m=>[39m [32m`${e.path}: 
+${e.message}`[39m)[33m.[39mjoin([32m'; '[39m)[33m;[39m
+    [31m[1m>[22m[39m[90m 78 |[39m     [36mthrow[39m [36mnew[39m [33mError[39m([32m`makeCity 
+failed: ${detail}${fields ? ' | ' + fields : ''}`[39m)[33m;[39m
+     [90m    |[39m           [31m[1m^[22m[39m
+     [90m 79 |[39m   }
+     [90m 80 |[39m }
+     [90m 81 |[39m[0m
+
+      at makeCity (tests/setup.js:78:11)
+      at Object.<anonymous> (tests/payments.test.js:67:18)
+
+  ΓùÅ Payment phone ΓÇ║ normalises +263 into local format
+
+    makeCity failed: duplicate key value violates unique constraint "cities_name_key" | name: name must 
+be unique
+
+    [0m [90m 76 |[39m     [36mconst[39m detail [33m=[39m 
+err[33m.[39mparent[33m?[39m[33m.[39mmessage [33m||[39m 
+err[33m.[39moriginal[33m?[39m[33m.[39mmessage [33m||[39m err[33m.[39mmessage[33m;[39m
+     [90m 77 |[39m     [36mconst[39m fields [33m=[39m 
+err[33m.[39merrors[33m?[39m[33m.[39mmap((e) [33m=>[39m [32m`${e.path}: 
+${e.message}`[39m)[33m.[39mjoin([32m'; '[39m)[33m;[39m
+    [31m[1m>[22m[39m[90m 78 |[39m     [36mthrow[39m [36mnew[39m [33mError[39m([32m`makeCity 
+failed: ${detail}${fields ? ' | ' + fields : ''}`[39m)[33m;[39m
+     [90m    |[39m           [31m[1m^[22m[39m
+     [90m 79 |[39m   }
+     [90m 80 |[39m }
+     [90m 81 |[39m[0m
+
+      at makeCity (tests/setup.js:78:11)
+      at Object.<anonymous> (tests/payments.test.js:87:18)
+
+  ΓùÅ Payment phone ΓÇ║ rejects a number that is not a Zimbabwean mobile
+
+    makeCity failed: duplicate key value violates unique constraint "cities_name_key" | name: name must 
+be unique
+
+    [0m [90m 76 |[39m     [36mconst[39m detail [33m=[39m 
+err[33m.[39mparent[33m?[39m[33m.[39mmessage [33m||[39m 
+err[33m.[39moriginal[33m?[39m[33m.[39mmessage [33m||[39m err[33m.[39mmessage[33m;[39m
+     [90m 77 |[39m     [36mconst[39m fields [33m=[39m 
+err[33m.[39merrors[33m?[39m[33m.[39mmap((e) [33m=>[39m [32m`${e.path}: 
+${e.message}`[39m)[33m.[39mjoin([32m'; '[39m)[33m;[39m
+    [31m[1m>[22m[39m[90m 78 |[39m     [36mthrow[39m [36mnew[39m [33mError[39m([32m`makeCity 
+failed: ${detail}${fields ? ' | ' + fields : ''}`[39m)[33m;[39m
+     [90m    |[39m           [31m[1m^[22m[39m
+     [90m 79 |[39m   }
+     [90m 80 |[39m }
+     [90m 81 |[39m[0m
+
+      at makeCity (tests/setup.js:78:11)
+      at Object.<anonymous> (tests/payments.test.js:101:18)
+
+  ΓùÅ Payment outcomes ΓÇ║ does NOT cancel the order when a payment fails
+
+    makeCity failed: duplicate key value violates unique constraint "cities_name_key" | name: name must 
+be unique
+
+    [0m [90m 76 |[39m     [36mconst[39m detail [33m=[39m 
+err[33m.[39mparent[33m?[39m[33m.[39mmessage [33m||[39m 
+err[33m.[39moriginal[33m?[39m[33m.[39mmessage [33m||[39m err[33m.[39mmessage[33m;[39m
+     [90m 77 |[39m     [36mconst[39m fields [33m=[39m 
+err[33m.[39merrors[33m?[39m[33m.[39mmap((e) [33m=>[39m [32m`${e.path}: 
+${e.message}`[39m)[33m.[39mjoin([32m'; '[39m)[33m;[39m
+    [31m[1m>[22m[39m[90m 78 |[39m     [36mthrow[39m [36mnew[39m [33mError[39m([32m`makeCity 
+failed: ${detail}${fields ? ' | ' + fields : ''}`[39m)[33m;[39m
+     [90m    |[39m           [31m[1m^[22m[39m
+     [90m 79 |[39m   }
+     [90m 80 |[39m }
+     [90m 81 |[39m[0m
+
+      at makeCity (tests/setup.js:78:11)
+      at Object.<anonymous> (tests/payments.test.js:119:18)
+
+  ΓùÅ Payment outcomes ΓÇ║ never regresses a settled payment
+
+    makeCity failed: duplicate key value violates unique constraint "cities_name_key" | name: name must 
+be unique
+
+    [0m [90m 76 |[39m     [36mconst[39m detail [33m=[39m 
+err[33m.[39mparent[33m?[39m[33m.[39mmessage [33m||[39m 
+err[33m.[39moriginal[33m?[39m[33m.[39mmessage [33m||[39m err[33m.[39mmessage[33m;[39m
+     [90m 77 |[39m     [36mconst[39m fields [33m=[39m 
+err[33m.[39merrors[33m?[39m[33m.[39mmap((e) [33m=>[39m [32m`${e.path}: 
+${e.message}`[39m)[33m.[39mjoin([32m'; '[39m)[33m;[39m
+    [31m[1m>[22m[39m[90m 78 |[39m     [36mthrow[39m [36mnew[39m [33mError[39m([32m`makeCity 
+failed: ${detail}${fields ? ' | ' + fields : ''}`[39m)[33m;[39m
+     [90m    |[39m           [31m[1m^[22m[39m
+     [90m 79 |[39m   }
+     [90m 80 |[39m }
+     [90m 81 |[39m[0m
+
+      at makeCity (tests/setup.js:78:11)
+      at Object.<anonymous> (tests/payments.test.js:148:18)
+
+  ΓùÅ Payment outcomes ΓÇ║ applies a duplicate webhook exactly once
+
+    makeCity failed: duplicate key value violates unique constraint "cities_name_key" | name: name must 
+be unique
+
+    [0m [90m 76 |[39m     [36mconst[39m detail [33m=[39m 
+err[33m.[39mparent[33m?[39m[33m.[39mmessage [33m||[39m 
+err[33m.[39moriginal[33m?[39m[33m.[39mmessage [33m||[39m err[33m.[39mmessage[33m;[39m
+     [90m 77 |[39m     [36mconst[39m fields [33m=[39m 
+err[33m.[39merrors[33m?[39m[33m.[39mmap((e) [33m=>[39m [32m`${e.path}: 
+${e.message}`[39m)[33m.[39mjoin([32m'; '[39m)[33m;[39m
+    [31m[1m>[22m[39m[90m 78 |[39m     [36mthrow[39m [36mnew[39m [33mError[39m([32m`makeCity 
+failed: ${detail}${fields ? ' | ' + fields : ''}`[39m)[33m;[39m
+     [90m    |[39m           [31m[1m^[22m[39m
+     [90m 79 |[39m   }
+     [90m 80 |[39m }
+     [90m 81 |[39m[0m
+
+      at makeCity (tests/setup.js:78:11)
+      at Object.<anonymous> (tests/payments.test.js:183:18)
+
+  ΓùÅ Payment ownership ΓÇ║ does not let you pay for someone else's order
+
+    makeCity failed: duplicate key value violates unique constraint "cities_name_key" | name: name must 
+be unique
+
+    [0m [90m 76 |[39m     [36mconst[39m detail [33m=[39m 
+err[33m.[39mparent[33m?[39m[33m.[39mmessage [33m||[39m 
+err[33m.[39moriginal[33m?[39m[33m.[39mmessage [33m||[39m err[33m.[39mmessage[33m;[39m
+     [90m 77 |[39m     [36mconst[39m fields [33m=[39m 
+err[33m.[39merrors[33m?[39m[33m.[39mmap((e) [33m=>[39m [32m`${e.path}: 
+${e.message}`[39m)[33m.[39mjoin([32m'; '[39m)[33m;[39m
+    [31m[1m>[22m[39m[90m 78 |[39m     [36mthrow[39m [36mnew[39m [33mError[39m([32m`makeCity 
+failed: ${detail}${fields ? ' | ' + fields : ''}`[39m)[33m;[39m
+     [90m    |[39m           [31m[1m^[22m[39m
+     [90m 79 |[39m   }
+     [90m 80 |[39m }
+     [90m 81 |[39m[0m
+
+      at makeCity (tests/setup.js:78:11)
+      at Object.<anonymous> (tests/payments.test.js:210:18)
+
+FAIL tests/auth.test.js
+  ΓùÅ Console
+
+    console.log
+      [dotenv@17.3.1] injecting env (8) from .env -- tip: ≡ƒöÉ encrypt with Dotenvx: https://dotenvx.com
+
+      at _log (node_modules/dotenv/lib/main.js:139:11)
+
+    console.log
+      [dotenv@17.3.1] injecting env (0) from .env -- tip: ≡ƒ¢á∩╕Å  run anywhere with `dotenvx run -- 
+yourcommand`
+
+      at _log (node_modules/dotenv/lib/main.js:139:11)
+
+    console.warn
+      ΓÜá∩╕Å  PAYMENTS ARE SIMULATED (ALLOW_MOCK_PAYMENTS=true). No money will move.
+
+    [0m [90m 56 |[39m }
+     [90m 57 |[39m [36mif[39m ([33mMOCK[39m) {
+    [31m[1m>[22m[39m[90m 58 |[39m   console[33m.[39mwarn([32m'ΓÜá∩╕Å  PAYMENTS ARE SIMULATED 
+(ALLOW_MOCK_PAYMENTS=true). No money will move.'[39m)[33m;[39m
+     [90m    |[39m           [31m[1m^[22m[39m
+     [90m 59 |[39m }
+     [90m 60 |[39m
+     [90m 61 |[39m [90m// Paynow endpoints[39m[0m
+
+      at Object.warn (src/services/payment.service.js:58:11)
+      at Object.require (src/controllers/payment.controller.js:17:5)
+      at Object.require (src/routes/payment.routes.js:8:5)
+      at Object.require (src/app.js:43:25)
+      at Object.require (tests/auth.test.js:2:13)
+
+  ΓùÅ Authorization ΓÇö the vendor read hole ΓÇ║ does NOT let a customer read another customer's order
+
+    makeCity failed: duplicate key value violates unique constraint "cities_name_key" | name: name must 
+be unique
+
+    [0m [90m 76 |[39m     [36mconst[39m detail [33m=[39m 
+err[33m.[39mparent[33m?[39m[33m.[39mmessage [33m||[39m 
+err[33m.[39moriginal[33m?[39m[33m.[39mmessage [33m||[39m err[33m.[39mmessage[33m;[39m
+     [90m 77 |[39m     [36mconst[39m fields [33m=[39m 
+err[33m.[39merrors[33m?[39m[33m.[39mmap((e) [33m=>[39m [32m`${e.path}: 
+${e.message}`[39m)[33m.[39mjoin([32m'; '[39m)[33m;[39m
+    [31m[1m>[22m[39m[90m 78 |[39m     [36mthrow[39m [36mnew[39m [33mError[39m([32m`makeCity 
+failed: ${detail}${fields ? ' | ' + fields : ''}`[39m)[33m;[39m
+     [90m    |[39m           [31m[1m^[22m[39m
+     [90m 79 |[39m   }
+     [90m 80 |[39m }
+     [90m 81 |[39m[0m
+
+      at makeCity (tests/setup.js:78:11)
+      at Object.<anonymous> (tests/auth.test.js:84:18)
+
+  ΓùÅ Authorization ΓÇö the vendor read hole ΓÇ║ DOES let the owning customer read their own order
+
+    makeCity failed: duplicate key value violates unique constraint "cities_name_key" | name: name must 
+be unique
+
+    [0m [90m 76 |[39m     [36mconst[39m detail [33m=[39m 
+err[33m.[39mparent[33m?[39m[33m.[39mmessage [33m||[39m 
+err[33m.[39moriginal[33m?[39m[33m.[39mmessage [33m||[39m err[33m.[39mmessage[33m;[39m
+     [90m 77 |[39m     [36mconst[39m fields [33m=[39m 
+err[33m.[39merrors[33m?[39m[33m.[39mmap((e) [33m=>[39m [32m`${e.path}: 
+${e.message}`[39m)[33m.[39mjoin([32m'; '[39m)[33m;[39m
+    [31m[1m>[22m[39m[90m 78 |[39m     [36mthrow[39m [36mnew[39m [33mError[39m([32m`makeCity 
+failed: ${detail}${fields ? ' | ' + fields : ''}`[39m)[33m;[39m
+     [90m    |[39m           [31m[1m^[22m[39m
+     [90m 79 |[39m   }
+     [90m 80 |[39m }
+     [90m 81 |[39m[0m
+
+      at makeCity (tests/setup.js:78:11)
+      at Object.<anonymous> (tests/auth.test.js:97:18)
+
+  ΓùÅ Authorization ΓÇö chat contacts leak phone numbers ΓÇ║ does NOT expose contacts on an order you 
+have nothing to do with
+
+    makeCity failed: duplicate key value violates unique constraint "cities_name_key" | name: name must 
+be unique
+
+    [0m [90m 76 |[39m     [36mconst[39m detail [33m=[39m 
+err[33m.[39mparent[33m?[39m[33m.[39mmessage [33m||[39m 
+err[33m.[39moriginal[33m?[39m[33m.[39mmessage [33m||[39m err[33m.[39mmessage[33m;[39m
+     [90m 77 |[39m     [36mconst[39m fields [33m=[39m 
+err[33m.[39merrors[33m?[39m[33m.[39mmap((e) [33m=>[39m [32m`${e.path}: 
+${e.message}`[39m)[33m.[39mjoin([32m'; '[39m)[33m;[39m
+    [31m[1m>[22m[39m[90m 78 |[39m     [36mthrow[39m [36mnew[39m [33mError[39m([32m`makeCity 
+failed: ${detail}${fields ? ' | ' + fields : ''}`[39m)[33m;[39m
+     [90m    |[39m           [31m[1m^[22m[39m
+     [90m 79 |[39m   }
+     [90m 80 |[39m }
+     [90m 81 |[39m[0m
+
+      at makeCity (tests/setup.js:78:11)
+      at Object.<anonymous> (tests/auth.test.js:125:18)
+
+FAIL tests/orders.test.js
+  ΓùÅ Console
+
+    console.log
+      [dotenv@17.3.1] injecting env (8) from .env -- tip: ≡ƒ¢í∩╕Å auth for agents: https://vestauth.com
+
+      at _log (node_modules/dotenv/lib/main.js:139:11)
+
+    console.log
+      [dotenv@17.3.1] injecting env (0) from .env -- tip: ΓÜÖ∩╕Å  load multiple .env files with { path: 
+['.env.local', '.env'] }
+
+      at _log (node_modules/dotenv/lib/main.js:139:11)
+
+    console.warn
+      ΓÜá∩╕Å  PAYMENTS ARE SIMULATED (ALLOW_MOCK_PAYMENTS=true). No money will move.
+
+    [0m [90m 56 |[39m }
+     [90m 57 |[39m [36mif[39m ([33mMOCK[39m) {
+    [31m[1m>[22m[39m[90m 58 |[39m   console[33m.[39mwarn([32m'ΓÜá∩╕Å  PAYMENTS ARE SIMULATED 
+(ALLOW_MOCK_PAYMENTS=true). No money will move.'[39m)[33m;[39m
+     [90m    |[39m           [31m[1m^[22m[39m
+     [90m 59 |[39m }
+     [90m 60 |[39m
+     [90m 61 |[39m [90m// Paynow endpoints[39m[0m
+
+      at Object.warn (src/services/payment.service.js:58:11)
+      at Object.require (src/controllers/payment.controller.js:17:5)
+      at Object.require (src/routes/payment.routes.js:8:5)
+      at Object.require (src/app.js:43:25)
+      at Object.require (tests/orders.test.js:2:13)
+
+  ΓùÅ Claiming an order ΓÇö the race condition ΓÇ║ refuses a second claim on an already-claimed order
+
+    makeCity failed: duplicate key value violates unique constraint "cities_name_key" | name: name must 
+be unique
+
+    [0m [90m 76 |[39m     [36mconst[39m detail [33m=[39m 
+err[33m.[39mparent[33m?[39m[33m.[39mmessage [33m||[39m 
+err[33m.[39moriginal[33m?[39m[33m.[39mmessage [33m||[39m err[33m.[39mmessage[33m;[39m
+     [90m 77 |[39m     [36mconst[39m fields [33m=[39m 
+err[33m.[39merrors[33m?[39m[33m.[39mmap((e) [33m=>[39m [32m`${e.path}: 
+${e.message}`[39m)[33m.[39mjoin([32m'; '[39m)[33m;[39m
+    [31m[1m>[22m[39m[90m 78 |[39m     [36mthrow[39m [36mnew[39m [33mError[39m([32m`makeCity 
+failed: ${detail}${fields ? ' | ' + fields : ''}`[39m)[33m;[39m
+     [90m    |[39m           [31m[1m^[22m[39m
+     [90m 79 |[39m   }
+     [90m 80 |[39m }
+     [90m 81 |[39m[0m
+
+      at makeCity (tests/setup.js:78:11)
+      at Object.<anonymous> (tests/orders.test.js:57:18)
+
+  ΓùÅ Claiming an order ΓÇö the race condition ΓÇ║ refuses a Mzaya whose vehicle is too small for the 
+load
+
+    makeCity failed: duplicate key value violates unique constraint "cities_name_key" | name: name must 
+be unique
+
+    [0m [90m 76 |[39m     [36mconst[39m detail [33m=[39m 
+err[33m.[39mparent[33m?[39m[33m.[39mmessage [33m||[39m 
+err[33m.[39moriginal[33m?[39m[33m.[39mmessage [33m||[39m err[33m.[39mmessage[33m;[39m
+     [90m 77 |[39m     [36mconst[39m fields [33m=[39m 
+err[33m.[39merrors[33m?[39m[33m.[39mmap((e) [33m=>[39m [32m`${e.path}: 
+${e.message}`[39m)[33m.[39mjoin([32m'; '[39m)[33m;[39m
+    [31m[1m>[22m[39m[90m 78 |[39m     [36mthrow[39m [36mnew[39m [33mError[39m([32m`makeCity 
+failed: ${detail}${fields ? ' | ' + fields : ''}`[39m)[33m;[39m
+     [90m    |[39m           [31m[1m^[22m[39m
+     [90m 79 |[39m   }
+     [90m 80 |[39m }
+     [90m 81 |[39m[0m
+
+      at makeCity (tests/setup.js:78:11)
+      at Object.<anonymous> (tests/orders.test.js:76:18)
+
+  ΓùÅ Claiming an order ΓÇö the race condition ΓÇ║ refuses an unapproved Mzaya
+
+    makeCity failed: duplicate key value violates unique constraint "cities_name_key" | name: name must 
+be unique
+
+    [0m [90m 76 |[39m     [36mconst[39m detail [33m=[39m 
+err[33m.[39mparent[33m?[39m[33m.[39mmessage [33m||[39m 
+err[33m.[39moriginal[33m?[39m[33m.[39mmessage [33m||[39m err[33m.[39mmessage[33m;[39m
+     [90m 77 |[39m     [36mconst[39m fields [33m=[39m 
+err[33m.[39merrors[33m?[39m[33m.[39mmap((e) [33m=>[39m [32m`${e.path}: 
+${e.message}`[39m)[33m.[39mjoin([32m'; '[39m)[33m;[39m
+    [31m[1m>[22m[39m[90m 78 |[39m     [36mthrow[39m [36mnew[39m [33mError[39m([32m`makeCity 
+failed: ${detail}${fields ? ' | ' + fields : ''}`[39m)[33m;[39m
+     [90m    |[39m           [31m[1m^[22m[39m
+     [90m 79 |[39m   }
+     [90m 80 |[39m }
+     [90m 81 |[39m[0m
+
+      at makeCity (tests/setup.js:78:11)
+      at Object.<anonymous> (tests/orders.test.js:97:18)
+
+  ΓùÅ Order status transitions ΓÇ║ only lets the assigned Mzaya update the status
+
+    makeCity failed: duplicate key value violates unique constraint "cities_name_key" | name: name must 
+be unique
+
+    [0m [90m 76 |[39m     [36mconst[39m detail [33m=[39m 
+err[33m.[39mparent[33m?[39m[33m.[39mmessage [33m||[39m 
+err[33m.[39moriginal[33m?[39m[33m.[39mmessage [33m||[39m err[33m.[39mmessage[33m;[39m
+     [90m 77 |[39m     [36mconst[39m fields [33m=[39m 
+err[33m.[39merrors[33m?[39m[33m.[39mmap((e) [33m=>[39m [32m`${e.path}: 
+${e.message}`[39m)[33m.[39mjoin([32m'; '[39m)[33m;[39m
+    [31m[1m>[22m[39m[90m 78 |[39m     [36mthrow[39m [36mnew[39m [33mError[39m([32m`makeCity 
+failed: ${detail}${fields ? ' | ' + fields : ''}`[39m)[33m;[39m
+     [90m    |[39m           [31m[1m^[22m[39m
+     [90m 79 |[39m   }
+     [90m 80 |[39m }
+     [90m 81 |[39m[0m
+
+      at makeCity (tests/setup.js:78:11)
+      at Object.<anonymous> (tests/orders.test.js:113:18)
+
+  ΓùÅ Order status transitions ΓÇ║ requires a proof photo to mark an order delivered
+
+    makeCity failed: duplicate key value violates unique constraint "cities_name_key" | name: name must 
+be unique
+
+    [0m [90m 76 |[39m     [36mconst[39m detail [33m=[39m 
+err[33m.[39mparent[33m?[39m[33m.[39mmessage [33m||[39m 
+err[33m.[39moriginal[33m?[39m[33m.[39mmessage [33m||[39m err[33m.[39mmessage[33m;[39m
+     [90m 77 |[39m     [36mconst[39m fields [33m=[39m 
+err[33m.[39merrors[33m?[39m[33m.[39mmap((e) [33m=>[39m [32m`${e.path}: 
+${e.message}`[39m)[33m.[39mjoin([32m'; '[39m)[33m;[39m
+    [31m[1m>[22m[39m[90m 78 |[39m     [36mthrow[39m [36mnew[39m [33mError[39m([32m`makeCity 
+failed: ${detail}${fields ? ' | ' + fields : ''}`[39m)[33m;[39m
+     [90m    |[39m           [31m[1m^[22m[39m
+     [90m 79 |[39m   }
+     [90m 80 |[39m }
+     [90m 81 |[39m[0m
+
+      at makeCity (tests/setup.js:78:11)
+      at Object.<anonymous> (tests/orders.test.js:135:18)
+
+Test Suites: 3 failed, 3 total
+Tests:       16 failed, 9 passed, 25 total
+Snapshots:   0 total
+Time:        6.058 s, estimated 7 s
+Ran all test suites.
+[dotenv@17.3.1] injecting env (8) from .env -- tip: ΓÜÖ∩╕Å  enable debug logging with { debug: true }
+Force exiting Jest: Have you considered using `--detectOpenHandles` to detect async operations that kept 
+running after all tests finished?

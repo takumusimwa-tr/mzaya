@@ -104,8 +104,10 @@ const PAYMENT_METHOD = {
   ZIPIT:     'zipit',
   VISA:      'visa',
   MASTERCARD:'mastercard',
-  CARD:      'card',       // Paynow hosted card page
-  DIASPORA:  'diaspora',   // Paynow diaspora / international cards
+  // Paynow's hosted card page — accepts international cards too, so someone
+  // paying from the diaspora uses this. There is no separate "diaspora" method:
+  // it would have routed to the identical endpoint.
+  CARD:      'card',
 };
 
 // ─── Currency ─────────────────────────────────────────────────────────────────

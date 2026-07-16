@@ -2,6 +2,7 @@ const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const User = require('../models/userModel');
 const { USER_ROLE, JWT } = require('../config/constants');
+const { logger } = require('../utils/logger');
 
 // ─── Register ─────────────────────────────────────────────────────────────────
 async function register(req, res) {
@@ -39,7 +40,7 @@ async function register(req, res) {
       user: safeUser(user),
     });
   } catch (err) {
-    console.error('Register error:', err.message);
+    logger.error('register_error', { error: err.message });
     return res.status(500).json({ error: 'Registration failed' });
   }
 }
@@ -71,7 +72,7 @@ async function login(req, res) {
       user: safeUser(user),
     });
   } catch (err) {
-    console.error('Login error:', err.message);
+    logger.error('login_error', { error: err.message });
     return res.status(500).json({ error: 'Login failed' });
   }
 }

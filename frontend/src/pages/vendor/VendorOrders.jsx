@@ -319,7 +319,7 @@ function OrderDetailPane({ order, onAccept, accepting, onChat, vehicles, onUpgra
       <button onClick={onChat}
         className="w-full py-3 rounded-2xl font-bold flex items-center justify-center gap-2 active:scale-98 mb-3"
         style={{ background: '#EDFAF3', color: '#00A651' }}>
-        <Icon name="chat" size={15} className="inline" /> Message customer & rider
+        <Icon name="chat" size={15} className="inline" /> Message customer & Mzaya
       </button>
 
       {/* Action */}

@@ -8,8 +8,8 @@ import LoadingScreen from '../../components/ui/LoadingScreen'
 import Icon from '../../components/ui/Icon'
 
 const STATUS_INFO = {
-  pending:   { label: 'Finding a rider',  icon: 'searching', desc: 'Looking for an available rider',  eta: '5-10 min'  },
-  accepted:  { label: 'Rider on the way', icon: 'rider', desc: 'Heading to the pickup',           eta: '10-15 min' },
+  pending:   { label: 'Finding a Mzaya',  icon: 'searching', desc: 'Looking for an available Mzaya',  eta: '5-10 min'  },
+  accepted:  { label: 'Mzaya on the way', icon: 'rider', desc: 'Heading to the pickup',           eta: '10-15 min' },
   picked_up: { label: 'Order picked up',  icon: 'parcel', desc: 'Your order has been collected',    eta: '10-20 min' },
   en_route:  { label: 'On the way',       icon: 'enroute', desc: 'Heading to you now',               eta: '5-10 min'  },
   delivered: { label: 'Delivered',        icon: 'delivered', desc: 'Enjoy!',                           eta: null        },
@@ -121,7 +121,7 @@ export default function TrackingPage() {
               <div className="absolute inset-0 flex items-center justify-center bg-gray-100/80 z-10">
                 <div className="text-center">
                   <div className="mb-2 flex justify-center animate-pulse text-gray-400"><Icon name="location" size={30} /></div>
-                  <p className="text-sm text-gray-500">Waiting for rider location...</p>
+                  <p className="text-sm text-gray-500">Waiting for Mzaya location...</p>
                 </div>
               </div>
             )}

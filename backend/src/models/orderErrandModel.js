@@ -35,6 +35,12 @@ const OrderErrand = sequelize.define('OrderErrand', {
     type: DataTypes.JSONB, // { lat, lng }
     allowNull: true,
   },
+  // A landmark for the errand end. Coordinates get the Mzaya to the gate; a
+  // landmark gets them through it — which in Zimbabwe is most of the problem.
+  errand_landmark: {
+    type: DataTypes.STRING,
+    allowNull: true, // e.g. "3rd floor, entrance behind the bank"
+  },
 
   // Estimated time to complete errand
   estimated_duration_minutes: {

@@ -1,5 +1,6 @@
 // backend/src/controllers/vendorStats.controller.js
 const { Op } = require('sequelize');
+const { logger } = require('../utils/logger');
 const {
   Order, OrderFood, OrderGrocery, OrderMaterials, Vendor,
 } = require('../models/associations');
@@ -99,7 +100,7 @@ async function vendorStats(req, res) {
       },
     });
   } catch (err) {
-    console.error('vendorStats error:', err.message);
+    logger.error('vendorstats_error', { error: err.message });
     return res.status(500).json({ error: 'Failed to load stats' });
   }
 }

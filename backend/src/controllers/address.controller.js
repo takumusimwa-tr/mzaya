@@ -1,5 +1,6 @@
 const { sequelize } = require('../config/db');
 const { QueryTypes } = require('sequelize');
+const { logger } = require('../utils/logger');
 
 // GET /api/addresses — list the customer's saved addresses
 async function listAddresses(req, res) {
@@ -11,7 +12,7 @@ async function listAddresses(req, res) {
     );
     return res.status(200).json({ addresses: rows });
   } catch (err) {
-    console.error('listAddresses error:', err.message);
+    logger.error('listaddresses_error', { error: err.message });
     return res.status(500).json({ error: 'Failed to fetch addresses' });
   }
 }
@@ -50,7 +51,7 @@ async function addAddress(req, res) {
     );
     return res.status(201).json({ address: rows[0][0] });
   } catch (err) {
-    console.error('addAddress error:', err.message);
+    logger.error('addaddress_error', { error: err.message });
     return res.status(500).json({ error: 'Failed to add address' });
   }
 }
@@ -84,7 +85,7 @@ async function updateAddress(req, res) {
     if (!rows[0].length) return res.status(404).json({ error: 'Address not found' });
     return res.status(200).json({ address: rows[0][0] });
   } catch (err) {
-    console.error('updateAddress error:', err.message);
+    logger.error('updateaddress_error', { error: err.message });
     return res.status(500).json({ error: 'Failed to update address' });
   }
 }
@@ -98,7 +99,7 @@ async function deleteAddress(req, res) {
     );
     return res.status(200).json({ message: 'Address deleted' });
   } catch (err) {
-    console.error('deleteAddress error:', err.message);
+    logger.error('deleteaddress_error', { error: err.message });
     return res.status(500).json({ error: 'Failed to delete address' });
   }
 }

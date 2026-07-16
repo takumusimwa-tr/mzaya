@@ -4,6 +4,7 @@ const {
   OrderFood, OrderGrocery, OrderMaterials,
 } = require('../models/associations');
 const { getIO } = require('../realtime/socket');
+const { logger } = require('../utils/logger');
 
 // Active window where communication is allowed.
 const ACTIVE_STATUSES = ['accepted', 'preparing', 'ready', 'picked_up', 'en_route'];
@@ -59,7 +60,7 @@ async function listMessages(req, res) {
 
     return res.status(200).json({ messages, my_role: role });
   } catch (err) {
-    console.error('listMessages error:', err.message);
+    logger.error('listmessages_error', { error: err.message });
     return res.status(500).json({ error: 'Failed to load messages' });
   }
 }
@@ -106,7 +107,7 @@ async function sendMessage(req, res) {
 
     return res.status(201).json({ message: full });
   } catch (err) {
-    console.error('sendMessage error:', err.message);
+    logger.error('sendmessage_error', { error: err.message });
     return res.status(500).json({ error: 'Failed to send message' });
   }
 }
@@ -140,7 +141,7 @@ async function orderContacts(req, res) {
 
     return res.status(200).json({ contacts, active: true });
   } catch (err) {
-    console.error('orderContacts error:', err.message);
+    logger.error('ordercontacts_error', { error: err.message });
     return res.status(500).json({ error: 'Failed to load contacts' });
   }
 }

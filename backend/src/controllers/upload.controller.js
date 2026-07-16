@@ -13,6 +13,7 @@
 //   CLOUDINARY_API_SECRET=...
 const path = require('path');
 const fs   = require('fs');
+const { logger } = require('../utils/logger');
 
 const CLOUD_NAME = process.env.CLOUDINARY_CLOUD_NAME || '';
 const API_KEY    = process.env.CLOUDINARY_API_KEY || '';
@@ -34,9 +35,9 @@ if (USE_CLOUDINARY) {
     api_secret: API_SECRET,
     secure:     true,
   });
-  console.log('🖼️  Cloudinary image hosting enabled');
+  logger.info('🖼️  Cloudinary image hosting enabled');
 } else {
-  console.log('🖼️  Cloudinary not configured — using local disk uploads (dev only)');
+  logger.info('🖼️  Cloudinary not configured — using local disk uploads (dev only)');
 }
 
 // POST /api/uploads — single image (multer put it in memory or on disk).
@@ -74,7 +75,7 @@ async function uploadImage(req, res) {
 
     return res.status(201).json({ url: result.secure_url });
   } catch (err) {
-    console.error('uploadImage error:', err.message);
+    logger.error('uploadimage_error', { error: err.message });
     return res.status(500).json({ error: 'Failed to upload image' });
   }
 }

@@ -3,6 +3,7 @@
 const { Order, OrderOffer, Rider, User } = require('../models/associations');
 const realtime = require('../realtime/socket');
 const { getIO } = require('../realtime/socket');
+const { logger } = require('../utils/logger');
 
 // POST /api/orders/:id/offers   (rider)  { type: 'accept'|'counter', amount_usd, note }
 // A rider accepts the customer's offered fare, or counters with their own.
@@ -43,7 +44,7 @@ async function makeOffer(req, res) {
 
     return res.status(201).json({ message: 'Offer submitted', offer });
   } catch (err) {
-    console.error('makeOffer error:', err.message);
+    logger.error('makeoffer_error', { error: err.message });
     return res.status(500).json({ error: 'Failed to submit offer' });
   }
 }
@@ -76,7 +77,7 @@ async function listOffers(req, res) {
 
     return res.status(200).json({ offers: enriched });
   } catch (err) {
-    console.error('listOffers error:', err.message);
+    logger.error('listoffers_error', { error: err.message });
     return res.status(500).json({ error: 'Failed to load offers' });
   }
 }
@@ -127,7 +128,7 @@ async function chooseOffer(req, res) {
 
     return res.status(200).json({ message: 'Rider assigned', order });
   } catch (err) {
-    console.error('chooseOffer error:', err.message);
+    logger.error('chooseoffer_error', { error: err.message });
     return res.status(500).json({ error: 'Failed to choose offer' });
   }
 }
@@ -169,7 +170,7 @@ async function negotiableOrders(req, res) {
       })),
     });
   } catch (err) {
-    console.error('negotiableOrders error:', err.message);
+    logger.error('negotiableorders_error', { error: err.message });
     return res.status(500).json({ error: 'Failed to load negotiable orders' });
   }
 }

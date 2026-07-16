@@ -160,26 +160,44 @@ export default function OrderDetail() {
           <button onClick={() => setShowChat(true)}
             className="w-full py-3 rounded-2xl font-bold text-white flex items-center justify-center gap-2 active:scale-98"
             style={{ background: '#00A651' }}>
-            <Icon name="chat" size={15} className="inline" /> Message rider & store
+            <Icon name="chat" size={15} className="inline" /> Message Mzaya & store
           </button>
         )}
 
         {/* Payment — show until the order is paid */}
-        {order.payment_status !== 'success' && order.status !== 'cancelled' && (
+        {/* Payment.
+            This is the ONLY place a payment method is chosen — checkout no longer
+            asks. Shown only while the order is genuinely awaiting payment: a
+            cancelled order needs no payment, and an already-delivered one that
+            somehow went unpaid is a reconciliation problem, not something to nag
+            the customer about on every visit. */}
+        {order.payment_status !== 'success'
+          && order.status !== 'cancelled'
+          && order.status !== 'delivered' && (
           <PaymentPanel order={order} onPaid={() => queryClient.invalidateQueries(['order', id])} />
+        )}
+
+        {/* Delivered but unpaid — surface it, don't hide it, but don't nag either. */}
+        {order.payment_status !== 'success' && order.status === 'delivered' && (
+          <div className="rounded-2xl p-4 border" style={{ background: '#FFFBEB', borderColor: '#FDE68A' }}>
+            <p className="text-sm font-semibold" style={{ color: '#B45309' }}>Payment outstanding</p>
+            <p className="text-xs mt-0.5" style={{ color: '#92400E' }}>
+              This order was delivered but payment hasn't cleared. Contact support if you believe this is wrong.
+            </p>
+          </div>
         )}
 
         {/* Fare negotiation — incoming rider offers */}
         {isAwaitingOffers && (
           <div className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100">
             <div className="flex items-center justify-between mb-1">
-              <h2 className="text-sm font-bold text-gray-700">Rider offers</h2>
+              <h2 className="text-sm font-bold text-gray-700">Mzaya offers</h2>
               <span className="text-xs text-gray-400">Your fare: US${Number(order.offered_fare_usd).toFixed(2)}</span>
             </div>
             {!offers?.length ? (
               <div className="py-6 text-center">
                 <div className="mb-2 flex justify-center animate-pulse text-gray-400"><Icon name="waiting" size={30} /></div>
-                <p className="text-sm text-gray-500">Waiting for riders to respond…</p>
+                <p className="text-sm text-gray-500">Waiting for Mzayas to respond…</p>
                 <p className="text-xs text-gray-400 mt-1">They can accept your fare or propose a price.</p>
               </div>
             ) : (
@@ -188,7 +206,7 @@ export default function OrderDetail() {
                   <div key={o.id} className="flex items-center justify-between p-3 rounded-xl border border-gray-100">
                     <div>
                       <div className="flex items-center gap-2">
-                        <p className="font-bold text-gray-900">{o.rider?.name || 'Rider'}</p>
+                        <p className="font-bold text-gray-900">{o.rider?.name || 'Mzaya'}</p>
                         {o.type === 'counter'
                           ? <span className="text-[10px] font-bold uppercase px-1.5 py-0.5 rounded bg-amber-50 text-amber-600">Counter</span>
                           : <span className="text-[10px] font-bold uppercase px-1.5 py-0.5 rounded bg-green-50" style={{ color: '#00A651' }}>Accepts</span>
@@ -197,7 +215,7 @@ export default function OrderDetail() {
                       <p className="text-xs text-gray-400 mt-0.5">
                         {o.rider_profile?.vehicle_type?.replace('_', ' ') || 'vehicle'}
                         {o.rider_profile?.total_deliveries != null && ` · ${o.rider_profile.total_deliveries} trips`}
-                        {o.rider_profile?.rating > 0 && ` · ⭐ US${Number(o.rider_profile.rating).toFixed(1)}`}
+                        {o.rider_profile?.rating > 0 && ` · ⭐ ${Number(o.rider_profile.rating).toFixed(1)}`}
                       </p>
                     </div>
                     <div className="text-right">
@@ -221,7 +239,7 @@ export default function OrderDetail() {
             <h2 className="text-sm font-bold text-gray-700 mb-3"><Icon name="camera" size={14} className="inline" /> Proof of delivery</h2>
             <img src={imageUrl(order.delivery_proof_url, 800)} alt="Delivery proof"
               className="w-full rounded-xl object-cover max-h-72" />
-            <p className="text-xs text-gray-400 mt-2">Photo taken by your rider at drop-off.</p>
+            <p className="text-xs text-gray-400 mt-2">Photo taken by your Mzaya at drop-off.</p>
           </div>
         )}
 

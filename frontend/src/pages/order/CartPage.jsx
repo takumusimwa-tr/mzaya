@@ -107,7 +107,12 @@ export default function CartPage() {
       </div>
 
       {/* Checkout bar */}
-      <div className="fixed bottom-20 left-1/2 -translate-x-1/2 w-full max-w-md px-4 z-30">
+      {/* Sits DIRECTLY on the bottom nav — no floating gap.
+          It used to be `bottom-20`, which parked the button 80px up and left a
+          dead band of empty screen between it and the nav. That's prime real
+          estate on a phone; it should either do something or not exist. */}
+      <div className="fixed bottom-16 left-1/2 -translate-x-1/2 w-full max-w-md px-4 pt-3 pb-3 z-30
+                      bg-gradient-to-t from-white via-white to-transparent">
         <button onClick={() => navigate('/checkout')}
           className="w-full flex items-center justify-between px-5 py-4 rounded-2xl text-white font-bold active:scale-98 transition-transform"
           style={{ background: '#00A651', boxShadow: '0 8px 24px #00A65150' }}>

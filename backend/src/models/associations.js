@@ -12,6 +12,8 @@ const Promo           = require('./promoModel');
 const Brand           = require('./brandModel');
 const OrderOffer      = require('./orderOfferModel');
 const OrderMessage    = require('./orderMessageModel');
+const PaymentAttempt  = require('./paymentAttemptModel');
+const PaymentEvent    = require('./paymentEventModel');
 
 // ─── City associations ────────────────────────────────────────────────────────
 City.hasMany(Vendor, { foreignKey: 'city_id', as: 'vendors' });
@@ -70,6 +72,14 @@ Order.hasMany(OrderMessage, { foreignKey: 'order_id', as: 'messages' });
 OrderMessage.belongsTo(Order, { foreignKey: 'order_id', as: 'order' });
 OrderMessage.belongsTo(User, { foreignKey: 'sender_id', as: 'sender' });
 
+// ─── Payments ────────────────────────────────────────────────────────────────
+// An order's paid state is DERIVED from its attempts, never written directly.
+Order.hasMany(PaymentAttempt, { foreignKey: 'order_id', as: 'paymentAttempts' });
+PaymentAttempt.belongsTo(Order, { foreignKey: 'order_id', as: 'order' });
+
+PaymentAttempt.hasMany(PaymentEvent, { foreignKey: 'attempt_id', as: 'events' });
+PaymentEvent.belongsTo(PaymentAttempt, { foreignKey: 'attempt_id', as: 'attempt' });
+
 module.exports = {
   User,
   Order,
@@ -85,4 +95,6 @@ module.exports = {
   Brand,
   OrderOffer,
   OrderMessage,
+  PaymentAttempt,
+  PaymentEvent,
 };

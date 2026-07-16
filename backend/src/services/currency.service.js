@@ -1,4 +1,5 @@
 const axios = require('axios');
+const { logger } = require('../utils/logger');
 
 // ─── In-memory rate cache ─────────────────────────────────────────────────────
 // Refreshed daily by the cron job in src/jobs/currencySync.job.js
@@ -28,7 +29,7 @@ async function fetchZigRate() {
     // Last resort hardcoded fallback (update periodically)
     return 27.50;
   } catch (err) {
-    console.error('Currency fetch error:', err.message);
+    logger.error('currency_fetch_error', { error: err.message });
     return cachedRate.usdToZig || 27.50;
   }
 }

@@ -1,73 +1,112 @@
 // Mzaya service worker.
 //
-// Zimbabwe has patchy mobile coverage — a rider routinely loses signal mid-
-// delivery, and a customer's connection drops between suburbs. The previous
-// worker cached only '/' and '/index.html', which meant a dropped signal gave
-// you a blank screen. That's not acceptable for a delivery app here.
+// ─────────────────────────────────────────────────────────────────────────────
+// WHAT THIS DELIBERATELY DOES NOT DO — and why
 //
-// Three strategies:
-//   1. App shell + static assets  → cache-first (instant load, works offline)
-//   2. GET API responses          → stale-while-revalidate (show last known data
-//                                    immediately, refresh in the background)
-//   3. Mutating requests offline  → queued and replayed when signal returns
-//                                    (so "Mark as delivered" isn't lost)
+// The previous version of this file did two dangerous things:
+//
+//   1. It queued EVERY offline non-GET request — including payment initiation,
+//      login, and admin mutations — into Cache Storage, WITH the Authorization
+//      header. That put bearer tokens in a store any origin script can read, and
+//      a replayed payment could charge a customer twice. It also returned 202, so
+//      the UI believed a payment had succeeded when nothing had happened.
+//
+//   2. It cached authenticated /api GET responses keyed by URL only. On a shared
+//      phone — completely normal in Zimbabwe — the next person to sign in could
+//      be served the previous user's orders, addresses and profile.
+//
+// Both are gone. The rules now:
+//
+//   • NEVER cache an authenticated API response. Private data lives in memory
+//     (React Query), never on disk.
+//   • ONLY cache a small allowlist of genuinely public, impersonal data.
+//   • NEVER queue writes generically. Only explicitly allowlisted idempotent
+//     commands, and NEVER with the Authorization header. Payments, auth and
+//     uploads can never queue — they must fail visibly.
+//   • Purge every cache on logout.
+//
+// The offline goal is still real (patchy Zimbabwean coverage), but resilience
+// must not be bought with someone's token or someone else's order history.
+// ─────────────────────────────────────────────────────────────────────────────
 
-const VERSION       = 'v2'
-const SHELL_CACHE   = `mzaya-shell-${VERSION}`
-const API_CACHE     = `mzaya-api-${VERSION}`
-const IMAGE_CACHE   = `mzaya-img-${VERSION}`
+const VERSION      = 'v3'
+const SHELL_CACHE  = `mzaya-shell-${VERSION}`
+const IMAGE_CACHE  = `mzaya-img-${VERSION}`
+const PUBLIC_CACHE = `mzaya-public-${VERSION}`
+const QUEUE_CACHE  = `mzaya-queue-${VERSION}`
 
-const SHELL_ASSETS = [
-  '/',
-  '/index.html',
-  '/manifest.json',
-  '/favicon.svg',
+const SHELL_ASSETS = ['/', '/index.html', '/manifest.json']
+
+// The ONLY API paths that may be written to disk. Public, impersonal, identical
+// for everyone. Adding to this list is a security decision: a path qualifies only
+// if a stranger seeing the response would be harmless.
+const PUBLIC_API_ALLOWLIST = [
+  '/api/cities',
 ]
 
-// ─── Install: pre-cache the shell ─────────────────────────────────────────────
+// The ONLY commands that may be queued offline. Each must be idempotent on the
+// server (safe to apply twice).
+//
+// Deliberately EMPTY until the backend enforces idempotency keys. An empty
+// allowlist means nothing queues — offline writes simply fail, which is safe and
+// honest. Populate it only once the server can guarantee "same key ⇒ one
+// mutation". Payments, auth, uploads and admin actions must NEVER be added.
+const QUEUEABLE = [
+  // e.g. { method: 'PATCH', pattern: /^\/api\/riders\/location$/ },
+]
+
+// ─── Install ──────────────────────────────────────────────────────────────────
 self.addEventListener('install', (event) => {
   event.waitUntil(
-    caches.open(SHELL_CACHE)
-      .then((cache) => cache.addAll(SHELL_ASSETS))
-      .catch(() => {/* a missing asset shouldn't block install */})
+    caches.open(SHELL_CACHE).then((c) => c.addAll(SHELL_ASSETS)).catch(() => {})
   )
   self.skipWaiting()
 })
 
-// ─── Activate: drop caches from older versions ────────────────────────────────
+// ─── Activate: drop every cache from an older version ─────────────────────────
 self.addEventListener('activate', (event) => {
-  const keep = [SHELL_CACHE, API_CACHE, IMAGE_CACHE]
+  const keep = [SHELL_CACHE, IMAGE_CACHE, PUBLIC_CACHE, QUEUE_CACHE]
   event.waitUntil(
     caches.keys()
-      .then((names) => Promise.all(
-        names.filter((n) => !keep.includes(n)).map((n) => caches.delete(n))
-      ))
+      .then((names) => Promise.all(names.filter((n) => !keep.includes(n)).map((n) => caches.delete(n))))
       .then(() => self.clients.claim())
   )
 })
+
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+const isPublicApi = (url) =>
+  PUBLIC_API_ALLOWLIST.some((p) => url.pathname === p || url.pathname.startsWith(p + '/'))
+
+const isQueueable = (request, url) =>
+  QUEUEABLE.some((q) => q.method === request.method && q.pattern.test(url.pathname))
+
+// A credentialed request must never be persisted.
+const isAuthenticated = (request) =>
+  request.headers.has('Authorization') || request.credentials === 'include'
 
 // ─── Fetch ────────────────────────────────────────────────────────────────────
 self.addEventListener('fetch', (event) => {
   const { request } = event
   const url = new URL(request.url)
 
-  // Never touch cross-origin requests we don't own, Vite's dev/HMR endpoints, or
-  // websockets. A cache-first worker in front of a dev server serves stale
-  // modules and makes you debug code that isn't on disk.
+  // Leave Vite's dev server alone — a cache-first worker in front of it serves
+  // stale modules and makes you debug code that isn't on disk.
   if (
     url.origin !== self.location.origin ||
     url.pathname.startsWith('/@vite') ||
     url.pathname.startsWith('/@react-refresh') ||
     url.pathname.startsWith('/node_modules') ||
     url.pathname.startsWith('/src/') ||
-    url.searchParams.has('v') ||           // Vite's pre-bundle cache-buster
+    url.searchParams.has('v') ||
     request.headers.get('upgrade') === 'websocket'
-  ) {
-    return
-  }
+  ) return
 
-  // Never cache non-GET — but if we're offline, queue it so it isn't lost.
+  // ── Writes ────────────────────────────────────────────────────────────────
   if (request.method !== 'GET') {
+    // Only an allowlisted idempotent command may be deferred. Everything else —
+    // payments, auth, uploads, admin — hits the network and fails honestly.
+    if (!isQueueable(request, url)) return
+
     event.respondWith(
       fetch(request.clone()).catch(async () => {
         await queueRequest(request.clone())
@@ -80,27 +119,31 @@ self.addEventListener('fetch', (event) => {
     return
   }
 
-  // Images (incl. Cloudinary) → cache-first. They're immutable and expensive.
+  // ── API GETs ──────────────────────────────────────────────────────────────
+  if (url.pathname.startsWith('/api/')) {
+    // Authenticated or not allowlisted → never cached. Straight to the network.
+    // If it's down, the request fails and React Query shows its error state —
+    // which is correct. Far better a visible "you're offline" than silently
+    // handing someone another user's orders.
+    if (isAuthenticated(request) || !isPublicApi(url)) return
+
+    event.respondWith(staleWhileRevalidate(request, PUBLIC_CACHE))
+    return
+  }
+
+  // ── Images ────────────────────────────────────────────────────────────────
   if (request.destination === 'image') {
     event.respondWith(cacheFirst(request, IMAGE_CACHE))
     return
   }
 
-  // API GETs → stale-while-revalidate: instant last-known data, silent refresh.
-  if (url.pathname.startsWith('/api/')) {
-    event.respondWith(staleWhileRevalidate(request, API_CACHE))
-    return
-  }
-
-  // Navigation → try network, fall back to the cached shell.
+  // ── Navigation ────────────────────────────────────────────────────────────
   if (request.mode === 'navigate') {
-    event.respondWith(
-      fetch(request).catch(() => caches.match('/index.html'))
-    )
+    event.respondWith(fetch(request).catch(() => caches.match('/index.html')))
     return
   }
 
-  // Everything else (JS/CSS bundles) → cache-first.
+  // ── App shell (JS/CSS) ────────────────────────────────────────────────────
   event.respondWith(cacheFirst(request, SHELL_CACHE))
 })
 
@@ -110,10 +153,7 @@ async function cacheFirst(request, cacheName) {
   if (cached) return cached
   try {
     const res = await fetch(request)
-    if (res.ok) {
-      const cache = await caches.open(cacheName)
-      cache.put(request, res.clone())
-    }
+    if (res.ok) (await caches.open(cacheName)).put(request, res.clone())
     return res
   } catch {
     return cached || Response.error()
@@ -123,35 +163,32 @@ async function cacheFirst(request, cacheName) {
 async function staleWhileRevalidate(request, cacheName) {
   const cache  = await caches.open(cacheName)
   const cached = await cache.match(request)
-
   const network = fetch(request)
-    .then((res) => {
-      if (res.ok) cache.put(request, res.clone())
-      return res
-    })
+    .then((res) => { if (res.ok) cache.put(request, res.clone()); return res })
     .catch(() => null)
-
-  // Serve cached immediately if we have it; otherwise wait for the network.
   return cached || (await network) || new Response(
     JSON.stringify({ error: 'offline' }),
     { status: 503, headers: { 'Content-Type': 'application/json' } },
   )
 }
 
-// ─── Offline write queue ──────────────────────────────────────────────────────
-// A rider marking an order delivered with no signal must not lose that action.
-// We stash the request and replay it when connectivity returns.
-const QUEUE_CACHE = 'mzaya-queue'
-
+// ─── Offline queue (allowlisted commands only) ────────────────────────────────
 async function queueRequest(request) {
   try {
     const body = await request.text()
+
+    // Strip credentials. A bearer token must never be written to disk — the
+    // replay asks the live app for a fresh one instead.
+    const headers = [...request.headers.entries()]
+      .filter(([k]) => !['authorization', 'cookie'].includes(k.toLowerCase()))
+
     const entry = {
-      url:     request.url,
-      method:  request.method,
-      headers: [...request.headers.entries()],
+      url: request.url,
+      method: request.method,
+      headers,
       body,
-      at:      Date.now(),
+      at: Date.now(),
+      expiresAt: Date.now() + 60 * 60 * 1000, // expire rather than replay stale
     }
     const cache = await caches.open(QUEUE_CACHE)
     await cache.put(
@@ -163,29 +200,54 @@ async function queueRequest(request) {
 
 async function replayQueue() {
   const cache = await caches.open(QUEUE_CACHE)
-  const keys  = await cache.keys()
-  for (const key of keys) {
+  for (const key of await cache.keys()) {
     try {
-      const res   = await cache.match(key)
-      const entry = await res.json()
+      const entry = await (await cache.match(key)).json()
+      if (Date.now() > entry.expiresAt) { await cache.delete(key); continue }
+
+      // Ask an open page for a fresh token — we never stored one.
+      const token = await currentToken()
+      if (!token) continue
+
+      const headers = new Headers(entry.headers)
+      headers.set('Authorization', `Bearer ${token}`)
+
       const ok = await fetch(entry.url, {
-        method:  entry.method,
-        headers: new Headers(entry.headers),
-        body:    entry.body || undefined,
+        method: entry.method, headers, body: entry.body || undefined,
       }).then((r) => r.ok).catch(() => false)
+
       if (ok) await cache.delete(key)
-    } catch {
-      // leave it queued for the next attempt
-    }
+    } catch {/* leave queued for the next attempt */}
   }
 }
 
-// Replay when the browser tells us we're back, and on demand from the app.
+// Ask the app for the current token rather than persisting one.
+async function currentToken() {
+  const clients = await self.clients.matchAll()
+  if (!clients.length) return null
+  return new Promise((resolve) => {
+    const chan = new MessageChannel()
+    chan.port1.onmessage = (e) => resolve(e.data?.token || null)
+    clients[0].postMessage({ type: 'get-token' }, [chan.port2])
+    setTimeout(() => resolve(null), 1000)
+  })
+}
+
+// ─── Messages ─────────────────────────────────────────────────────────────────
 self.addEventListener('sync', (event) => {
   if (event.tag === 'mzaya-replay') event.waitUntil(replayQueue())
 })
 
 self.addEventListener('message', (event) => {
-  if (event.data === 'replay-queue') event.waitUntil(replayQueue())
-  if (event.data === 'skip-waiting') self.skipWaiting()
+  const data = event.data
+  if (data === 'replay-queue') event.waitUntil(replayQueue())
+  if (data === 'skip-waiting')  self.skipWaiting()
+
+  // On logout, destroy everything. Cache Storage outlives a session otherwise,
+  // and the next person to use this phone must inherit nothing.
+  if (data === 'purge-caches') {
+    event.waitUntil(
+      caches.keys().then((names) => Promise.all(names.map((n) => caches.delete(n))))
+    )
+  }
 })

@@ -7,6 +7,7 @@ const { getCurrentRate } = require('./currency.service');
 const { VEHICLE_META } = require('../config/constants');
 const mlService = require('./ml.service');
 const realtime = require('../realtime/socket');
+const { logger } = require('../utils/logger');
 
 // ─── Quote an order (no persistence) ──────────────────────────────────────────
 // Shared by POST /api/orders/quote and createOrder so the fee the customer sees
@@ -191,7 +192,7 @@ async function createOrder(customerId, orderData) {
       realtime.emitOrderAssigned(updatedOrder.rider_id, updatedOrder);
     }
   } catch (err) {
-    console.error('[realtime] emit new order failed:', err.message);
+    logger.error('realtime_emit_new_order_failed_error', { error: err.message });
   }
 
   // ── Fire-and-forget: extract ML features + score anomaly ──────────────────
@@ -201,7 +202,7 @@ async function createOrder(customerId, orderData) {
       await mlService.extractFeatures(orderJson);
       await mlService.scoreOrder(orderJson);
     } catch (err) {
-      console.error('[ML] Background processing failed:', err.message);
+      logger.error('ml_background_processing_failed_error', { error: err.message });
     }
   });
 
@@ -220,10 +221,41 @@ async function getOrderById(orderId, requesterId, requesterRole) {
   });
 
   if (!order) throw new Error('Order not found');
-  if (requesterRole === 'customer' && order.customer_id !== requesterId) throw new Error('Access denied');
-  if (requesterRole === 'rider'    && order.rider_id    !== requesterId) throw new Error('Access denied');
 
-  return order;
+  // Authorization.
+  //
+  // This used to check customers and riders and then FALL THROUGH for vendors —
+  // no check at all. Any vendor could therefore read any order in the system,
+  // including a competitor's: customer names, phone numbers, delivery addresses,
+  // totals. Just by changing the UUID in the URL.
+  //
+  // The route layer now guards this with loadOrder(), but the service closes it
+  // too. A hole this bad should not depend on a caller remembering to wrap it.
+  if (requesterRole === 'admin') return order;
+
+  if (requesterRole === 'customer') {
+    if (order.customer_id !== requesterId) throw new Error('Access denied');
+    return order;
+  }
+
+  if (requesterRole === 'rider') {
+    if (order.rider_id !== requesterId) throw new Error('Access denied');
+    return order;
+  }
+
+  if (requesterRole === 'vendor') {
+    // Only the vendor whose branch is actually fulfilling this order.
+    const vendorId = await resolveVendorId(order.id);
+    if (!vendorId) throw new Error('Access denied');   // errands have no vendor
+
+    const { Vendor } = require('../models/associations');
+    const branch = await Vendor.findByPk(vendorId, { attributes: ['owner_id'], raw: true });
+    if (!branch || branch.owner_id !== requesterId) throw new Error('Access denied');
+    return order;
+  }
+
+  // Unknown role — deny. Fail closed.
+  throw new Error('Access denied');
 }
 
 async function getCustomerOrders(customerId) {
@@ -255,7 +287,7 @@ async function updateOrderStatus(orderId, newStatus, riderId) {
     const vendorId = await resolveVendorId(order.id);
     realtime.emitOrderUpdated(order, { vendorId });
   } catch (err) {
-    console.error('[realtime] emit status failed:', err.message);
+    logger.error('realtime_emit_status_failed_error', { error: err.message });
   }
 
   // On delivery, credit the rider: delivery fee + 100% of the tip, and bump
@@ -273,7 +305,7 @@ async function updateOrderStatus(orderId, newStatus, riderId) {
         });
       }
     } catch (e) {
-      console.error('earnings credit failed:', e.message);
+      logger.error('earnings_credit_failed', { error: e.message });
     }
   }
 

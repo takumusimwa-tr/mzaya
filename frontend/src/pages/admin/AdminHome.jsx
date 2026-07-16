@@ -74,8 +74,8 @@ function Overview() {
     { label: 'Customers', value: o.total_customers || 0 },
     { label: 'Vendors', value: o.total_vendors || 0 },
     { label: 'Pending vendors', value: o.pending_vendors || 0, accent: o.pending_vendors ? '#D97706' : undefined },
-    { label: 'Riders', value: o.total_riders || 0 },
-    { label: 'Pending riders', value: o.pending_riders || 0, accent: o.pending_riders ? '#D97706' : undefined },
+    { label: 'Mzayas', value: o.total_riders || 0 },
+    { label: 'Pending Mzayas', value: o.pending_riders || 0, accent: o.pending_riders ? '#D97706' : undefined },
   ]
   return (
     <div className="grid grid-cols-2 gap-3">
@@ -163,14 +163,14 @@ function RidersQueue() {
   return (
     <div>
       <FilterRow options={['pending', 'approved', 'all']} value={filter} onChange={setFilter} />
-      {isLoading ? <LoadingScreen message="Loading riders..." /> : (
+      {isLoading ? <LoadingScreen message="Loading Mzayas..." /> : (
         <div className="flex flex-col gap-2 mt-3">
           {!riders?.length && <Empty label="No riders here" />}
           {riders?.map((r) => (
             <div key={r.id} className="bg-white rounded-2xl p-4 border border-gray-100">
               <div className="flex items-start justify-between">
                 <div>
-                  <p className="font-bold text-gray-900">{r.user?.name || 'Rider'}</p>
+                  <p className="font-bold text-gray-900">{r.user?.name || 'Mzaya'}</p>
                   <p className="text-xs text-gray-400">{r.user?.phone} · {r.city?.name || '—'}</p>
                   <p className="text-xs text-gray-400 capitalize mt-0.5">{r.vehicle_type?.replace('_', ' ') || 'no vehicle'}</p>
                 </div>

@@ -190,7 +190,7 @@ export default function RiderHome() {
               <Icon name="rider" size={22} />
               <div className="flex-1">
                 <p className="font-bold text-sm" style={{ color: '#92400E' }}>
-                  Complete your rider setup
+                  Complete your Mzaya setup
                 </p>
                 <p className="text-xs" style={{ color: '#B45309' }}>
                   Add your vehicle and city so we can match you with deliveries.

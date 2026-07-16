@@ -1,6 +1,7 @@
 // backend/src/controllers/geo.controller.js
 const axios = require('axios');
 const { extractCoords, isShortLink, looksLikeZimCoords } = require('../utils/pinParser');
+const { logger } = require('../utils/logger');
 
 // POST /api/geo/resolve-pin  { link: "<pasted whatsapp/maps link>" }
 // Returns { lat, lng, source } or 422 if it can't extract coordinates.
@@ -45,7 +46,7 @@ async function resolvePin(req, res) {
       error: "Couldn't read a location from that link. Paste the Google Maps link from the WhatsApp pin, or type the address instead.",
     });
   } catch (err) {
-    console.error('resolvePin error:', err.message);
+    logger.error('resolvepin_error', { error: err.message });
     return res.status(500).json({ error: 'Failed to resolve location' });
   }
 }

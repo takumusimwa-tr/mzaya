@@ -440,7 +440,7 @@ export default function CheckoutPage() {
               <p className="text-xs text-gray-400 mt-2">
                 {longestPrep > 30
                   ? `Some items need ~${longestPrep} min prep, so the earliest is ${minLeadMinutes} minutes from now.`
-                  : "At least 30 minutes ahead, up to 7 days. We'll dispatch a rider close to your chosen time."}
+                  : "At least 30 minutes ahead, up to 7 days. We'll dispatch a Mzaya close to your chosen time."}
               </p>
             </>
           )}
@@ -452,7 +452,7 @@ export default function CheckoutPage() {
             <div className="flex items-center justify-between mb-1">
               <div>
                 <h2 className="text-sm font-bold text-gray-700">Name your fare</h2>
-                <p className="text-xs text-gray-400 mt-0.5">Offer a price — riders accept or counter.</p>
+                <p className="text-xs text-gray-400 mt-0.5">Offer a price — Mzayas accept or counter.</p>
               </div>
               <button type="button" onClick={() => setNameYourFare((v) => !v)}
                 className="relative w-11 h-6 rounded-full transition-colors"
@@ -484,8 +484,8 @@ export default function CheckoutPage() {
 
         {/* Tip the rider */}
         <div className="bg-white rounded-2xl p-4 border border-gray-100">
-          <h2 className="text-sm font-bold text-gray-700 mb-1">Tip your rider</h2>
-          <p className="text-xs text-gray-400 mb-3">100% goes to your rider. Optional, but appreciated.</p>
+          <h2 className="text-sm font-bold text-gray-700 mb-1">Tip your Mzaya</h2>
+          <p className="text-xs text-gray-400 mb-3">100% goes to your Mzaya. Optional, but appreciated.</p>
           <div className="flex gap-2">
             {[0, 1, 2, 5].map((amt) => (
               <button key={amt} type="button"
@@ -558,26 +558,6 @@ export default function CheckoutPage() {
           )}
         </div>
 
-        {/* Payment.
-            The method is chosen at PAY time, not here. Previously checkout asked
-            for a payment method AND the payment panel asked again on the order
-            page — the customer picked twice, and the two could disagree. One
-            question, asked once, at the moment it's actually needed. */}
-        <div className="bg-white rounded-2xl p-4 border border-gray-100">
-          <div className="flex items-center gap-3">
-            <span className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0"
-              style={{ background: '#EDFAF3', color: '#00A651' }}>
-              <Icon name="money" size={18} />
-            </span>
-            <div>
-              <p className="text-sm font-semibold text-gray-800">Pay after you place the order</p>
-              <p className="text-xs text-gray-400 mt-0.5">
-                EcoCash, OneMoney, InnBucks, card or diaspora — choose on the next screen.
-              </p>
-            </div>
-          </div>
-        </div>
-
         {/* Order summary */}
         <div className="bg-white rounded-2xl p-4 border border-gray-100">
           <h2 className="text-sm font-bold text-gray-700 mb-3">Order summary</h2>
@@ -601,7 +581,7 @@ export default function CheckoutPage() {
             </div>
             {tip > 0 && (
               <div className="flex justify-between text-sm text-gray-600 mb-2">
-                <span>Rider tip</span>
+                <span>Mzaya tip</span>
                 <span>${tip.toFixed(2)}</span>
               </div>
             )}
@@ -627,7 +607,12 @@ export default function CheckoutPage() {
       </div>
 
       {/* Place order */}
-      <div className="fixed bottom-20 left-1/2 -translate-x-1/2 w-full max-w-md px-4 z-30">
+      {/* Sits DIRECTLY on the bottom nav — no floating gap.
+          It used to be `bottom-20`, which parked the button 80px up and left a
+          dead band of empty screen between it and the nav. That's prime real
+          estate on a phone; it should either do something or not exist. */}
+      <div className="fixed bottom-16 left-1/2 -translate-x-1/2 w-full max-w-md px-4 pt-3 pb-3 z-30
+                      bg-gradient-to-t from-white via-white to-transparent">
         <button onClick={handleSubmit} disabled={loading}
           className="w-full flex items-center justify-between px-5 py-4 rounded-2xl text-white font-bold active:scale-98 transition-transform disabled:opacity-70"
           style={{ background: '#00A651', boxShadow: '0 8px 24px #00A65150' }}>

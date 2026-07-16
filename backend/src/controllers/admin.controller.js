@@ -1,5 +1,6 @@
 // backend/src/controllers/admin.controller.js
 const { Op } = require('sequelize');
+const { logger } = require('../utils/logger');
 const {
   Vendor, User, Order, Rider, City,
 } = require('../models/associations');
@@ -41,7 +42,7 @@ async function overview(req, res) {
       },
     });
   } catch (err) {
-    console.error('admin overview error:', err.message);
+    logger.error('admin_overview_error', { error: err.message });
     return res.status(500).json({ error: 'Failed to load overview' });
   }
 }
@@ -64,7 +65,7 @@ async function listVendors(req, res) {
     });
     return res.status(200).json({ vendors });
   } catch (err) {
-    console.error('admin listVendors error:', err.message);
+    logger.error('admin_listvendors_error', { error: err.message });
     return res.status(500).json({ error: 'Failed to load vendors' });
   }
 }
@@ -77,7 +78,7 @@ async function approveVendor(req, res) {
     await vendor.update({ is_active: true });
     return res.status(200).json({ message: 'Vendor approved', vendor });
   } catch (err) {
-    console.error('approveVendor error:', err.message);
+    logger.error('approvevendor_error', { error: err.message });
     return res.status(500).json({ error: 'Failed to approve vendor' });
   }
 }
@@ -90,7 +91,7 @@ async function rejectVendor(req, res) {
     await vendor.update({ is_active: false });
     return res.status(200).json({ message: 'Vendor set inactive', vendor });
   } catch (err) {
-    console.error('rejectVendor error:', err.message);
+    logger.error('rejectvendor_error', { error: err.message });
     return res.status(500).json({ error: 'Failed to update vendor' });
   }
 }
@@ -113,7 +114,7 @@ async function listRiders(req, res) {
     });
     return res.status(200).json({ riders });
   } catch (err) {
-    console.error('admin listRiders error:', err.message);
+    logger.error('admin_listriders_error', { error: err.message });
     return res.status(500).json({ error: 'Failed to load riders' });
   }
 }
@@ -126,7 +127,7 @@ async function approveRider(req, res) {
     await rider.update({ is_approved: true });
     return res.status(200).json({ message: 'Rider approved', rider });
   } catch (err) {
-    console.error('approveRider error:', err.message);
+    logger.error('approverider_error', { error: err.message });
     return res.status(500).json({ error: 'Failed to approve rider' });
   }
 }
@@ -141,7 +142,7 @@ async function liveOrders(req, res) {
     });
     return res.status(200).json({ orders });
   } catch (err) {
-    console.error('liveOrders error:', err.message);
+    logger.error('liveorders_error', { error: err.message });
     return res.status(500).json({ error: 'Failed to load live orders' });
   }
 }

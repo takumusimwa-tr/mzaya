@@ -8,6 +8,7 @@ const {
   cancelOrder,
 } = require('../services/order.service');
 const { VEHICLE_RANK } = require('../config/constants');
+const { logger } = require('../utils/logger');
 
 // Default an unknown/missing vehicle to bicycle-level capability (rank 1) so a
 // rider with a bad record still sees the lightest orders but nothing gated.
@@ -28,7 +29,7 @@ async function placeOrder(req, res) {
       dispatch: result.dispatch,
     });
   } catch (err) {
-    console.error('placeOrder error:', err.message);
+    logger.error('placeorder_error', { error: err.message });
     return res.status(400).json({ error: err.message });
   }
 }
@@ -40,7 +41,7 @@ async function quote(req, res) {
     const result = quoteOrder(req.body);
     return res.status(200).json({ quote: result });
   } catch (err) {
-    console.error('quote error:', err.message);
+    logger.error('quote_error', { error: err.message });
     return res.status(400).json({ error: err.message });
   }
 }
@@ -115,7 +116,7 @@ async function availableOrders(req, res) {
 
     return res.status(200).json({ orders: visible });
   } catch (err) {
-    console.error('availableOrders error:', err.message);
+    logger.error('availableorders_error', { error: err.message });
     return res.status(500).json({ error: 'Failed to fetch available orders' });
   }
 }
@@ -162,7 +163,7 @@ async function claimOrder(req, res) {
     const claimed = await Order.findByPk(order.id);
     return res.status(200).json({ message: 'Order claimed', order: claimed });
   } catch (err) {
-    console.error('claimOrder error:', err.message);
+    logger.error('claimorder_error', { error: err.message });
     return res.status(500).json({ error: 'Failed to claim order' });
   }
 }
@@ -250,7 +251,7 @@ async function upgradeVehicle(req, res) {
       released,
     });
   } catch (err) {
-    console.error('upgradeVehicle error:', err.message);
+    logger.error('upgradevehicle_error', { error: err.message });
     return res.status(500).json({ error: 'Failed to upgrade vehicle' });
   }
 }
@@ -335,7 +336,7 @@ async function vendorOrders(req, res) {
 
     return res.status(200).json({ orders });
   } catch (err) {
-    console.error('vendorOrders error:', err.message);
+    logger.error('vendororders_error', { error: err.message });
     return res.status(500).json({ error: 'Failed to fetch vendor orders' });
   }
 }
@@ -355,7 +356,7 @@ async function rateOrder(req, res) {
     await order.update({ rating, review: review || null });
     return res.status(200).json({ message: 'Rating submitted', rating });
   } catch (err) {
-    console.error('rateOrder error:', err.message);
+    logger.error('rateorder_error', { error: err.message });
     return res.status(500).json({ error: err.message });
   }
 }

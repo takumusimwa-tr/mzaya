@@ -8,6 +8,7 @@ const {
   Brand, Vendor, MenuItem, City,
 } = require('../models/associations');
 const { withLiveOpen } = require('../utils/vendorHours');
+const { logger } = require('../utils/logger');
 
 // Haversine distance in km between two {lat,lng} points.
 function distanceKm(a, b) {
@@ -78,7 +79,7 @@ async function browseBrands(req, res) {
 
     return res.status(200).json({ brands: result });
   } catch (err) {
-    console.error('browseBrands error:', err.message);
+    logger.error('browsebrands_error', { error: err.message });
     return res.status(500).json({ error: 'Failed to load brands' });
   }
 }
@@ -150,7 +151,7 @@ async function browseProducts(req, res) {
 
     return res.status(200).json({ products, categories });
   } catch (err) {
-    console.error('browseProducts error:', err.message);
+    logger.error('browseproducts_error', { error: err.message });
     return res.status(500).json({ error: 'Failed to load products' });
   }
 }

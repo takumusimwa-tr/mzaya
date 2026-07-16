@@ -1,4 +1,5 @@
 const axios = require('axios');
+const { logger } = require('../utils/logger');
 
 const ML_URL = process.env.ML_SERVICE_URL || 'http://localhost:8000';
 
@@ -10,7 +11,7 @@ async function extractFeatures(order) {
     return response.data;
   } catch (err) {
     // Non-blocking — if ML service is down, order still succeeds
-    console.error('[ML] Feature extraction failed:', err.message);
+    logger.error('ml_feature_extraction_failed_error', { error: err.message });
     return null;
   }
 }
@@ -21,7 +22,7 @@ async function scoreOrder(order) {
     const response = await axios.post(`${ML_URL}/anomaly/score`, { order });
     return response.data;
   } catch (err) {
-    console.error('[ML] Anomaly scoring failed:', err.message);
+    logger.error('ml_anomaly_scoring_failed_error', { error: err.message });
     return null;
   }
 }
@@ -32,7 +33,7 @@ async function getModelMetrics() {
     const response = await axios.get(`${ML_URL}/analytics/model-metrics`);
     return response.data;
   } catch (err) {
-    console.error('[ML] Model metrics failed:', err.message);
+    logger.error('ml_model_metrics_failed_error', { error: err.message });
     return null;
   }
 }
@@ -44,7 +45,7 @@ async function getSpendingTrends(city = null) {
     const response = await axios.get(`${ML_URL}/analytics/spending-trends`, { params });
     return response.data;
   } catch (err) {
-    console.error('[ML] Spending trends failed:', err.message);
+    logger.error('ml_spending_trends_failed_error', { error: err.message });
     return null;
   }
 }
@@ -55,7 +56,7 @@ async function getAnomalies(limit = 50) {
     const response = await axios.get(`${ML_URL}/anomaly/list`, { params: { limit } });
     return response.data;
   } catch (err) {
-    console.error('[ML] Anomaly list failed:', err.message);
+    logger.error('ml_anomaly_list_failed_error', { error: err.message });
     return null;
   }
 }
@@ -66,7 +67,7 @@ async function trainModel() {
     const response = await axios.post(`${ML_URL}/anomaly/train`);
     return response.data;
   } catch (err) {
-    console.error('[ML] Model training failed:', err.message);
+    logger.error('ml_model_training_failed_error', { error: err.message });
     return null;
   }
 }
@@ -88,7 +89,7 @@ async function getDemandForecast(city = 'harare', category = 'food', hoursAhead 
     });
     return response.data;
   } catch (err) {
-    console.error('[ML] Demand forecast failed:', err.message);
+    logger.error('ml_demand_forecast_failed_error', { error: err.message });
     return null;
   }
 }
@@ -99,7 +100,7 @@ async function getDemandSummary() {
     const response = await axios.get(`${ML_URL}/forecast/summary`);
     return response.data;
   } catch (err) {
-    console.error('[ML] Demand summary failed:', err.message);
+    logger.error('ml_demand_summary_failed_error', { error: err.message });
     return null;
   }
 }
@@ -122,7 +123,7 @@ async function getRiderScores(city = null) {
     const response = await axios.get(`${ML_URL}/performance/riders`, { params });
     return response.data;
   } catch (err) {
-    console.error('[ML] Rider scores failed:', err.message);
+    logger.error('ml_rider_scores_failed_error', { error: err.message });
     return null;
   }
 }
@@ -136,7 +137,7 @@ async function getVendorScores(city = null, category = null) {
     const response = await axios.get(`${ML_URL}/performance/vendors`, { params });
     return response.data;
   } catch (err) {
-    console.error('[ML] Vendor scores failed:', err.message);
+    logger.error('ml_vendor_scores_failed_error', { error: err.message });
     return null;
   }
 }
@@ -147,7 +148,7 @@ async function getPlatformSummary() {
     const response = await axios.get(`${ML_URL}/performance/summary`);
     return response.data;
   } catch (err) {
-    console.error('[ML] Platform summary failed:', err.message);
+    logger.error('ml_platform_summary_failed_error', { error: err.message });
     return null;
   }
 }

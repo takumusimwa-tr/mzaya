@@ -8,9 +8,20 @@
 // Requests/responses are validated with a SHA512 hash of concatenated field
 // values + the Integration Key (Paynow's scheme). Amounts are strings.
 //
-// MOCK MODE: if PAYNOW_INTEGRATION_ID / PAYNOW_INTEGRATION_KEY are not set,
-// the service simulates the whole flow so the app can be built/tested without a
-// merchant account. Flip to real by adding the two env vars.
+// MOCK MODE: without Paynow credentials the service simulates the whole flow so
+// the app can be built and tested without a merchant account.
+//
+// ⚠️  MOCK MODE CAN NEVER RUN IN PRODUCTION.
+//
+// It previously could: MOCK was derived purely from "are the credentials
+// present?", with no environment check. Deploy without credentials and the site
+// would happily accept orders, show "✅ Payment received", and move no money at
+// all — customers believing they had paid, and no reconciliation trail. That is
+// the single most expensive bug this codebase could ship.
+//
+// So mock now requires an EXPLICIT opt-in (ALLOW_MOCK_PAYMENTS=true) and is hard
+// -refused in production. validateEnv additionally refuses to boot a production
+// server without real credentials, so this is a second line of defence.
 const axios = require('axios');
 const crypto = require('crypto');
 const querystring = require('querystring');
@@ -20,7 +31,32 @@ const INTEGRATION_ID  = process.env.PAYNOW_INTEGRATION_ID || '';
 const INTEGRATION_KEY = process.env.PAYNOW_INTEGRATION_KEY || '';
 const APP_URL         = process.env.APP_URL || 'http://localhost:5000';
 const CLIENT_URL      = process.env.CLIENT_URL || 'http://localhost:5173';
-const MOCK = !INTEGRATION_ID || !INTEGRATION_KEY;
+
+const IS_PROD    = process.env.NODE_ENV === 'production';
+const HAS_CREDS  = !!(INTEGRATION_ID && INTEGRATION_KEY);
+const ALLOW_MOCK = process.env.ALLOW_MOCK_PAYMENTS === 'true';
+
+const MOCK = !HAS_CREDS && ALLOW_MOCK && !IS_PROD;
+
+// Fail loudly rather than quietly pretending to take money.
+if (IS_PROD && !HAS_CREDS) {
+  console.error('FATAL: production requires PAYNOW_INTEGRATION_ID and PAYNOW_INTEGRATION_KEY.');
+  process.exit(1);
+}
+if (IS_PROD && ALLOW_MOCK) {
+  console.error('FATAL: ALLOW_MOCK_PAYMENTS must never be true in production.');
+  process.exit(1);
+}
+if (!HAS_CREDS && !ALLOW_MOCK) {
+  console.error(
+    'FATAL: no Paynow credentials. Set them, or set ALLOW_MOCK_PAYMENTS=true to\n' +
+    '       explicitly run simulated payments in development.'
+  );
+  process.exit(1);
+}
+if (MOCK) {
+  console.warn('⚠️  PAYMENTS ARE SIMULATED (ALLOW_MOCK_PAYMENTS=true). No money will move.');
+}
 
 // Paynow endpoints
 const INITIATE_URL = 'https://www.paynow.co.zw/interface/initiatetransaction';

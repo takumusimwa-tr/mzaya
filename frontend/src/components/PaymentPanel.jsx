@@ -2,12 +2,20 @@ import { useState, useEffect, useRef } from 'react'
 import { paymentAPI } from '../api/api'
 import Icon from './ui/Icon'
 
+// Payment methods.
+//
+// There is deliberately NO separate "Diaspora" option. It used to be here, but
+// it routed to the exact same Paynow hosted page as "Card" — two buttons calling
+// identical code, implying a capability that didn't exist. Paynow's card page
+// already accepts international cards, so someone paying from London just uses
+// Card. (Paynow does sell a distinct diaspora/remittance product; it needs
+// specific merchant-account enablement and a different integration. If you
+// enable it, it becomes a real method here — not before.)
 const METHODS = [
-  { id: 'ecocash',  label: 'EcoCash',   sub: 'Econet mobile money', kind: 'mobile' },
-  { id: 'onemoney', label: 'OneMoney',  sub: 'NetOne mobile money',  kind: 'mobile' },
-  { id: 'innbucks', label: 'InnBucks',  sub: 'Mobile wallet',        kind: 'mobile' },
-  { id: 'card',     label: 'Card',      sub: 'Visa / Mastercard',    kind: 'redirect' },
-  { id: 'diaspora', label: 'Diaspora',  sub: 'Pay from abroad',      kind: 'redirect' },
+  { id: 'ecocash',  label: 'EcoCash',   sub: 'Econet mobile money',      kind: 'mobile' },
+  { id: 'onemoney', label: 'OneMoney',  sub: 'NetOne mobile money',      kind: 'mobile' },
+  { id: 'innbucks', label: 'InnBucks',  sub: 'Mobile wallet',            kind: 'mobile' },
+  { id: 'card',     label: 'Card',      sub: 'Visa / Mastercard', kind: 'redirect' },
 ]
 
 // Handles the whole Paynow payment lifecycle for one order.
@@ -18,6 +26,13 @@ export default function PaymentPanel({ order, onPaid }) {
   const [message, setMessage] = useState('')
   const [error, setError]     = useState('')
   const pollTimer = useRef(null)
+
+  // One key per payment intent. Regenerated when the customer changes method or
+  // number — that's a genuinely different intent and deserves a fresh attempt.
+  const idempotencyKey = useRef(`${order.id}:${Date.now()}:${Math.random().toString(36).slice(2)}`)
+  useEffect(() => {
+    idempotencyKey.current = `${order.id}:${method}:${phone}`
+  }, [order.id, method, phone])
 
   const chosen = METHODS.find((m) => m.id === method)
   const isMobile = chosen?.kind === 'mobile'
@@ -53,7 +68,13 @@ export default function PaymentPanel({ order, onPaid }) {
       const { data } = await paymentAPI.initiate(order.id, {
         payment_method: method,
         currency: 'USD',
-        phone: phone.trim(),
+        // The number the customer TYPED. The backend previously ignored this and
+        // sent the prompt to their profile number instead — so anyone paying from
+        // a spouse's or second line never received it.
+        payment_phone: phone.trim(),
+        // Idempotency: a double-tap, a retry, or a flaky connection must never
+        // produce two USSD prompts (or two charges). Same key ⇒ same attempt.
+        idempotency_key: idempotencyKey.current,
       })
 
       if (data.redirectUrl) {
@@ -64,7 +85,11 @@ export default function PaymentPanel({ order, onPaid }) {
 
       // Mobile money → prompt sent, begin polling.
       setStage('polling')
-      setMessage(data.instructions || 'Check your phone and approve the prompt.')
+      setMessage(
+        data.sentTo
+          ? `Approve the prompt sent to ${data.sentTo}.`
+          : (data.instructions || 'Check your phone and approve the prompt.')
+      )
       startPolling()
     } catch (err) {
       setStage('failed')

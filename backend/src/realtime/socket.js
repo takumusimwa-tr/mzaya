@@ -45,10 +45,38 @@ function initSocket(httpServer) {
     // Admins watch the platform.
     if (role === 'admin') socket.join(rooms.admins());
 
-    // Clients tell us which extra rooms to join (vendor branch, city).
-    socket.on('join:vendor', (vendorId) => vendorId && socket.join(rooms.vendor(vendorId)));
+    // ── Room joins are AUTHORIZED, not trusted ──────────────────────────────
+    //
+    // These used to accept whatever id the client sent. A signed-in customer
+    // could emit join:vendor with any branch id and start receiving that
+    // business's live order feed — names, addresses, totals. A straight data
+    // leak, exploitable from the browser console.
+    //
+    // Now every join is checked against the database: you may only enter a room
+    // you actually own or belong to.
+
+    socket.on('join:vendor', async (vendorId) => {
+      if (!vendorId) return;
+      const ok = await canJoinVendor(socket.user, vendorId);
+      if (!ok) {
+        console.warn(`[socket] refused vendor room ${vendorId} for user ${id} (${role})`);
+        return socket.emit('room:denied', { room: 'vendor', id: vendorId });
+      }
+      socket.join(rooms.vendor(vendorId));
+    });
+
     socket.on('leave:vendor', (vendorId) => vendorId && socket.leave(rooms.vendor(vendorId)));
-    socket.on('join:city',   (cityId) => cityId && socket.join(rooms.city(cityId)));
+
+    socket.on('join:city', async (cityId) => {
+      if (!cityId) return;
+      const ok = await canJoinCity(socket.user, cityId);
+      if (!ok) {
+        console.warn(`[socket] refused city room ${cityId} for user ${id} (${role})`);
+        return socket.emit('room:denied', { room: 'city', id: cityId });
+      }
+      socket.join(rooms.city(cityId));
+    });
+
     socket.on('leave:city',  (cityId) => cityId && socket.leave(rooms.city(cityId)));
 
     socket.on('disconnect', () => { /* rooms auto-cleaned */ });
@@ -56,6 +84,47 @@ function initSocket(httpServer) {
 
   console.log('⚡ Socket.IO ready');
   return io;
+}
+
+// ─── Room authorization ───────────────────────────────────────────────────────
+// Never trust an id supplied over the socket. Check ownership in the database.
+
+// A vendor room may be joined only by the OWNER of that branch's brand (or an
+// admin). Not by a customer, not by a rider, not by a different vendor.
+async function canJoinVendor(user, vendorId) {
+  if (!user) return false;
+  if (user.role === 'admin') return true;
+  if (user.role !== 'vendor') return false;
+
+  try {
+    const { Vendor } = require('../models/associations');
+    const branch = await Vendor.findByPk(vendorId, { attributes: ['owner_id'], raw: true });
+    return !!branch && branch.owner_id === user.id;
+  } catch (err) {
+    console.error('[socket] canJoinVendor failed:', err.message);
+    return false;   // fail closed
+  }
+}
+
+// A city room carries the available-jobs feed. Only a rider registered to THAT
+// city (or an admin) may listen to it.
+async function canJoinCity(user, cityId) {
+  if (!user) return false;
+  if (user.role === 'admin') return true;
+  if (user.role !== 'rider') return false;
+
+  try {
+    const { Rider } = require('../models/associations');
+    const rider = await Rider.findOne({
+      where: { user_id: user.id },
+      attributes: ['city_id'],
+      raw: true,
+    });
+    return !!rider && String(rider.city_id) === String(cityId);
+  } catch (err) {
+    console.error('[socket] canJoinCity failed:', err.message);
+    return false;   // fail closed
+  }
 }
 
 // ─── Emit helpers (called from controllers/services) ──────────────────────────

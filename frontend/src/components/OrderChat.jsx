@@ -4,7 +4,10 @@ import { chatAPI } from '../api/api'
 import useSocketEvent from '../hooks/useSocketEvent'
 import Icon from './ui/Icon'
 
-const ROLE_LABELS = { customer: 'Customer', rider: 'Rider', vendor: 'Store' }
+// Display names. The delivery agent is a "Mzaya" to users; 'rider' stays the
+// internal identifier (schema, routes, roles) — mixing the brand word into the
+// data model would read worse, not better.
+const ROLE_LABELS = { customer: 'Customer', rider: 'Mzaya', vendor: 'Store' }
 const ROLE_COLORS = { customer: '#00A651', rider: '#00A651', vendor: '#D97706' }
 
 // Full-screen-ish chat sheet for one order. Any participant (customer/rider/
@@ -46,12 +49,28 @@ export default function OrderChat({ orderId, onClose }) {
   const submit = () => { if (text.trim()) send.mutate(text.trim()) }
 
   return (
-    <div className="fixed inset-0 z-50 flex flex-col bg-white max-w-md mx-auto">
+    // Responsive.
+    //
+    // This was `fixed inset-0 max-w-md mx-auto` — a phone-width sheet. That's
+    // right on a phone, but the vendor console is a full-width TABLET layout, so
+    // the chat rendered as a narrow strip floating over the side rail.
+    //
+    // Now: a full-screen sheet on phones, a proper centred modal (with a dimmed
+    // backdrop) from `sm:` upward. Same component, correct on both.
+    <div className="fixed inset-0 z-50 flex sm:items-center sm:justify-center">
+      {/* Backdrop — tablet/desktop only; on a phone the sheet fills the screen. */}
+      <div
+        onClick={onClose}
+        className="hidden sm:block absolute inset-0 bg-black/40"
+      />
+
+      <div className="relative flex flex-col bg-white w-full h-full
+                      sm:h-[85vh] sm:max-h-[700px] sm:w-[440px] sm:rounded-2xl sm:overflow-hidden sm:shadow-2xl">
       {/* Header */}
-      <div className="px-4 pt-12 pb-3 border-b border-gray-100 flex items-center justify-between" style={{ background: '#00A651' }}>
+      <div className="px-4 pt-12 sm:pt-4 pb-3 border-b border-gray-100 flex items-center justify-between" style={{ background: '#00A651' }}>
         <div>
           <p className="text-white font-bold">Order chat</p>
-          <p className="text-white/70 text-xs">Customer · Rider · Store</p>
+          <p className="text-white/70 text-xs">Customer · Mzaya · Store</p>
         </div>
         <button onClick={onClose} className="w-9 h-9 rounded-full bg-white/20 text-white flex items-center justify-center">✕</button>
       </div>
@@ -118,6 +137,7 @@ export default function OrderChat({ orderId, onClose }) {
           style={{ background: '#00A651' }}>
           <Icon name="send" size={18} />
         </button>
+      </div>
       </div>
     </div>
   )

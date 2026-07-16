@@ -24,14 +24,20 @@ const REQUIRED_IN_PROD = [
   { key: 'CLIENT_URL',     why: 'public frontend URL — Paynow redirects back to it' },
 ];
 
-// Absent → the feature falls back safely. Worth warning about in production,
-// because a live deployment almost certainly wants them.
-const OPTIONAL_IN_PROD = [
-  { key: 'PAYNOW_INTEGRATION_ID',  why: 'payments run in MOCK mode without it — no real money moves' },
-  { key: 'PAYNOW_INTEGRATION_KEY', why: 'payments run in MOCK mode without it' },
-  { key: 'CLOUDINARY_CLOUD_NAME',  why: 'uploads fall back to local disk, which is WIPED on every redeploy' },
-  { key: 'CLOUDINARY_API_KEY',     why: 'uploads fall back to local disk' },
-  { key: 'CLOUDINARY_API_SECRET',  why: 'uploads fall back to local disk' },
+// These were previously "warnings" in production. That was a serious mistake.
+//
+// Without Paynow credentials the payment service silently enters MOCK mode: the
+// site accepts orders, tells customers "✅ Payment received", and no money moves.
+// Without Cloudinary, uploads are written to the container filesystem — which is
+// WIPED on every redeploy, taking vendor logos and delivery-proof photos with it.
+//
+// Neither of those is a warning. Both are refusals.
+const REQUIRED_IN_PROD_HARD = [
+  { key: 'PAYNOW_INTEGRATION_ID',  why: 'without it payments run SIMULATED — the site would take orders and move no money' },
+  { key: 'PAYNOW_INTEGRATION_KEY', why: 'without it payments run SIMULATED' },
+  { key: 'CLOUDINARY_CLOUD_NAME',  why: 'without it uploads land on an ephemeral disk and vanish on redeploy' },
+  { key: 'CLOUDINARY_API_KEY',     why: 'without it uploads land on an ephemeral disk' },
+  { key: 'CLOUDINARY_API_SECRET',  why: 'without it uploads land on an ephemeral disk' },
 ];
 
 function validateEnv() {
@@ -47,8 +53,13 @@ function validateEnv() {
     for (const { key, why } of REQUIRED_IN_PROD) {
       if (!process.env[key]) missing.push(`${key} — ${why}`);
     }
-    for (const { key, why } of OPTIONAL_IN_PROD) {
-      if (!process.env[key]) warnings.push(`${key} — ${why}`);
+    for (const { key, why } of REQUIRED_IN_PROD_HARD) {
+      if (!process.env[key]) missing.push(`${key} — ${why}`);
+    }
+
+    // Simulated payments in production would be catastrophic. Refuse outright.
+    if (process.env.ALLOW_MOCK_PAYMENTS === 'true') {
+      missing.push('ALLOW_MOCK_PAYMENTS — must never be true in production; it simulates payments');
     }
 
     // A short secret is barely better than no secret.

@@ -77,6 +77,7 @@ function requestLogger(req, res, next) {
                 : 'info';
 
     logger[level]('request', {
+      reqId:  req.id,          // ties every line of this request together
       method: req.method,
       path:   req.originalUrl,
       status: res.statusCode,
@@ -87,4 +88,21 @@ function requestLogger(req, res, next) {
   next();
 }
 
-module.exports = { logger, requestLogger };
+// A logger bound to one request, so controllers don't have to pass reqId around
+// by hand — and can't forget to.
+//
+//   req.log.error('payment_failed', { orderId })
+//
+// …emits with reqId and userId already attached.
+function attachLogger(req, res, next) {
+  const base = { reqId: req.id, userId: req.user?.id };
+  req.log = {
+    error: (msg, meta) => logger.error(msg, { ...base, userId: req.user?.id, ...meta }),
+    warn:  (msg, meta) => logger.warn(msg,  { ...base, userId: req.user?.id, ...meta }),
+    info:  (msg, meta) => logger.info(msg,  { ...base, userId: req.user?.id, ...meta }),
+    debug: (msg, meta) => logger.debug(msg, { ...base, userId: req.user?.id, ...meta }),
+  };
+  next();
+}
+
+module.exports = { logger, requestLogger, attachLogger };

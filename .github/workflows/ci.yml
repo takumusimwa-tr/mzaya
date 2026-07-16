@@ -1,0 +1,130 @@
+name: CI
+
+on:
+  push:
+    branches: [main, database, frontend]
+  pull_request:
+    branches: [main]
+
+jobs:
+  # ── Backend: integration tests against a REAL Postgres ──────────────────────
+  #
+  # Not a mocked database. Every bug this suite exists to catch lives at the
+  # database boundary — the claim race needs a real atomic UPDATE, payment
+  # idempotency needs a real unique constraint, the enum/varchar mismatch needed
+  # real type checking. Mocks would have passed all three while production burned.
+  backend:
+    name: Backend tests
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:18
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: mzaya_test
+        ports:
+          - 5432:5432
+        # Don't start the tests until Postgres is actually accepting connections.
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+          cache-dependency-path: backend/package-lock.json
+
+      - name: Install
+        working-directory: backend
+        run: npm ci
+
+      - name: Test
+        working-directory: backend
+        env:
+          NODE_ENV: test
+          TEST_DB_URL: postgresql://postgres:postgres@localhost:5432/mzaya_test
+          JWT_SECRET: ci-secret-at-least-32-characters-long!!!
+          ALLOW_MOCK_PAYMENTS: 'true'
+        run: npm test
+
+      - name: Migrations apply cleanly to an empty database
+        working-directory: backend
+        env:
+          DB_URL: postgresql://postgres:postgres@localhost:5432/mzaya_migrate_check
+          JWT_SECRET: ci-secret-at-least-32-characters-long!!!
+        run: |
+          # A migration that only works against YOUR laptop's schema isn't a
+          # migration. Prove they run from nothing.
+          PGPASSWORD=postgres createdb -h localhost -U postgres mzaya_migrate_check
+          npm run migrate
+
+  # ── Frontend: it must actually build ────────────────────────────────────────
+  frontend:
+    name: Frontend build
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install
+        working-directory: frontend
+        run: npm ci
+
+      - name: Build
+        working-directory: frontend
+        run: npm run build
+
+      - name: Bundle size
+        working-directory: frontend
+        run: |
+          echo "Built bundle:"
+          du -sh dist
+          # Data is expensive in Zimbabwe. If the bundle balloons, someone should
+          # have to look at why.
+          SIZE=$(du -sk dist | cut -f1)
+          echo "dist is ${SIZE}KB"
+          if [ "$SIZE" -gt 3000 ]; then
+            echo "::warning::Bundle is over 3MB — that's a lot of mobile data."
+          fi
+
+  # ── Dependency audit ────────────────────────────────────────────────────────
+  audit:
+    name: Dependency audit
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      # Fail on HIGH or CRITICAL only.
+      #
+      # We knowingly ship 2 moderate advisories: `uuid` reaches us through
+      # Sequelize, the vulnerable code path (v3/v5/v6 with an explicit buffer) is
+      # unreachable from this app, and npm's proposed "fix" is to downgrade
+      # Sequelize v6 → v3, which would destroy the data layer. See SECURITY_NOTES.md.
+      #
+      # Failing on `moderate` would therefore fail every build forever and train
+      # everyone to ignore the audit — which is worse than not running it.
+      - name: Backend
+        working-directory: backend
+        run: npm audit --audit-level=high
+
+      - name: Frontend
+        working-directory: frontend
+        run: npm audit --audit-level=high

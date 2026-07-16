@@ -5,6 +5,7 @@ import useAuthStore from '../../store/useAuthStore'
 import Button from '../../components/ui/Button'
 import Input from '../../components/ui/Input'
 import Icon from '../../components/ui/Icon'
+import LocationPicker from '../../components/LocationPicker'
 
 const TASK_TYPES = [
   { id: 'ZIMRA',        label: 'ZIMRA / Tax',        icon: 'zimra' },
@@ -15,18 +16,19 @@ const TASK_TYPES = [
   { id: 'other',        label: 'Other',               icon: 'errand' },
 ]
 
-const PAYMENT_METHODS = [
-  { id: 'ecocash',    label: 'EcoCash',    sub: 'Econet mobile money' },
-  { id: 'onemoney',   label: 'OneMoney',   sub: 'NetOne mobile money' },
-  { id: 'innbucks',   label: 'InnBucks',   sub: 'InnBucks wallet' },
-  { id: 'zipit',      label: 'ZIPIT',      sub: 'Bank transfer (USD)' },
-  { id: 'visa',       label: 'Visa',       sub: 'Card payment (USD)' },
-  { id: 'mastercard', label: 'Mastercard', sub: 'Card payment (USD)' },
-]
 
 export default function ErrandPage() {
   const navigate = useNavigate()
   const user     = useAuthStore((s) => s.user)
+
+  // Both ends of an errand need a real coordinate, for the same reason checkout
+  // does: a Zimbabwean street address alone will have the Mzaya phoning you.
+  //  • errand pin  — where they're going (ZIMRA, the bank, the shop)
+  //  • your pin    — where they collect documents / return them to you
+  const [errandCoords, setErrandCoords]     = useState(null)
+  const [errandLandmark, setErrandLandmark] = useState('')
+  const [yourCoords, setYourCoords]         = useState(null)
+  const [yourLandmark, setYourLandmark]     = useState('')
 
   const [form, setForm] = useState({
     task_type:                  '',
@@ -79,12 +81,17 @@ export default function ErrandPage() {
         category_type:   'errand',
         city:            'harare',
         pickup_address:  form.errand_location,
+        pickup_location: errandCoords || null,
         dropoff_address: form.dropoff_address,
+        dropoff_location: yourCoords || null,
+        dropoff_landmark: yourLandmark || null,
         payment_method:  form.payment_method,
         detail: {
           task_type:                  form.task_type,
           task_description:           form.task_description,
           errand_location:            form.errand_location,
+          errand_coordinates:         errandCoords || null,
+          errand_landmark:            errandLandmark || null,
           estimated_duration_minutes: parseInt(form.estimated_duration_minutes) || 60,
           documents_required:         form.documents_required,
           document_description:       form.documents_required ? form.document_description : null,
@@ -169,6 +176,16 @@ export default function ErrandPage() {
             placeholder="e.g. ZIMRA Office, Cnr Livingstone Ave & Kwame Nkrumah"
             required
           />
+          <LocationPicker
+            coords={errandCoords}
+            onCoords={setErrandCoords}
+            landmark={errandLandmark}
+            onLandmark={setErrandLandmark}
+            label="Pin the errand location (recommended)"
+            landmarkLabel="Landmark / directions for the Mzaya (optional)"
+            landmarkPlaceholder="e.g. 3rd floor, entrance behind the bank"
+            whatsappMessage="Hi! Please share the location pin for this errand so my Mzaya can find it."
+          />
 
           <Input
             label="Your address (for updates / document return)"
@@ -177,6 +194,15 @@ export default function ErrandPage() {
             onChange={handleChange}
             placeholder="e.g. 15 Borrowdale Rd, Harare"
             required
+          />
+          <LocationPicker
+            coords={yourCoords}
+            onCoords={setYourCoords}
+            landmark={yourLandmark}
+            onLandmark={setYourLandmark}
+            label="Pin your location (recommended)"
+            landmarkLabel="Landmark / directions to you (optional)"
+            landmarkPlaceholder="e.g. blue gate opposite Total garage, ask for tuckshop"
           />
 
           <div className="flex flex-col gap-1">
@@ -207,11 +233,11 @@ export default function ErrandPage() {
               name="documents_required"
               checked={form.documents_required}
               onChange={handleChange}
-              className="w-4 h-4 accent-blue-600"
+              className="w-4 h-4 accent-green-600"
             />
             <div>
               <p className="text-sm font-medium text-gray-800">Documents need to be collected</p>
-              <p className="text-xs text-gray-400">Rider will pick up documents from your location first</p>
+              <p className="text-xs text-gray-400">Your Mzaya will collect the documents from you first</p>
             </div>
           </label>
 
@@ -231,11 +257,11 @@ export default function ErrandPage() {
               name="cash_float_required"
               checked={form.cash_float_required}
               onChange={handleChange}
-              className="w-4 h-4 accent-blue-600"
+              className="w-4 h-4 accent-green-600"
             />
             <div>
               <p className="text-sm font-medium text-gray-800">Cash float required</p>
-              <p className="text-xs text-gray-400">Rider will carry cash to pay fees on your behalf</p>
+              <p className="text-xs text-gray-400">Your Mzaya will carry cash to pay the fees for you</p>
             </div>
           </label>
 
@@ -259,39 +285,17 @@ export default function ErrandPage() {
           />
         </div>
 
-        {/* Payment */}
-        <div className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100">
-          <h2 className="text-sm font-bold text-gray-700 mb-3">Payment method</h2>
-          <div className="flex flex-col gap-2">
-            {PAYMENT_METHODS.map((method) => (
-              <label
-                key={method.id}
-                className={`flex items-center gap-3 p-3 rounded-xl border cursor-pointer transition-all
-                  ${form.payment_method === method.id
-                    ? 'border-green-500 bg-green-50'
-                    : 'border-gray-200 bg-white'
-                  }`}
-              >
-                <input
-                  type="radio"
-                  name="payment_method"
-                  value={method.id}
-                  checked={form.payment_method === method.id}
-                  onChange={handleChange}
-                  className="accent-blue-600"
-                />
-                <div>
-                  <p className="text-sm font-semibold text-gray-900">{method.label}</p>
-                  <p className="text-xs text-gray-400">{method.sub}</p>
-                </div>
-              </label>
-            ))}
-          </div>
-        </div>
+        {/* Payment is chosen on the order page, at the moment it's actually
+            taken — not here, and not twice. */}
       </form>
 
       {/* Submit button */}
-      <div className="fixed bottom-20 left-1/2 -translate-x-1/2 w-full max-w-md px-4 z-30">
+      {/* Sits DIRECTLY on the bottom nav — no floating gap.
+          It used to be `bottom-20`, which parked the button 80px up and left a
+          dead band of empty screen between it and the nav. That's prime real
+          estate on a phone; it should either do something or not exist. */}
+      <div className="fixed bottom-16 left-1/2 -translate-x-1/2 w-full max-w-md px-4 pt-3 pb-3 z-30
+                      bg-gradient-to-t from-white via-white to-transparent">
         <Button
           size="lg"
           loading={loading}

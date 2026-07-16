@@ -1,6 +1,7 @@
 const { Rider, City } = require('../models/associations');
 const { Order } = require('../models/associations');
 const { VEHICLE_RANK } = require('../config/constants');
+const { logger } = require('../utils/logger');
 
 // GET /api/riders/profile
 async function getProfile(req, res) {
@@ -9,7 +10,7 @@ async function getProfile(req, res) {
     if (!rider) return res.status(404).json({ error: 'Rider profile not found' });
     return res.status(200).json({ rider });
   } catch (err) {
-    console.error('getProfile error:', err.message);
+    logger.error('getprofile_error', { error: err.message });
     return res.status(500).json({ error: 'Failed to fetch rider profile' });
   }
 }
@@ -58,7 +59,7 @@ async function upsertProfile(req, res) {
 
     return res.status(200).json({ message: 'Rider profile saved', rider });
   } catch (err) {
-    console.error('upsertProfile error:', err.message);
+    logger.error('upsertprofile_error', { error: err.message });
     return res.status(500).json({ error: 'Failed to save rider profile' });
   }
 }
@@ -78,7 +79,7 @@ async function toggleOnline(req, res) {
     await rider.update({ is_online: !!is_online });
     return res.status(200).json({ message: 'Status updated', rider });
   } catch (err) {
-    console.error('toggleOnline error:', err.message);
+    logger.error('toggleonline_error', { error: err.message });
     return res.status(500).json({ error: 'Failed to update online status' });
   }
 }
@@ -99,7 +100,7 @@ async function updateLocation(req, res) {
 
     return res.status(200).json({ message: 'Location updated' });
   } catch (err) {
-    console.error('updateLocation error:', err.message);
+    logger.error('updatelocation_error', { error: err.message });
     return res.status(500).json({ error: 'Failed to update location' });
   }
 }
@@ -125,7 +126,7 @@ async function getRiderLocationForOrder(req, res) {
 
     return res.status(200).json({ location: rider.current_location });
   } catch (err) {
-    console.error('getRiderLocationForOrder error:', err.message);
+    logger.error('getriderlocationfororder_error', { error: err.message });
     return res.status(500).json({ error: 'Failed to fetch rider location' });
   }
 }

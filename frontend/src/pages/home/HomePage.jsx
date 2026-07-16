@@ -18,8 +18,34 @@ const CATEGORIES = [
   { id: 'errand',    label: 'Errands',   icon: 'errand' },
 ]
 
-// Product-first verticals browse by product; the rest browse by brand/store.
-const PRODUCT_FIRST = ['materials', 'grocery']
+// Product-first verticals lead with a carousel of actual items; the rest lead
+// with stores.
+//
+// Food is here deliberately. The instinct to leave it out — "you browse
+// restaurants, not individual burgers" — is a Western framing. Zimbabweans search
+// for the DISH: "who has sadza and beef?", "where's chicken and chips?" — not the
+// brand. And practically: in a city with a handful of restaurants, a store-only
+// list is a dead page, while a dish carousel gives someone something to want
+// immediately.
+//
+// Errands stay store-less by nature — there's nothing to browse.
+const PRODUCT_FIRST = ['food', 'grocery', 'materials']
+
+// What the browsable thing is CALLED in each vertical.
+//
+// Module-level on purpose: HomePage and ProductFirst are separate components, and
+// a const declared inside one is invisible to the other. (It was, briefly —
+// "NOUN is not defined".)
+//
+// Generic "products" reads like a warehouse catalogue when someone just wants
+// lunch.
+const NOUNS = {
+  food:      { search: 'Search dishes, restaurants...',   popular: 'Popular dishes',    stores: 'Restaurants near you' },
+  grocery:   { search: 'Search groceries, stores...',     popular: 'Popular items',     stores: 'Stores near you' },
+  materials: { search: 'Search materials, suppliers...',  popular: 'Popular materials', stores: 'Suppliers near you' },
+}
+const DEFAULT_NOUN = { search: 'Search restaurants, stores...', popular: 'Popular near you', stores: 'Stores near you' }
+const nounFor = (category) => NOUNS[category] || DEFAULT_NOUN
 
 export default function HomePage() {
   const user       = useAuthStore((s) => s.user)
@@ -36,6 +62,8 @@ export default function HomePage() {
   useEffect(() => { if (city && !selectedCity) setSelectedCity(city) }, [city])
 
   const isProductFirst = PRODUCT_FIRST.includes(category)
+  const noun = nounFor(category)
+
 
   // Brand-first (food): list brands resolved to nearest branch.
   // Also used for the STORE LIST below the product carousel in product-first mode.
@@ -116,7 +144,7 @@ export default function HomePage() {
           <input type="text" value={search}
             onChange={(e) => setSearch(e.target.value)}
             onFocus={() => setFocused(true)} onBlur={() => setFocused(false)}
-            placeholder={isProductFirst ? 'Search products...' : 'Search restaurants, stores...'}
+            placeholder={noun.search}
             className="flex-1 bg-transparent text-sm text-gray-800 outline-none placeholder-gray-400" />
           {search && <button onClick={() => setSearch('')} className="text-gray-400 text-xl leading-none">×</button>}
         </div>
@@ -287,6 +315,7 @@ function BrandCard({ brand, onClick, isFavorite, onToggleFavorite }) {
 
 // ─── Product-first (materials/grocery): Popular carousel + store list ─────────
 function ProductFirst({ products, brands, loading, storesLoading, search, activeCat, category, navigate, isFavorite, toggle }) {
+  const noun = nounFor(category)
   // When searching, product results take over (flat list — search is product-intent).
   if (search) {
     return (
@@ -316,7 +345,7 @@ function ProductFirst({ products, brands, loading, storesLoading, search, active
       {!loading && popular.length > 0 && (
         <div className="mb-6">
           <h3 className="text-lg font-black text-gray-900 mb-3">
-            {activeCat ? `Popular in ${activeCat}` : 'Popular near you'}
+            {activeCat ? `Popular in ${activeCat}` : noun.popular}
           </h3>
           <div className="flex gap-3 overflow-x-auto no-scrollbar pb-1 -mx-4 px-4">
             {popular.map((p) => (
@@ -329,7 +358,7 @@ function ProductFirst({ products, brands, loading, storesLoading, search, active
 
       {/* Stores — the main list */}
       <div className="flex items-center justify-between mb-3">
-        <h3 className="text-lg font-black text-gray-900">Stores near you</h3>
+        <h3 className="text-lg font-black text-gray-900">{noun.stores}</h3>
         {brands?.length > 0 && <span className="text-xs text-gray-400">{brands.length} store{brands.length !== 1 ? 's' : ''}</span>}
       </div>
       {storesLoading ? <SkeletonList /> : !brands?.length ? <EmptyState productMode /> : (
