@@ -11,3 +11,8 @@ __pycache__/
 # test scratch output
 *.txt
 backend/*.txt
+
+# test scratch output
+backend/jr.txt
+backend/jesterr.txt
+backend/test-output.txt
