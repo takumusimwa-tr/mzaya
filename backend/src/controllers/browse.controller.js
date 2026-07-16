@@ -3,7 +3,6 @@
 //   - Brand-first (food/errands): list brands, each resolved to its nearest branch.
 //   - Product-first (materials/grocery): list available products across stores,
 //     each carrying its brand + nearest branch + price (Instacart-style).
-const { Op } = require('sequelize');
 const {
   Brand, Vendor, MenuItem, City,
 } = require('../models/associations');

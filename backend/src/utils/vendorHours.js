@@ -2,7 +2,6 @@
 // Computes whether a vendor is open right now, from opening_hours + pause state.
 // Open = current Zimbabwe time falls within today's hours AND not manually paused.
 
-const DAY_KEYS = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'];
 
 // Current time in Africa/Harare as { day: 'mon'|..., minutes: number-since-midnight }
 function nowInHarare() {

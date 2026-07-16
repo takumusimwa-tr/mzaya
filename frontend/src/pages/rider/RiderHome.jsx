@@ -37,7 +37,11 @@ export default function RiderHome() {
   const needsSetup = profileFetched && (!riderProfile || !riderProfile.vehicle_type || !riderProfile.city_id)
 
   useEffect(() => {
-    if (riderProfile) setOnline(riderProfile.is_online)
+    // Seed the online toggle from the loaded profile once it arrives.
+    if (riderProfile) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setOnline(riderProfile.is_online)
+    }
   }, [riderProfile])
 
   useEffect(() => {

@@ -1,7 +1,6 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { orderAPI } from '../../api/api'
-import useAuthStore from '../../store/useAuthStore'
 import Button from '../../components/ui/Button'
 import Input from '../../components/ui/Input'
 import Icon from '../../components/ui/Icon'
@@ -19,7 +18,6 @@ const TASK_TYPES = [
 
 export default function ErrandPage() {
   const navigate = useNavigate()
-  const user     = useAuthStore((s) => s.user)
 
   // Both ends of an errand need a real coordinate, for the same reason checkout
   // does: a Zimbabwean street address alone will have the Mzaya phoning you.
@@ -41,7 +39,10 @@ export default function ErrandPage() {
     document_description:       '',
     cash_float_required:        false,
     cash_float_amount_usd:      '',
-    payment_method:             'ecocash',
+    // No payment method chosen here. The model allows null ('set when customer
+    // checks out'), and PaymentPanel is the one place a method is picked — at
+    // the moment payment is actually taken.
+    payment_method:             null,
     special_instructions:       '',
   })
   const [loading, setLoading] = useState(false)
@@ -118,7 +119,7 @@ export default function ErrandPage() {
           <BackIcon />
         </button>
         <h1 className="text-xl font-bold text-white">Book an Errand</h1>
-        <p className="text-white/80 text-sm mt-1">We'll send a rider to handle it for you</p>
+        <p className="text-white/80 text-sm mt-1">We'll send a Mzaya to handle it for you</p>
       </div>
 
       <form onSubmit={handleSubmit} className="px-4 mt-4 flex flex-col gap-4">

@@ -59,6 +59,9 @@ export default function HomePage() {
   const { isFavorite, toggle } = useFavoriteIds()
   const { city, loading: locLoading } = useLocation()
   const [selectedCity, setSelectedCity] = useState(null)
+  // Adopt the detected city once, when it first arrives. selectedCity is
+  // intentionally omitted from deps — the guard handles the one-time set.
+  // eslint-disable-next-line react-hooks/set-state-in-effect, react-hooks/exhaustive-deps
   useEffect(() => { if (city && !selectedCity) setSelectedCity(city) }, [city])
 
   const isProductFirst = PRODUCT_FIRST.includes(category)

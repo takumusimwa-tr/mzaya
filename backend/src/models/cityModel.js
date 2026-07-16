@@ -1,6 +1,5 @@
 const { DataTypes } = require('sequelize');
 const { sequelize } = require('../config/db');
-const { CITY } = require('../config/constants');
 
 const City = sequelize.define('City', {
   id: {

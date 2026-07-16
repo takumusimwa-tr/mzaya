@@ -1,4 +1,3 @@
-const axios = require('axios');
 const { logger } = require('../utils/logger');
 
 // ─── In-memory rate cache ─────────────────────────────────────────────────────

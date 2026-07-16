@@ -71,7 +71,7 @@ export default function ItemModal({ item, vendor, onClose }) {
             {item.description && (
               <p className="text-sm text-gray-500 mt-1.5 leading-relaxed">{item.description}</p>
             )}
-            <p className="text-lg font-black text-gray-900 mt-3">${unitPrice.toFixed(2)}</p>
+            <p className="text-lg font-black text-gray-900 mt-3">US${unitPrice.toFixed(2)}</p>
 
             <div className="mt-5">
               <label className="text-sm font-bold text-gray-700">Special instructions</label>
@@ -109,7 +109,7 @@ export default function ItemModal({ item, vendor, onClose }) {
             className="flex-1 flex items-center justify-between px-5 py-3.5 rounded-2xl text-white font-bold active:scale-98 transition-transform disabled:opacity-70"
             style={{ background: '#00A651' }}>
             <span>{adding ? 'Added!' : 'Add to cart'}</span>
-            <span>${total.toFixed(2)}</span>
+            <span>US${total.toFixed(2)}</span>
           </button>
         </div>
       </div>

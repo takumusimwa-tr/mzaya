@@ -2,7 +2,7 @@ const request = require('supertest');
 const app = require('../src/app');
 const {
   models, resetDatabase,
-  makeCity, makeUser, makeVendor, makeMenuItem, makeRider, makeOrder, tokenFor,
+  makeCity, makeUser, makeRider, makeOrder, tokenFor,
 } = require('./setup');
 
 const { Order } = models;

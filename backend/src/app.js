@@ -20,18 +20,14 @@ require('dotenv').config({
 // the tests, which set their own environment — running the production validator
 // on import would kill the test process.
 
-const http    = require('http');
 const express = require('express');
 const cors    = require('cors');
 const helmet  = require('helmet');
-const { initSocket } = require('./realtime/socket');
 const { logger, requestLogger, attachLogger } = require('./utils/logger');
 const { requestId } = require('./middleware/requestId.middleware');
 const { authLimiter, writeLimiter, apiLimiter } = require('./middleware/rateLimit.middleware');
 
 const { sequelize }                  = require('./config/db');
-const { startCurrencySyncJob }       = require('./jobs/currencySync.job');
-const { startScheduledReleaseJob }   = require('./jobs/scheduledRelease.job');
 
 require('./models/associations');
 
@@ -185,7 +181,7 @@ app.get('/', (req, res) => {
 
 // Unhandled errors. In production we log the detail but return a generic
 // message — an error string can leak table names, file paths, and query shapes.
-app.use((err, req, res, next) => {
+app.use((err, req, res, _next) => {
   logger.error('unhandled_error', {
     reqId:   req.id,
     message: err.message,

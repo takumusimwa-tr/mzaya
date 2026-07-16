@@ -1,5 +1,6 @@
 const { sequelize } = require('../config/db');
 const { QueryTypes } = require('sequelize');
+const { logger } = require('../utils/logger');
 
 // Favourites are on BRANDS, not branches.
 //
@@ -38,7 +39,7 @@ async function listFavorites(req, res) {
     );
     return res.status(200).json({ brands: rows });
   } catch (err) {
-    console.error('listFavorites error:', err.message);
+    logger.error('listfavorites_error', { error: err.message });
     return res.status(500).json({ error: 'Failed to fetch favorites' });
   }
 }
@@ -52,7 +53,7 @@ async function favoriteIds(req, res) {
     );
     return res.status(200).json({ ids: rows.map((r) => r.brand_id) });
   } catch (err) {
-    console.error('favoriteIds error:', err.message);
+    logger.error('favoriteids_error', { error: err.message });
     return res.status(500).json({ error: 'Failed to fetch favorite ids' });
   }
 }
@@ -93,7 +94,7 @@ async function toggleFavorite(req, res) {
     );
     return res.status(201).json({ favorited: true });
   } catch (err) {
-    console.error('toggleFavorite error:', err.message);
+    logger.error('togglefavorite_error', { error: err.message });
     return res.status(500).json({ error: 'Failed to toggle favorite' });
   }
 }

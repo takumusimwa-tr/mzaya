@@ -18,6 +18,9 @@ export default function useNotifications(onNewOrder) {
     }, 15000)
 
     return () => clearInterval(interval)
+    // onNewOrder is intentionally excluded — including it would tear down and
+    // recreate the 15s interval on every render.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user])
 }
 

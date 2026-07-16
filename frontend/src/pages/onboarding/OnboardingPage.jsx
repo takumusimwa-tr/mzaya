@@ -34,7 +34,7 @@ export default function OnboardingPage() {
   // If already logged in skip onboarding
   useEffect(() => {
     if (token) navigate('/', { replace: true })
-  }, [token])
+  }, [token, navigate])
 
   const next = () => {
     if (slide < SLIDES.length - 1) {
@@ -134,7 +134,7 @@ function RoleSelection({ navigate }) {
         <p className="text-sm text-gray-500 mb-6">Choose your role to get started</p>
 
         <div className="flex flex-col gap-3">
-          {ROLES.map(({ role, icon, title, desc, color, badge }) => (
+          {ROLES.map(({ role, icon, title, desc, color }) => (
             <button
               key={role}
               onClick={() => navigate(`/register?role=${role}`)}

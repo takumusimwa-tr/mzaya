@@ -1,9 +1,8 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { useNavigate } from 'react-router-dom'
 import { orderAPI, geoAPI, promoAPI } from '../../api/api'
 import useCartStore from '../../store/useCartStore'
-import useAuthStore from '../../store/useAuthStore'
 import api from '../../api/api'
 import Icon from '../../components/ui/Icon'
 
@@ -37,7 +36,6 @@ function buildDetail(cart, totalWeightKg) {
 export default function CheckoutPage() {
   const navigate = useNavigate()
   const cart     = useCartStore()
-  const user     = useAuthStore((s) => s.user)
 
   const { data: savedAddresses } = useQuery({
     queryKey: ['addresses'],

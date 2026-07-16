@@ -1,6 +1,5 @@
 const { DataTypes } = require('sequelize');
 const { sequelize } = require('../config/db');
-const { CATEGORY_TYPE } = require('../config/constants');
 
 const Vendor = sequelize.define('Vendor', {
   id: {

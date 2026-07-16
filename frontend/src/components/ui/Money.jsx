@@ -16,10 +16,12 @@
 // convert with the current rate exposed at build/run time.
 const ZIG_RATE = Number(import.meta.env.VITE_ZIG_RATE) || 0
 
+// eslint-disable-next-line react-refresh/only-export-components
 export function formatUsd(amount) {
   return `US$${Number(amount || 0).toFixed(2)}`
 }
 
+// eslint-disable-next-line react-refresh/only-export-components
 export function formatZig(amount) {
   return `ZiG ${Number(amount || 0).toFixed(2)}`
 }

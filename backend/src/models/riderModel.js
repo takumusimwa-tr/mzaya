@@ -1,6 +1,5 @@
 const { DataTypes } = require('sequelize');
 const { sequelize } = require('../config/db');
-const { VEHICLE_TYPE } = require('../config/constants');
 
 const Rider = sequelize.define('Rider', {
   id: {

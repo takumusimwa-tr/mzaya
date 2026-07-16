@@ -2,7 +2,6 @@ import { useEffect, useRef } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useNavigate } from 'react-router-dom'
 import api from '../../api/api'
-import useAuthStore from '../../store/useAuthStore'
 import useActiveBranch from '../../store/useActiveBranch'
 import LoadingScreen from '../../components/ui/LoadingScreen'
 import Badge from '../../components/ui/Badge'
@@ -29,7 +28,6 @@ function vendorColor(name = '') {
 }
 
 export default function VendorHome() {
-  const user        = useAuthStore((s) => s.user)
   const branchId    = useActiveBranch((s) => s.branchId)
   const navigate    = useNavigate()
   const queryClient = useQueryClient()
@@ -41,7 +39,6 @@ export default function VendorHome() {
   })
 
   const { data: orders } = useQuery({
-    queryKey: ['vendor-orders'],
     queryKey: ['vendor-orders', branchId],
     queryFn:  () => api.get('/orders/vendor', { params: branchId ? { branch_id: branchId } : {} }).then((r) => r.data.orders),
     refetchInterval: 15000,

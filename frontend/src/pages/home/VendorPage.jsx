@@ -28,6 +28,7 @@ export default function VendorPage() {
   useEffect(() => {
     if (!highlightId || !vendor?.menuItems) return
     const item = vendor.menuItems.find((i) => i.id === highlightId)
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     if (item) setActiveItem(item)
   }, [highlightId, vendor])
 

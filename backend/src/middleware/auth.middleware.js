@@ -1,5 +1,4 @@
 const jwt = require('jsonwebtoken');
-const { USER_ROLE } = require('../config/constants');
 
 // ─── Verify JWT ───────────────────────────────────────────────────────────────
 function authenticate(req, res, next) {
@@ -22,7 +21,7 @@ function authenticate(req, res, next) {
 
 // ─── Role guard factory ───────────────────────────────────────────────────────
 // Usage: requireRole(USER_ROLE.ADMIN)
-// Usage: requireRole(USER_ROLE.RIDER, USER_ROLE.ADMIN)
+// Usage: requireRole(USER_ROLE.RIDER.ADMIN)
 function requireRole(...roles) {
   return (req, res, next) => {
     if (!req.user) {

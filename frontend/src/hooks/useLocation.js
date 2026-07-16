@@ -31,7 +31,10 @@ export default function useLocation() {
   const [coords,  setCoords]  = useState(null)
 
   useEffect(() => {
+    // Geolocation is an async external system — syncing its result into state is
+    // exactly what an effect is for.
     if (!navigator.geolocation) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setCity(CITIES[0])
       setError('Geolocation not supported')
       setLoading(false)

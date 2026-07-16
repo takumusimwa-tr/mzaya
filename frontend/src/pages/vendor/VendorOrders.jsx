@@ -31,7 +31,7 @@ function playNewOrderAlert() {
       osc.start(t); osc.stop(t + 0.2)
     })
     setTimeout(() => ctx.close(), 2000)
-  } catch (e) { /* audio not available */ }
+  } catch { /* audio not available */ }
 }
 
 // Keep the tablet screen awake while the console is open (kitchen display).
@@ -44,7 +44,7 @@ function useWakeLock() {
         if ('wakeLock' in navigator) {
           lock = await navigator.wakeLock.request('screen')
         }
-      } catch (e) { /* denied or unsupported */ }
+      } catch { /* denied or unsupported */ }
     }
     request()
     // Re-acquire if the page becomes visible again (lock drops on tab switch)
@@ -53,7 +53,7 @@ function useWakeLock() {
     return () => {
       released = true
       document.removeEventListener('visibilitychange', onVisible)
-      if (lock) { try { lock.release() } catch (e) {} }
+      if (lock) { try { lock.release() } catch { /* already released */ } }
     }
   }, [])
 }
@@ -133,10 +133,12 @@ export default function VendorOrders() {
     return g
   }, [orders])
 
-  const list = grouped[group] || []
+  const list = useMemo(() => grouped[group] || [], [grouped, group])
 
   // Auto-select the first order in the current group if none selected / stale.
   useEffect(() => {
+    // Keep a valid selection as the list changes — legitimate state sync.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     if (!list.length) { setSelectedId(null); return }
     if (!selectedId || !list.some((o) => o.id === selectedId)) {
       setSelectedId(list[0].id)

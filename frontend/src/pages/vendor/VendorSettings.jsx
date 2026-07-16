@@ -34,6 +34,8 @@ export default function VendorSettings() {
 
   useEffect(() => {
     if (!vendor) return
+    // Seed the editable settings form from the loaded vendor record.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setForm({
       name:        vendor.name || '',
       description: vendor.description || '',

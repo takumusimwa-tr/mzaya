@@ -65,7 +65,6 @@ const REMOTE_URL   = 'https://www.paynow.co.zw/interface/remotetransaction'; // 
 // Mobile-money methods use Express Checkout; everything else uses web redirect.
 const MOBILE_METHODS = ['ecocash', 'onemoney', 'innbucks', 'omari'];
 // Diaspora / card / general go through the web redirect (hosted page).
-const REDIRECT_METHODS = ['visa', 'mastercard', 'card', 'diaspora', 'web'];
 
 // ─── Hash helpers (Paynow SHA512 scheme) ──────────────────────────────────────
 // Concatenate all values (except 'hash'), append the integration key, SHA512, uppercase.
@@ -93,7 +92,7 @@ function parsePaynowResponse(body) {
 }
 
 // ─── Initiate mobile-money express payment (USSD push) ────────────────────────
-async function initiateExpress({ orderId, amount, phone, method, currency = 'USD', email }) {
+async function initiateExpress({ orderId, amount, phone, method, currency: _currency = 'USD', email }) {
   const reference = `MZAYA-${orderId}`;
 
   if (MOCK) return mockInitiate({ reference, mobile: true });
@@ -134,7 +133,7 @@ async function initiateExpress({ orderId, amount, phone, method, currency = 'USD
 }
 
 // ─── Initiate web redirect payment (cards / diaspora / general) ───────────────
-async function initiateRedirect({ orderId, amount, currency = 'USD', email }) {
+async function initiateRedirect({ orderId, amount, currency: _currency = 'USD', email }) {
   const reference = `MZAYA-${orderId}`;
 
   if (MOCK) return mockInitiate({ reference, mobile: false, orderId });

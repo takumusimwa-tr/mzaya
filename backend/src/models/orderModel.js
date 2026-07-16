@@ -1,14 +1,6 @@
 const { DataTypes } = require('sequelize');
 const { sequelize } = require('../config/db');
-const {
-  CATEGORY_TYPE,
-  ORDER_STATUS,
-  VEHICLE_TYPE,
-  PAYMENT_METHOD,
-  PAYMENT_STATUS,
-  CURRENCY,
-  CITY,
-} = require('../config/constants');
+const { ORDER_STATUS, PAYMENT_STATUS } = require('../config/constants');
 
 const Order = sequelize.define('Order', {
   id: {

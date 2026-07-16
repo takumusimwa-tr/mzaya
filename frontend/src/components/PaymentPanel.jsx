@@ -29,7 +29,11 @@ export default function PaymentPanel({ order, onPaid }) {
 
   // One key per payment intent. Regenerated when the customer changes method or
   // number — that's a genuinely different intent and deserves a fresh attempt.
-  const idempotencyKey = useRef(`${order.id}:${Date.now()}:${Math.random().toString(36).slice(2)}`)
+  // Seeded once via a lazy useState initializer — the impure Date.now()/random
+  // call runs a single time, inside the initializer function, never in the render
+  // body. useRef then holds the mutable value the effect updates.
+  const [initialKey] = useState(() => `${order.id}:${Date.now()}:${Math.random().toString(36).slice(2)}`)
+  const idempotencyKey = useRef(initialKey)
   useEffect(() => {
     idempotencyKey.current = `${order.id}:${method}:${phone}`
   }, [order.id, method, phone])

@@ -42,6 +42,8 @@ export default function TrackingPage() {
 
   // Load Leaflet from CDN
   useEffect(() => {
+    // Loading Leaflet from a CDN is async external work — the effect is correct.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     if (window.L) { setMapReady(true); return }
 
     const css = document.createElement('link')

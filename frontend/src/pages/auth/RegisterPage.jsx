@@ -7,7 +7,7 @@ import Button from '../../components/ui/Button'
 
 const ROLE_LABELS = {
   customer: 'Customer account',
-  rider:    'Rider account',
+  rider:    'Mzaya account',
   vendor:   'Vendor account',
 }
 

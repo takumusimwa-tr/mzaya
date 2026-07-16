@@ -98,8 +98,10 @@ function signToken(user) {
 }
 
 function safeUser(user) {
-  // Never return password hash to client
-  const { password, ...safe } = user.toJSON();
+  // Strip the password hash before returning a user to the client. The
+  // destructured _password is intentionally discarded — that's the whole point
+  // (the ^_ prefix marks it intentional to the linter).
+  const { password: _password, ...safe } = user.toJSON();
   return safe;
 }
 
