@@ -7,3 +7,7 @@ ml-service/venv/
 __pycache__/
 *.pyc
 *.pkl
+
+# test scratch output
+*.txt
+backend/*.txt
