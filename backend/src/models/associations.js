@@ -14,6 +14,8 @@ const OrderOffer      = require('./orderOfferModel');
 const OrderMessage    = require('./orderMessageModel');
 const PaymentAttempt  = require('./paymentAttemptModel');
 const PaymentEvent    = require('./paymentEventModel');
+const Favorite        = require('./favoriteModel');
+const Address         = require('./addressModel');
 
 // ─── City associations ────────────────────────────────────────────────────────
 City.hasMany(Vendor, { foreignKey: 'city_id', as: 'vendors' });
@@ -39,6 +41,18 @@ Vendor.belongsTo(Brand, { foreignKey: 'brand_id', as: 'brand' });
 
 User.hasMany(Brand, { foreignKey: 'owner_id', as: 'brands' });
 Brand.belongsTo(User, { foreignKey: 'owner_id', as: 'owner' });
+
+// ─── Favorite associations ────────────────────────────────────────────────────
+// A customer favourites a brand. FKs give sync the columns + referential
+// integrity; the controllers query the table by raw SQL.
+User.hasMany(Favorite,  { foreignKey: 'customer_id', as: 'favorites' });
+Favorite.belongsTo(User,  { foreignKey: 'customer_id', as: 'customer' });
+Brand.hasMany(Favorite, { foreignKey: 'brand_id', as: 'favoritedBy' });
+Favorite.belongsTo(Brand, { foreignKey: 'brand_id', as: 'brand' });
+
+// ─── Address associations ─────────────────────────────────────────────────────
+User.hasMany(Address,  { foreignKey: 'customer_id', as: 'addresses' });
+Address.belongsTo(User,  { foreignKey: 'customer_id', as: 'customer' });
 
 // ─── Rider associations ───────────────────────────────────────────────────────
 User.hasOne(Rider, { foreignKey: 'user_id', as: 'riderProfile' });
@@ -81,6 +95,8 @@ PaymentAttempt.hasMany(PaymentEvent, { foreignKey: 'attempt_id', as: 'events' })
 PaymentEvent.belongsTo(PaymentAttempt, { foreignKey: 'attempt_id', as: 'attempt' });
 
 module.exports = {
+  Favorite,
+  Address,
   User,
   Order,
   OrderFood,
