@@ -1,6 +1,5 @@
 import pandas as pd
 import numpy as np
-from prophet import Prophet
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import text
 from datetime import datetime, timedelta
@@ -11,6 +10,18 @@ warnings.filterwarnings('ignore')
 
 FORECAST_MODEL_PATH = "app/models/prophet_{city}_{category}.pkl"
 MIN_PROPHET_SAMPLES = 24  # need at least 24 distinct hours for Prophet
+
+# Prophet is an optional, heavy dependency (pulls in cmdstanpy/Stan). The service
+# is designed to fall back to a statistical forecast when it's unavailable or when
+# there isn't enough data — so we import it lazily. In staging (empty database),
+# the fallback path is the only one that ever runs, so the service should boot and
+# work whether or not prophet is installed.
+def _load_prophet():
+    try:
+        from prophet import Prophet
+        return Prophet
+    except ImportError:
+        return None
 
 # ─── Load training data from feature store ───────────────────────────────────
 async def load_demand_data(db: AsyncSession, city: str = None, category: str = None) -> pd.DataFrame:
@@ -60,6 +71,14 @@ async def train_forecast_model(
             "status":  "skipped",
             "reason":  f"Need {MIN_PROPHET_SAMPLES}+ distinct hourly observations for {city}/{category}",
             "samples": 0,
+        }
+
+    Prophet = _load_prophet()
+    if Prophet is None:
+        return {
+            "status": "skipped",
+            "reason": "Prophet is not installed in this environment; using statistical forecast instead.",
+            "samples": len(df),
         }
 
     model = Prophet(
