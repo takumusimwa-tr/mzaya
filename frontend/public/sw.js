@@ -29,7 +29,7 @@
 // must not be bought with someone's token or someone else's order history.
 // ─────────────────────────────────────────────────────────────────────────────
 
-const VERSION      = 'v3'
+const VERSION      = 'v4'
 const SHELL_CACHE  = `mzaya-shell-${VERSION}`
 const IMAGE_CACHE  = `mzaya-img-${VERSION}`
 const PUBLIC_CACHE = `mzaya-public-${VERSION}`
@@ -138,8 +138,38 @@ self.addEventListener('fetch', (event) => {
   }
 
   // ── Navigation ────────────────────────────────────────────────────────────
+  // SPA routes (/home, /orders, …) aren't real files — the server rewrites them
+  // to index.html. This handler must ALWAYS resolve to a real Response; returning
+  // undefined from respondWith surfaces as "network error response" and breaks
+  // every navigation. The previous version did exactly that when the shell cache
+  // was empty (precache can fail silently) — so we guard every branch.
   if (request.mode === 'navigate') {
-    event.respondWith(fetch(request).catch(() => caches.match('/index.html')))
+    event.respondWith((async () => {
+      // 1. Network first — the fresh app shell.
+      try {
+        const net = await fetch(request)
+        if (net && net.ok) return net
+      } catch { /* offline — fall through to cache */ }
+
+      // 2. Cached shell, tried under both keys we precache.
+      const cachedIndex = await caches.match('/index.html')
+      if (cachedIndex) return cachedIndex
+      const cachedRoot = await caches.match('/')
+      if (cachedRoot) return cachedRoot
+
+      // 3. Last resort: fetch index.html directly. Only if THAT fails do we hand
+      //    back a real error Response — still a valid Response, never undefined.
+      try {
+        return await fetch('/index.html')
+      } catch {
+        return new Response(
+          '<!doctype html><meta charset=utf-8><title>Offline</title>' +
+          '<p style="font-family:sans-serif;padding:2rem">You appear to be offline. ' +
+          'Reconnect and reload.</p>',
+          { status: 503, headers: { 'Content-Type': 'text/html' } },
+        )
+      }
+    })())
     return
   }
 
