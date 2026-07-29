@@ -1,0 +1,40 @@
+{
+  "version": "1.0.0",
+  "created": "2026-07-29",
+  "assets": {
+    "onboarding": [
+      "mzaya-onboarding-errands-02.svg",
+      "mzaya-onboarding-commerce-01.svg",
+      "mzaya-onboarding-delivery-03.svg"
+    ],
+    "emptyStates": [
+      "mzaya-empty-cart.svg",
+      "mzaya-empty-products.svg",
+      "mzaya-empty-favorites.svg",
+      "mzaya-empty-addresses.svg",
+      "mzaya-empty-orders.svg"
+    ],
+    "status": [
+      "mzaya-order-completed.svg",
+      "mzaya-searching-rider.svg",
+      "mzaya-order-confirmed.svg"
+    ],
+    "categories": [
+      "mzaya-category-materials.svg",
+      "mzaya-category-more.svg",
+      "mzaya-category-food.svg",
+      "mzaya-category-grocery.svg",
+      "mzaya-category-pharmacy.svg",
+      "mzaya-category-courier.svg",
+      "mzaya-category-errands.svg"
+    ],
+    "services": [
+      "mzaya-service-other.svg",
+      "mzaya-service-shopping-run.svg",
+      "mzaya-service-zimra.svg",
+      "mzaya-service-document-delivery.svg",
+      "mzaya-service-bank-queue.svg",
+      "mzaya-service-bill-payment.svg"
+    ]
+  }
+}

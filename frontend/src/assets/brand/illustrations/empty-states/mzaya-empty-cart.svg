@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 520" role="img" aria-labelledby="title">
+<title id="title">Your cart is empty</title>
+
+<defs>
+  <filter id="shadow" x="-30%" y="-30%" width="160%" height="160%">
+    <feDropShadow dx="0" dy="10" stdDeviation="12" flood-color="#071B33" flood-opacity=".12"/>
+  </filter>
+  <linearGradient id="greenGrad" x1="0" y1="0" x2="1" y2="1">
+    <stop offset="0" stop-color="#34C76F"/>
+    <stop offset="1" stop-color="#007D3D"/>
+  </linearGradient>
+  <linearGradient id="skyGrad" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0" stop-color="#DFF4FF"/>
+    <stop offset="1" stop-color="#FFFFFF"/>
+  </linearGradient>
+</defs>
+
+    <rect width="720" height="520" rx="36" fill="#F8FBF9"/>
+    <circle cx="110" cy="94" r="54" fill="#E8F8EF"/>
+    <circle cx="610" cy="112" r="36" fill="#FFC107" opacity=".22"/>
+    
+        <path d="M213 194h64l31 142h202l35-104H296" fill="none" stroke="#007D3D" stroke-width="18" stroke-linecap="round" stroke-linejoin="round"/>
+        <circle cx="345" cy="374" r="22" fill="#071B33"/>
+        <circle cx="482" cy="374" r="22" fill="#071B33"/>
+        <circle cx="355" cy="205" r="28" fill="#34C76F"/>
+        <circle cx="423" cy="188" r="27" fill="#FFC107"/>
+        <circle cx="476" cy="231" r="24" fill="#E65C4F"/>
+        <path d="M396 130v54M369 157h54" stroke="#00A651" stroke-width="16" stroke-linecap="round"/>
+        
+    
+</svg>

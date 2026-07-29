@@ -1,0 +1,17 @@
+
+.mzaya-searching-rider {
+  animation: mzaya-pulse 1.6s ease-in-out infinite;
+  transform-origin: center;
+}
+@keyframes mzaya-pulse {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.06); opacity: .84; }
+}
+.mzaya-order-success {
+  animation: mzaya-pop .72s cubic-bezier(.2,.9,.2,1.15) both;
+}
+@keyframes mzaya-pop {
+  0% { transform: scale(.82); opacity: 0; }
+  70% { transform: scale(1.05); opacity: 1; }
+  100% { transform: scale(1); opacity: 1; }
+}

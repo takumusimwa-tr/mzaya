@@ -1,0 +1,52 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 520" role="img" aria-labelledby="title">
+<title id="title">Track every step</title>
+
+<defs>
+  <filter id="shadow" x="-30%" y="-30%" width="160%" height="160%">
+    <feDropShadow dx="0" dy="10" stdDeviation="12" flood-color="#071B33" flood-opacity=".12"/>
+  </filter>
+  <linearGradient id="greenGrad" x1="0" y1="0" x2="1" y2="1">
+    <stop offset="0" stop-color="#34C76F"/>
+    <stop offset="1" stop-color="#007D3D"/>
+  </linearGradient>
+  <linearGradient id="skyGrad" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0" stop-color="#DFF4FF"/>
+    <stop offset="1" stop-color="#FFFFFF"/>
+  </linearGradient>
+</defs>
+
+<rect width="720" height="520" rx="36" fill="#F8FBF9"/>
+<path d="M0 420c130-66 273-52 410 2s229 61 310 24v74H0z" fill="#E8F8EF"/>
+<!-- map -->
+<g filter="url(#shadow)">
+  <rect x="54" y="86" width="382" height="326" rx="34" fill="#FFFFFF"/>
+  <path d="M86 330c66-122 142-83 190-168s102-52 128-13" fill="none" stroke="#E4E7EC" stroke-width="18" stroke-linecap="round"/>
+  <path d="M96 328c63-117 136-78 184-161s96-48 118-12" fill="none" stroke="#00A651" stroke-width="8" stroke-linecap="round" stroke-dasharray="16 18"/>
+  <circle cx="100" cy="326" r="18" fill="#00A651"/>
+  <path d="M100 297c-27 0-46-20-46-45 0-27 20-47 46-47s46 20 46 47c0 25-19 45-46 45z" fill="#FFC107"/>
+  <circle cx="100" cy="252" r="14" fill="#FFFFFF"/>
+  <path d="M393 179c-27 0-46-20-46-45 0-27 20-47 46-47s46 20 46 47c0 25-19 45-46 45z" fill="#007D3D"/>
+  <circle cx="393" cy="134" r="14" fill="#FFFFFF"/>
+</g>
+<!-- phone -->
+<g transform="translate(446 52)" filter="url(#shadow)">
+  <rect width="220" height="392" rx="40" fill="#071B33"/>
+  <rect x="13" y="17" width="194" height="358" rx="30" fill="#FFFFFF"/>
+  <rect x="76" y="29" width="68" height="9" rx="5" fill="#E4E7EC"/>
+  <circle cx="110" cy="192" r="70" fill="#E8F8EF"/>
+  <path d="M110 111c-39 0-68 29-68 66 0 48 68 106 68 106s68-58 68-106c0-37-29-66-68-66z" fill="#00A651"/>
+  <circle cx="110" cy="176" r="27" fill="#FFFFFF"/>
+  <rect x="50" y="310" width="120" height="26" rx="13" fill="#00A651"/>
+  <circle cx="110" cy="351" r="8" fill="#E4E7EC"/>
+</g>
+<!-- rider -->
+<g transform="translate(226 292)">
+  <circle cx="58" cy="22" r="20" fill="#8B5A3C"/>
+  <rect x="37" y="43" width="56" height="58" rx="20" fill="#00A651"/>
+  <circle cx="28" cy="135" r="26" fill="#071B33"/>
+  <circle cx="116" cy="135" r="26" fill="#071B33"/>
+  <path d="M30 132h60l-24-38H46zM92 96l22 7" fill="none" stroke="#007D3D" stroke-width="9" stroke-linejoin="round" stroke-linecap="round"/>
+  <rect x="78" y="47" width="48" height="40" rx="8" fill="#007D3D"/>
+</g>
+
+</svg>

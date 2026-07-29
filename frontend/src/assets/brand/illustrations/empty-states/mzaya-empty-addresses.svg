@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 520" role="img" aria-labelledby="title">
+<title id="title">No saved addresses</title>
+
+<defs>
+  <filter id="shadow" x="-30%" y="-30%" width="160%" height="160%">
+    <feDropShadow dx="0" dy="10" stdDeviation="12" flood-color="#071B33" flood-opacity=".12"/>
+  </filter>
+  <linearGradient id="greenGrad" x1="0" y1="0" x2="1" y2="1">
+    <stop offset="0" stop-color="#34C76F"/>
+    <stop offset="1" stop-color="#007D3D"/>
+  </linearGradient>
+  <linearGradient id="skyGrad" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0" stop-color="#DFF4FF"/>
+    <stop offset="1" stop-color="#FFFFFF"/>
+  </linearGradient>
+</defs>
+
+    <rect width="720" height="520" rx="36" fill="#F8FBF9"/>
+    <circle cx="110" cy="94" r="54" fill="#E8F8EF"/>
+    <circle cx="610" cy="112" r="36" fill="#FFC107" opacity=".22"/>
+    
+        <path d="M360 109c-76 0-132 56-132 126 0 91 132 199 132 199s132-108 132-199c0-70-56-126-132-126z" fill="#E8F8EF" stroke="#00A651" stroke-width="16"/>
+        <circle cx="360" cy="234" r="54" fill="#FFFFFF"/>
+        <circle cx="360" cy="234" r="26" fill="#00A651"/>
+        <path d="M150 390c95-44 190-38 286 6s180 43 252 7" fill="none" stroke="#E4E7EC" stroke-width="18" stroke-linecap="round"/>
+        
+    
+</svg>

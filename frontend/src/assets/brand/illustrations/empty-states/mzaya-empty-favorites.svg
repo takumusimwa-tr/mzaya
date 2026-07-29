@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 520" role="img" aria-labelledby="title">
+<title id="title">No favorites yet</title>
+
+<defs>
+  <filter id="shadow" x="-30%" y="-30%" width="160%" height="160%">
+    <feDropShadow dx="0" dy="10" stdDeviation="12" flood-color="#071B33" flood-opacity=".12"/>
+  </filter>
+  <linearGradient id="greenGrad" x1="0" y1="0" x2="1" y2="1">
+    <stop offset="0" stop-color="#34C76F"/>
+    <stop offset="1" stop-color="#007D3D"/>
+  </linearGradient>
+  <linearGradient id="skyGrad" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0" stop-color="#DFF4FF"/>
+    <stop offset="1" stop-color="#FFFFFF"/>
+  </linearGradient>
+</defs>
+
+    <rect width="720" height="520" rx="36" fill="#F8FBF9"/>
+    <circle cx="110" cy="94" r="54" fill="#E8F8EF"/>
+    <circle cx="610" cy="112" r="36" fill="#FFC107" opacity=".22"/>
+    
+        <rect x="192" y="154" width="336" height="228" rx="34" fill="#FFFFFF" filter="url(#shadow)"/>
+        <path d="M360 336s-116-67-116-142c0-39 31-70 70-70 22 0 39 9 46 24 8-15 25-24 47-24 39 0 70 31 70 70 0 75-117 142-117 142z" fill="#E8F8EF" stroke="#00A651" stroke-width="14"/>
+        
+    
+</svg>

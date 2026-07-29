@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 520" role="img" aria-labelledby="title">
+<title id="title">No products here yet</title>
+
+<defs>
+  <filter id="shadow" x="-30%" y="-30%" width="160%" height="160%">
+    <feDropShadow dx="0" dy="10" stdDeviation="12" flood-color="#071B33" flood-opacity=".12"/>
+  </filter>
+  <linearGradient id="greenGrad" x1="0" y1="0" x2="1" y2="1">
+    <stop offset="0" stop-color="#34C76F"/>
+    <stop offset="1" stop-color="#007D3D"/>
+  </linearGradient>
+  <linearGradient id="skyGrad" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0" stop-color="#DFF4FF"/>
+    <stop offset="1" stop-color="#FFFFFF"/>
+  </linearGradient>
+</defs>
+
+    <rect width="720" height="520" rx="36" fill="#F8FBF9"/>
+    <circle cx="110" cy="94" r="54" fill="#E8F8EF"/>
+    <circle cx="610" cy="112" r="36" fill="#FFC107" opacity=".22"/>
+    
+        <rect x="190" y="258" width="340" height="120" rx="24" fill="#FFFFFF" filter="url(#shadow)"/>
+        <rect x="220" y="188" width="280" height="96" rx="20" fill="#FFF8E7"/>
+        <path d="M224 188l28-44h216l28 44" fill="#FFC107" opacity=".85"/>
+        <circle cx="315" cy="238" r="22" fill="#34C76F"/>
+        <circle cx="382" cy="238" r="22" fill="#E65C4F"/>
+        <path d="M352 380v56" stroke="#007D3D" stroke-width="18" stroke-linecap="round"/>
+        <circle cx="352" cy="154" r="25" fill="#8B5A3C"/>
+        <rect x="320" y="178" width="64" height="90" rx="25" fill="#00A651"/>
+        <rect x="370" y="195" width="74" height="14" rx="7" transform="rotate(-12 370 195)" fill="#8B5A3C"/>
+        
+    
+</svg>

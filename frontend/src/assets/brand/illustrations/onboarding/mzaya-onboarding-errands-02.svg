@@ -1,0 +1,65 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 520" role="img" aria-labelledby="title">
+<title id="title">Send a Mzaya to handle it</title>
+
+<defs>
+  <filter id="shadow" x="-30%" y="-30%" width="160%" height="160%">
+    <feDropShadow dx="0" dy="10" stdDeviation="12" flood-color="#071B33" flood-opacity=".12"/>
+  </filter>
+  <linearGradient id="greenGrad" x1="0" y1="0" x2="1" y2="1">
+    <stop offset="0" stop-color="#34C76F"/>
+    <stop offset="1" stop-color="#007D3D"/>
+  </linearGradient>
+  <linearGradient id="skyGrad" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0" stop-color="#DFF4FF"/>
+    <stop offset="1" stop-color="#FFFFFF"/>
+  </linearGradient>
+</defs>
+
+<rect width="720" height="520" rx="36" fill="#F8FBF9"/>
+<circle cx="104" cy="102" r="58" fill="#E8F8EF"/>
+<path d="M0 414c140-60 280-45 408 10s224 64 312 18v78H0z" fill="#E8F8EF"/>
+<!-- civic building -->
+<g filter="url(#shadow)">
+  <path d="M72 198l132-76 132 76" fill="#00A651" opacity=".95"/>
+  <rect x="88" y="198" width="232" height="170" rx="14" fill="#FFFFFF"/>
+  <rect x="111" y="218" width="30" height="118" rx="6" fill="#FFF8E7"/>
+  <rect x="166" y="218" width="30" height="118" rx="6" fill="#FFF8E7"/>
+  <rect x="221" y="218" width="30" height="118" rx="6" fill="#FFF8E7"/>
+  <rect x="276" y="218" width="22" height="118" rx="6" fill="#FFF8E7"/>
+  <rect x="72" y="354" width="264" height="22" rx="11" fill="#007D3D"/>
+</g>
+<!-- customer -->
+<g transform="translate(352 136)">
+  <circle cx="58" cy="56" r="31" fill="#C4865B"/>
+  <path d="M29 57c1-30 38-45 60-25 12 10 15 28 9 43-19-10-43-9-69-18z" fill="#312016"/>
+  <rect x="24" y="90" width="72" height="116" rx="30" fill="#FFC107"/>
+  <path d="M40 201l-6 115M83 201l11 115" stroke="#071B33" stroke-width="20" stroke-linecap="round"/>
+  <rect x="84" y="116" width="76" height="12" rx="6" transform="rotate(-8 84 116)" fill="#C4865B"/>
+  <rect x="132" y="83" width="38" height="52" rx="6" fill="#FFFFFF" stroke="#E4E7EC" stroke-width="3"/>
+  <path d="M139 96h24M139 107h24M139 118h17" stroke="#00A651" stroke-width="4" stroke-linecap="round"/>
+</g>
+<!-- messenger -->
+<g transform="translate(478 116)">
+  <circle cx="60" cy="56" r="31" fill="#8B5A3C"/>
+  <path d="M31 54c1-30 38-44 59-25 11 10 14 27 9 42-21-10-43-10-68-17z" fill="#1F1F1F"/>
+  <path d="M24 47h71" stroke="#00A651" stroke-width="13" stroke-linecap="round"/>
+  <rect x="24" y="91" width="78" height="124" rx="34" fill="url(#greenGrad)"/>
+  <rect x="79" y="115" width="84" height="14" rx="7" transform="rotate(9 79 115)" fill="#8B5A3C"/>
+  <rect x="139" y="103" width="40" height="52" rx="7" fill="#FFFFFF" stroke="#E4E7EC" stroke-width="3"/>
+  <path d="M146 117h24M146 129h24M146 141h17" stroke="#00A651" stroke-width="4" stroke-linecap="round"/>
+  <path d="M42 211l-12 112M88 211l16 112" stroke="#071B33" stroke-width="21" stroke-linecap="round"/>
+  <rect x="94" y="99" width="62" height="62" rx="12" fill="#007D3D"/>
+  <path d="M106 116h38v29h-38z" fill="#FFFFFF"/>
+  <path d="M125 116v13l-8-6-8 6v-13" fill="#00A651"/>
+</g>
+<!-- service chips -->
+<g font-family="Arial, sans-serif" font-size="18" font-weight="700">
+  <rect x="74" y="405" width="150" height="48" rx="24" fill="#FFFFFF" filter="url(#shadow)"/>
+  <text x="149" y="436" text-anchor="middle" fill="#071B33">Documents</text>
+  <rect x="242" y="405" width="126" height="48" rx="24" fill="#FFFFFF" filter="url(#shadow)"/>
+  <text x="305" y="436" text-anchor="middle" fill="#071B33">Queues</text>
+  <rect x="386" y="405" width="160" height="48" rx="24" fill="#FFFFFF" filter="url(#shadow)"/>
+  <text x="466" y="436" text-anchor="middle" fill="#071B33">Bill payment</text>
+</g>
+
+</svg>
