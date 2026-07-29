@@ -1,0 +1,7 @@
+:root {
+  --mzaya-motion-fast: 140ms;
+  --mzaya-motion-base: 220ms;
+  --mzaya-motion-slow: 320ms;
+  --mzaya-ease-standard: cubic-bezier(.2,.8,.2,1);
+  --mzaya-ease-emphasized: cubic-bezier(.2,.9,.2,1.1);
+}

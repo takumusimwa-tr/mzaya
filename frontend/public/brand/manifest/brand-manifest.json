@@ -1,0 +1,17 @@
+{
+  "brand": "Mzaya",
+  "version": "1.0.0",
+  "created": "2026-07-29",
+  "colors": {
+    "primary": "#00A651",
+    "primaryDark": "#007D3D",
+    "mint": "#E8F8EF",
+    "navy": "#071B33",
+    "sunshine": "#FFC107"
+  },
+  "logos": {
+    "symbol": "frontend/src/assets/brand/logos/mzaya-symbol-primary.svg",
+    "mark": "frontend/src/assets/brand/logos/mzaya-mark-green.svg",
+    "lockup": "frontend/src/assets/brand/logos/mzaya-lockup-horizontal-primary.svg"
+  }
+}

@@ -8,7 +8,7 @@
     <stop offset="1" stop-color="#007D3D"/>
   </linearGradient>
 </defs>
-<rect width="512" height="512" rx="112" fill="#00A651"/>
+<rect width="512" height="512" rx="112" fill="#071B33"/>
 <!-- M frame -->
 <path d="M96 384V120h76l84 111 84-111h76v264h-76V236l-84 106-84-106v148z" fill="#FFFFFF"/>
 <!-- courier head -->

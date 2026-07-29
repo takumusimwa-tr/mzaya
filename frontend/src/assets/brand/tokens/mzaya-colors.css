@@ -1,0 +1,20 @@
+:root {
+  --mzaya-green-50: #EFFCF4;
+  --mzaya-green-100: #D9F8E5;
+  --mzaya-green-200: #B5EFCB;
+  --mzaya-green-300: #82E2A8;
+  --mzaya-green-400: #46CE7F;
+  --mzaya-green-500: #16B45F;
+  --mzaya-green-600: #00A651;
+  --mzaya-green-700: #008541;
+  --mzaya-green-800: #007D3D;
+  --mzaya-green-900: #07562F;
+  --mzaya-navy-950: #071B33;
+  --mzaya-sunshine: #FFC107;
+  --mzaya-mint: #E8F8EF;
+  --mzaya-text-primary: #111827;
+  --mzaya-text-secondary: #667085;
+  --mzaya-surface: #FFFFFF;
+  --mzaya-surface-subtle: #F7F8FA;
+  --mzaya-border: #E4E7EC;
+}

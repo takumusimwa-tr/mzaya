@@ -1,0 +1,16 @@
+:root {
+  --mzaya-space-1: 0.25rem;
+  --mzaya-space-2: 0.5rem;
+  --mzaya-space-3: 0.75rem;
+  --mzaya-space-4: 1rem;
+  --mzaya-space-5: 1.25rem;
+  --mzaya-space-6: 1.5rem;
+  --mzaya-space-8: 2rem;
+  --mzaya-space-10: 2.5rem;
+  --mzaya-space-12: 3rem;
+  --mzaya-radius-sm: 0.5rem;
+  --mzaya-radius-md: 0.75rem;
+  --mzaya-radius-lg: 1rem;
+  --mzaya-radius-xl: 1.5rem;
+  --mzaya-radius-pill: 999px;
+}
