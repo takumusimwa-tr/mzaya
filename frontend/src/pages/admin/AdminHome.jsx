@@ -7,7 +7,7 @@ import useAuthStore from '../../store/useAuthStore'
 import LoadingScreen from '../../components/ui/LoadingScreen'
 import Icon from '../../components/ui/Icon'
 
-const TABS = ['Overview', 'Vendors', 'Riders', 'Promos', 'Live', 'Mzaya AI']
+const TABS = ['Overview', 'Vendors', 'Mzayas', 'Promos', 'Live', 'Mzaya AI']
 
 export default function AdminHome() {
   const user     = useAuthStore((s) => s.user)
@@ -49,7 +49,7 @@ export default function AdminHome() {
       <div className="px-4 mt-4">
         {tab === 'Overview' && <Overview />}
         {tab === 'Vendors'  && <VendorsQueue />}
-        {tab === 'Riders'   && <RidersQueue />}
+        {tab === 'Mzayas'   && <RidersQueue />}
         {tab === 'Promos'   && <PromosManager />}
         {tab === 'Live'     && <LiveOrders />}
         {tab === 'Mzaya AI' && <MzayaAI />}
@@ -165,7 +165,7 @@ function RidersQueue() {
       <FilterRow options={['pending', 'approved', 'all']} value={filter} onChange={setFilter} />
       {isLoading ? <LoadingScreen message="Loading Mzayas..." /> : (
         <div className="flex flex-col gap-2 mt-3">
-          {!riders?.length && <Empty label="No riders here" />}
+          {!riders?.length && <Empty label="No Mzayas here" />}
           {riders?.map((r) => (
             <div key={r.id} className="bg-white rounded-2xl p-4 border border-gray-100">
               <div className="flex items-start justify-between">

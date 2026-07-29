@@ -1,13 +1,8 @@
-import primary from "../../assets/brand/logos/mzaya-mark-green.svg";
-import white from "../../assets/brand/logos/mzaya-mark-white.svg";
-import navy from "../../assets/brand/logos/mzaya-mark-navy.svg";
+import markGreen from '../../assets/brand/logos/mzaya-mark-green.svg'
+import markWhite from '../../assets/brand/logos/mzaya-mark-white.svg'
+import symbolPrimary from '../../assets/brand/logos/mzaya-symbol-primary.svg'
 
-const sources = { primary, white, navy };
-
-export default function MzayaIcon({
-  variant = "primary",
-  className = "",
-  title = "Mzaya",
-}) {
-  return <img src={sources[variant] ?? primary} alt={title} className={className} />;
+export default function MzayaIcon({ size = 48, color = '#00A651', bg = null, className = '' }) {
+  const src = bg ? symbolPrimary : color === '#FFFFFF' ? markWhite : markGreen
+  return <img src={src} alt="" aria-hidden="true" width={size} height={size} className={className} />
 }

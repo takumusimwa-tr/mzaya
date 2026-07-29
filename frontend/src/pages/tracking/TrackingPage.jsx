@@ -6,6 +6,9 @@ import api from '../../api/api'
 import Badge from '../../components/ui/Badge'
 import LoadingScreen from '../../components/ui/LoadingScreen'
 import Icon from '../../components/ui/Icon'
+import illoSearching from '../../assets/brand/illustrations/status/mzaya-searching-rider.svg'
+import illoConfirmed from '../../assets/brand/illustrations/status/mzaya-order-confirmed.svg'
+import illoCompleted from '../../assets/brand/illustrations/status/mzaya-order-completed.svg'
 
 const STATUS_INFO = {
   pending:   { label: 'Finding a Mzaya',  icon: 'searching', desc: 'Looking for an available Mzaya',  eta: '5-10 min'  },
@@ -130,9 +133,20 @@ export default function TrackingPage() {
           </>
         ) : (
           <div className="w-full h-full flex items-center justify-center"
-            style={{ background: 'linear-gradient(135deg, #FFE8E3, #FFD0C7)' }}>
-            <div className="text-center">
-              <div className="mb-2 flex justify-center"><Icon name={info.icon} size={40} /></div>
+            style={{ background: 'linear-gradient(135deg, #E9F9F0, #D6F3E3)' }}>
+            <div className="text-center px-6">
+              {order.status === 'pending' ? (
+                <img src={illoSearching} alt="" aria-hidden="true"
+                  className="mx-auto w-44 max-w-full mb-3 select-none" draggable="false" />
+              ) : order.status === 'accepted' ? (
+                <img src={illoConfirmed} alt="" aria-hidden="true"
+                  className="mx-auto w-44 max-w-full mb-3 select-none" draggable="false" />
+              ) : order.status === 'delivered' ? (
+                <img src={illoCompleted} alt="" aria-hidden="true"
+                  className="mx-auto w-44 max-w-full mb-3 select-none" draggable="false" />
+              ) : (
+                <div className="mb-2 flex justify-center text-green-700"><Icon name={info.icon} size={40} /></div>
+              )}
               <p className="text-sm font-medium text-gray-600">{info.label}</p>
             </div>
           </div>

@@ -3,6 +3,7 @@ import { useFavoriteBrands, useFavoriteIds } from '../../hooks/useFavorites'
 import imageUrl from '../../utils/imageUrl'
 import LoadingScreen from '../../components/ui/LoadingScreen'
 import Icon from '../../components/ui/Icon'
+import emptyFavorites from '../../assets/brand/illustrations/empty-states/mzaya-empty-favorites.svg'
 
 export default function FavoritesPage() {
   const navigate = useNavigate()
@@ -25,7 +26,7 @@ export default function FavoritesPage() {
 
       {!brands || brands.length === 0 ? (
         <div className="flex flex-col items-center justify-center px-6 pt-24">
-          <div className="mb-4 flex justify-center text-gray-300"><Icon name="favorite" size={56} /></div>
+          <img src={emptyFavorites} alt="" aria-hidden="true" className="mx-auto w-56 max-w-full mb-5 select-none" draggable="false" />
           <h2 className="text-lg font-bold text-gray-900 mb-1">No favorites yet</h2>
           <p className="text-gray-400 text-sm text-center mb-6">
             Tap the heart on any vendor to save it here for quick reordering

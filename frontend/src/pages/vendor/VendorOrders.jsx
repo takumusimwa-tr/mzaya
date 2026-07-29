@@ -298,7 +298,7 @@ function OrderDetailPane({ order, onAccept, accepting, onChat, vehicles, onUpgra
           <Row label="Drop-off" value={order.dropoff_address} />
           {order.dropoff_landmark && <Row label="Landmark" value={order.dropoff_landmark} />}
           {order.vehicle_type && <Row label="Vehicle" value={order.vehicle_type.replace('_', ' ')} />}
-          <Row label="City" value={order.city} />
+          <Row label="City" value={order.city ? order.city.charAt(0).toUpperCase() + order.city.slice(1) : '—'} />
         </div>
       </div>
 

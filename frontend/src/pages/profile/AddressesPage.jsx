@@ -4,6 +4,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import api from '../../api/api'
 import LoadingScreen from '../../components/ui/LoadingScreen'
 import Icon from '../../components/ui/Icon'
+import emptyAddresses from '../../assets/brand/illustrations/empty-states/mzaya-empty-addresses.svg'
 
 export default function AddressesPage() {
   const navigate    = useNavigate()
@@ -67,7 +68,7 @@ export default function AddressesPage() {
       <div className="px-4 mt-4 flex flex-col gap-3">
         {(!addresses || addresses.length === 0) ? (
           <div className="text-center py-16 bg-white rounded-2xl" style={{ boxShadow: '0 1px 8px rgba(0,0,0,0.06)' }}>
-            <div className="mb-3 flex justify-center text-gray-300"><Icon name="location" size={48} /></div>
+            <img src={emptyAddresses} alt="" aria-hidden="true" className="mx-auto w-48 max-w-full mb-5 select-none" draggable="false" />
             <p className="font-bold text-gray-800 mb-1">No saved addresses</p>
             <p className="text-gray-400 text-sm">Add one for faster checkout</p>
           </div>

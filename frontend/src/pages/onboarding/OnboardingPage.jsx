@@ -3,25 +3,25 @@ import { useNavigate } from 'react-router-dom'
 import useAuthStore from '../../store/useAuthStore'
 import { MzayaLockup } from '../../components/brand/MzayaLockup'
 import Icon from '../../components/ui/Icon'
+import illoCommerce from '../../assets/brand/illustrations/onboarding/mzaya-onboarding-commerce-01.svg'
+import illoErrands  from '../../assets/brand/illustrations/onboarding/mzaya-onboarding-errands-02.svg'
+import illoDelivery from '../../assets/brand/illustrations/onboarding/mzaya-onboarding-delivery-03.svg'
 
 const SLIDES = [
   {
-    icon:     'food',
+    image:    illoCommerce,
     title:    'Food, groceries & more',
-    subtitle: 'Order from restaurants, supermarkets, hardware stores — all in one app. Delivered to your door.',
-    bg:       'from-green-500 to-green-700',
+    subtitle: 'Order from restaurants, supermarkets and hardware stores — all in one app, delivered to your door.',
   },
   {
-    icon:     'rider',
-    title:    'Fast delivery across Zimbabwe',
-    subtitle: 'Riders in Harare, Bulawayo and Mutare ready to deliver. Track your order in real time.',
-    bg:       'from-blue-500 to-[#00873F]',
+    image:    illoErrands,
+    title:    'Errands, handled',
+    subtitle: 'ZIMRA runs, bank queues, document drop-offs — send a Mzaya to stand in line so you don\u2019t have to.',
   },
   {
-    icon:     'money',
-    title:    'Pay with EcoCash & more',
-    subtitle: 'EcoCash, OneMoney, InnBucks, ZIPIT, Visa and Mastercard all accepted. USD and ZiG supported.',
-    bg:       'from-orange-500 to-orange-600',
+    image:    illoDelivery,
+    title:    'Fast delivery, easy payment',
+    subtitle: 'Track your Mzaya in real time. Pay with EcoCash, OneMoney, InnBucks or card — USD and ZiG accepted.',
   },
 ]
 
@@ -51,19 +51,20 @@ export default function OnboardingPage() {
   const current = SLIDES[slide]
 
   return (
-    <div className={`min-h-screen flex flex-col bg-gradient-to-br ${current.bg} transition-all duration-500`}>
+    <div className="min-h-screen flex flex-col bg-white">
       {/* Skip button */}
       <div className="flex justify-end px-6 pt-12">
-        <button onClick={skip} className="text-white/70 text-sm font-medium">
+        <button onClick={skip} className="text-gray-400 text-sm font-medium active:text-gray-600">
           Skip
         </button>
       </div>
 
       {/* Slide content */}
       <div className="flex-1 flex flex-col items-center justify-center px-8 text-center">
-        <div className="mb-8 flex justify-center animate-bounce" style={{ color: '#00A651' }}><Icon name={current.icon} size={80} /></div>
-        <h1 className="text-2xl font-bold text-white mb-4 leading-tight">{current.title}</h1>
-        <p className="text-white/80 text-base leading-relaxed">{current.subtitle}</p>
+        <img src={current.image} alt="" aria-hidden="true"
+          className="w-72 max-w-full mb-10 select-none" draggable="false" />
+        <h1 className="text-2xl font-black text-gray-900 mb-3 leading-tight">{current.title}</h1>
+        <p className="text-gray-500 text-base leading-relaxed max-w-xs">{current.subtitle}</p>
       </div>
 
       {/* Dots + button */}
@@ -75,15 +76,17 @@ export default function OnboardingPage() {
               key={i}
               onClick={() => setSlide(i)}
               className={`rounded-full transition-all ${
-                i === slide ? 'w-6 h-2 bg-white' : 'w-2 h-2 bg-white/40'
+                i === slide ? 'w-6 h-2' : 'w-2 h-2 bg-gray-200'
               }`}
+              style={i === slide ? { background: '#00A651' } : undefined}
             />
           ))}
         </div>
 
         <button
           onClick={next}
-          className="w-full bg-white py-4 rounded-2xl text-sm font-bold text-gray-900 active:scale-95 transition-all shadow-lg"
+          className="w-full py-4 rounded-2xl text-sm font-bold text-white active:scale-95 transition-all shadow-lg"
+          style={{ background: '#00A651' }}
         >
           {slide < SLIDES.length - 1 ? 'Next' : 'Get started'}
         </button>
@@ -107,7 +110,7 @@ function RoleSelection({ navigate }) {
       role:    'rider',
       icon:    'rider',
       title:   'I want to deliver',
-      desc:    'Accept delivery jobs and earn money',
+      desc:    'Become a Mzaya — accept delivery jobs and earn money',
       color:   'border-green-500 bg-green-50',
       badge:   'bg-green-100 text-green-700',
     },
@@ -116,7 +119,7 @@ function RoleSelection({ navigate }) {
       icon:    'store',
       title:   'I have a business',
       desc:    'List your restaurant, store or business',
-      color:   'border-orange-400 bg-green-50',
+      color:   'border-green-400 bg-green-50',
       badge:   'bg-green-100 text-green-700',
     },
   ]

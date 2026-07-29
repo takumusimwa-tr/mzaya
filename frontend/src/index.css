@@ -1,4 +1,5 @@
 @import "./assets/brand/tokens/mzaya-tokens.css";
+@import "./assets/brand/animations/mzaya-illustration-motion.css";
 @import "tailwindcss";
 
 /* Hide scrollbar for horizontal scroll areas */
@@ -31,3 +32,6 @@ html { -webkit-text-size-adjust: 100%; }
 
 /* Scroll margin for sticky category nav */
 .scroll-mt-16 { scroll-margin-top: 4rem; }
+
+body { margin: 0; background: #F7F8FA; color: var(--mzaya-text-primary); }
+@keyframes mzaya-float { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-7px); } }

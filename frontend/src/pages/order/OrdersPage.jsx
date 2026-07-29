@@ -5,6 +5,7 @@ import LoadingScreen from '../../components/ui/LoadingScreen'
 import Badge from '../../components/ui/Badge'
 import useReorder from '../../hooks/useReorder'
 import Icon from '../../components/ui/Icon'
+import emptyOrders from '../../assets/brand/illustrations/empty-states/mzaya-empty-orders.svg'
 
 export default function OrdersPage() {
   const navigate = useNavigate()
@@ -26,7 +27,7 @@ export default function OrdersPage() {
 
       {!orders?.length ? (
         <div className="flex flex-col items-center justify-center py-24 px-6">
-          <div className="mb-4 flex justify-center text-gray-300"><Icon name="parcel" size={48} /></div>
+          <img src={emptyOrders} alt="" aria-hidden="true" className="mx-auto w-56 max-w-full mb-5 select-none" draggable="false" />
           <p className="text-gray-600 font-semibold">No orders yet</p>
           <p className="text-gray-400 text-sm text-center mt-1">Your orders will appear here</p>
         </div>

@@ -13,6 +13,7 @@ import { negotiationAPI } from '../../api/api'
 import PaymentPanel from '../../components/PaymentPanel'
 import OrderChat from '../../components/OrderChat'
 import Icon from '../../components/ui/Icon'
+import illoCompleted from '../../assets/brand/illustrations/status/mzaya-order-completed.svg'
 
 const STATUS_STEPS = ['pending', 'accepted', 'picked_up', 'en_route', 'delivered']
 
@@ -116,6 +117,17 @@ export default function OrderDetail() {
       </div>
 
       <div className="px-4 flex flex-col gap-4">
+        {/* Delivered — a small moment of celebration. Success is one of the few
+            places the brand guidelines want illustration + motion. */}
+        {isDelivered && (
+          <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 text-center">
+            <img src={illoCompleted} alt="" aria-hidden="true"
+              className="mx-auto w-44 max-w-full mb-2 select-none" draggable="false" />
+            <p className="font-bold text-gray-900">Order delivered</p>
+            <p className="text-sm text-gray-500 mt-0.5">Thanks for ordering with Mzaya</p>
+          </div>
+        )}
+
         {/* Status */}
         <div className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100">
           <div className="flex items-center justify-between mb-4">

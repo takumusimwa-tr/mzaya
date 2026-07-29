@@ -10,6 +10,24 @@
 //
 // Emoji are still fine for genuinely *expressive* moments (celebration, tone) —
 // just not for identity, navigation, or status.
+// Brand icons — hand-drawn Mzaya set for categories and errand services. They're
+// stroke-based currentColor SVGs, so they inherit active/inactive colours exactly
+// like Lucide. Imported ?raw and rendered inline (an <img> would flatten
+// currentColor). Lucide stays for ordinary UI actions, per the brand guidelines.
+import brandFood      from '../../assets/brand/icons/categories/mzaya-category-food.svg?raw'
+import brandGrocery   from '../../assets/brand/icons/categories/mzaya-category-grocery.svg?raw'
+import brandMaterials from '../../assets/brand/icons/categories/mzaya-category-materials.svg?raw'
+import brandErrands   from '../../assets/brand/icons/categories/mzaya-category-errands.svg?raw'
+import brandCourier   from '../../assets/brand/icons/categories/mzaya-category-courier.svg?raw'
+import brandPharmacy  from '../../assets/brand/icons/categories/mzaya-category-pharmacy.svg?raw'
+import brandMore      from '../../assets/brand/icons/categories/mzaya-category-more.svg?raw'
+import brandZimra     from '../../assets/brand/icons/services/mzaya-service-zimra.svg?raw'
+import brandBank      from '../../assets/brand/icons/services/mzaya-service-bank-queue.svg?raw'
+import brandDocument  from '../../assets/brand/icons/services/mzaya-service-document-delivery.svg?raw'
+import brandShopping  from '../../assets/brand/icons/services/mzaya-service-shopping-run.svg?raw'
+import brandBill      from '../../assets/brand/icons/services/mzaya-service-bill-payment.svg?raw'
+import brandOther     from '../../assets/brand/icons/services/mzaya-service-other.svg?raw'
+
 import {
   // Categories
   UtensilsCrossed, ShoppingCart, HardHat, ClipboardList,
@@ -27,8 +45,26 @@ import {
 // Semantic name → Lucide component.
 // Callers use the CONCEPT ("food", "rider"), never the vendor's icon name — so
 // switching icon libraries later touches only this file.
+// Concepts with a bespoke Mzaya glyph. Checked before the Lucide map, so a brand
+// icon wins wherever one exists and Lucide covers the rest.
+const BRAND_ICONS = {
+  food:      brandFood,
+  grocery:   brandGrocery,
+  materials: brandMaterials,
+  errand:    brandErrands,
+  courier:   brandCourier,
+  pharmacy:  brandPharmacy,
+  more:      brandMore,
+  zimra:     brandZimra,
+  bank:      brandBank,
+  document:  brandDocument,
+  shopping:  brandShopping,
+  bill:      brandBill,
+  service:   brandOther,
+}
+
 const ICONS = {
-  // Categories
+  // Categories (Lucide fallbacks — BRAND_ICONS takes precedence at render)
   food:        UtensilsCrossed,
   grocery:     ShoppingCart,
   materials:   HardHat,

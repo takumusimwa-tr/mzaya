@@ -1,11 +1,39 @@
 import { useState, useEffect } from 'react'
+import api from '../api/api'
 
-// Real city IDs from the database
-const CITIES = [
-  { id: 'd7e5b342-5ee8-4e40-9c1f-1024ec0007a2', name: 'Harare',   slug: 'harare',   lat: -17.8252, lng: 31.0335 },
-  { id: '33d3b120-9bd8-4d66-8819-bbc9a706634d', name: 'Bulawayo', slug: 'bulawayo', lat: -20.1325, lng: 28.6261 },
-  { id: 'db158d68-fd21-4136-ae0e-8708795a6e17', name: 'Mutare',   slug: 'mutare',   lat: -18.9707, lng: 32.6709 },
+// Fallback coordinates only — used when the cities API is unreachable, so the UI
+// can still show a sensible city name. Deliberately NO ids here: the previous
+// version hardcoded UUIDs copied from one developer database, and any other
+// environment (staging, a teammate's machine) has different ids — so every browse
+// query silently filtered by a city that didn't exist and returned nothing.
+// Real ids must always come from GET /api/cities.
+const FALLBACK_CITIES = [
+  { id: null, name: 'Harare',   slug: 'harare',   lat: -17.8252, lng: 31.0335 },
+  { id: null, name: 'Bulawayo', slug: 'bulawayo', lat: -20.1325, lng: 28.6261 },
+  { id: null, name: 'Mutare',   slug: 'mutare',   lat: -18.9707, lng: 32.6709 },
 ]
+
+// Module-level cache: fetch the city list once per session, not once per mount.
+let cityCache = null
+
+async function loadCities() {
+  if (cityCache) return cityCache
+  try {
+    const { data } = await api.get('/cities')
+    const rows = data.cities || []
+    if (rows.length) {
+      cityCache = rows.map((c) => ({
+        id:   c.id,
+        name: c.name,
+        slug: c.slug,
+        lat:  c.center?.lat ?? 0,
+        lng:  c.center?.lng ?? 0,
+      }))
+      return cityCache
+    }
+  } catch { /* network/API down — fall through */ }
+  return FALLBACK_CITIES
+}
 
 function haversineDistance(lat1, lng1, lat2, lng2) {
   const R = 6371
@@ -17,45 +45,59 @@ function haversineDistance(lat1, lng1, lat2, lng2) {
   return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
 }
 
-function getNearestCity(lat, lng) {
-  return CITIES.reduce((nearest, city) => {
+function getNearestCity(cities, lat, lng) {
+  return cities.reduce((nearest, city) => {
     const dist = haversineDistance(lat, lng, city.lat, city.lng)
     return dist < nearest.dist ? { ...city, dist } : nearest
-  }, { dist: Infinity })
+  }, { ...cities[0], dist: Infinity })
 }
 
 export default function useLocation() {
   const [city,    setCity]    = useState(null)
+  const [cities,  setCities]  = useState(FALLBACK_CITIES)
   const [loading, setLoading] = useState(true)
   const [error,   setError]   = useState(null)
   const [coords,  setCoords]  = useState(null)
 
   useEffect(() => {
-    // Geolocation is an async external system — syncing its result into state is
-    // exactly what an effect is for.
-    if (!navigator.geolocation) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setCity(CITIES[0])
-      setError('Geolocation not supported')
-      setLoading(false)
-      return
-    }
+    let cancelled = false
 
-    navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        const { latitude, longitude } = pos.coords
-        setCoords({ lat: latitude, lng: longitude })
-        setCity(getNearestCity(latitude, longitude))
+    // Two async external systems — the cities API and device geolocation — are
+    // synced into state here, which is exactly what an effect is for.
+    ;(async () => {
+      const list = await loadCities()
+      if (cancelled) return
+      setCities(list)
+
+      const fallbackToDefault = (msg) => {
+        setCity(list[0])
+        setError(msg)
         setLoading(false)
-      },
-      () => {
-        setCity(CITIES[0])
-        setError('Location access denied — defaulting to Harare')
-        setLoading(false)
-      },
-      { timeout: 5000, maximumAge: 300000 }
-    )
+      }
+
+      if (!navigator.geolocation) {
+        fallbackToDefault('Geolocation not supported')
+        return
+      }
+
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          if (cancelled) return
+          const { latitude, longitude } = pos.coords
+          setCoords({ lat: latitude, lng: longitude })
+          setCity(getNearestCity(list, latitude, longitude))
+          setLoading(false)
+        },
+        () => {
+          if (cancelled) return
+          fallbackToDefault('Location access denied — defaulting to Harare')
+        },
+        { timeout: 5000, maximumAge: 300000 }
+      )
+    })()
+
+    return () => { cancelled = true }
   }, [])
 
-  return { city, loading, error, coords, cities: CITIES }
+  return { city, loading, error, coords, cities }
 }

@@ -10,6 +10,7 @@ import imageUrl from '../../utils/imageUrl'
 import { useFavoriteIds } from '../../hooks/useFavorites'
 import { MzayaWordmark } from '../../components/brand/MzayaLockup'
 import Icon from '../../components/ui/Icon'
+import emptyProducts from '../../assets/brand/illustrations/empty-states/mzaya-empty-products.svg'
 
 const CATEGORIES = [
   { id: 'food',      label: 'Food',      icon: 'food' },
@@ -139,7 +140,7 @@ export default function HomePage() {
       {/* ── Greeting + Search ── */}
       <div className="px-4 pt-4 pb-4 bg-white border-b border-gray-100">
         <h2 className="text-2xl font-black text-gray-900 mb-3">{greeting}, {user?.name?.split(' ')[0]}! 👋</h2>
-        <div className={`flex items-center gap-3 px-4 py-3 rounded-2xl transition-all ${focused ? 'ring-2 ring-red-400' : ''}`}
+        <div className={`flex items-center gap-3 px-4 py-3 rounded-2xl transition-all ${focused ? 'ring-2 ring-green-500' : ''}`}
           style={{ background: '#F2F2F2' }}>
           <svg className="w-4 h-4 flex-shrink-0 text-gray-400" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
@@ -461,7 +462,7 @@ function SkeletonList() {
 function EmptyState({ search, productMode }) {
   return (
     <div className="text-center py-16 bg-white rounded-2xl" style={{ boxShadow: '0 1px 8px rgba(0,0,0,0.06)' }}>
-      <div className="mb-3 flex justify-center text-gray-300"><Icon name={productMode ? 'parcel' : 'store'} size={48} /></div>
+      <img src={emptyProducts} alt="" aria-hidden="true" className="mx-auto w-52 max-w-full mb-5 select-none" draggable="false" />
       <p className="font-bold text-gray-800 mb-1">
         {search ? 'No results found' : productMode ? 'No products here yet' : 'No vendors here yet'}
       </p>

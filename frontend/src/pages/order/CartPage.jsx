@@ -1,6 +1,7 @@
 import { useNavigate } from 'react-router-dom'
 import useCartStore from '../../store/useCartStore'
 import Icon from '../../components/ui/Icon'
+import emptyCart from '../../assets/brand/illustrations/empty-states/mzaya-empty-cart.svg'
 
 export default function CartPage() {
   const navigate = useNavigate()
@@ -20,7 +21,7 @@ export default function CartPage() {
           <h1 className="text-lg font-bold text-gray-900">Cart</h1>
         </div>
         <div className="flex-1 flex flex-col items-center justify-center px-6">
-          <div className="mb-4 flex justify-center text-gray-300"><Icon name="grocery" size={56} /></div>
+          <img src={emptyCart} alt="" aria-hidden="true" className="mx-auto w-56 max-w-full mb-5 select-none" draggable="false" />
           <h2 className="text-lg font-bold text-gray-900 mb-1">Your cart is empty</h2>
           <p className="text-gray-400 text-sm text-center mb-6">Add items from a vendor to get started</p>
           <button onClick={() => navigate('/home')}

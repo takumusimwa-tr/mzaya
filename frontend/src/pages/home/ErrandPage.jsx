@@ -5,14 +5,20 @@ import Button from '../../components/ui/Button'
 import Input from '../../components/ui/Input'
 import Icon from '../../components/ui/Icon'
 import LocationPicker from '../../components/LocationPicker'
+import zimraIcon from '../../assets/brand/icons/services/mzaya-service-zimra.svg'
+import bankIcon from '../../assets/brand/icons/services/mzaya-service-bank-queue.svg'
+import documentIcon from '../../assets/brand/icons/services/mzaya-service-document-delivery.svg'
+import shoppingIcon from '../../assets/brand/icons/services/mzaya-service-shopping-run.svg'
+import billIcon from '../../assets/brand/icons/services/mzaya-service-bill-payment.svg'
+import otherIcon from '../../assets/brand/icons/services/mzaya-service-other.svg'
 
 const TASK_TYPES = [
-  { id: 'ZIMRA',        label: 'ZIMRA / Tax',        icon: 'zimra' },
-  { id: 'bank_queue',   label: 'Bank Queue',          icon: 'bank' },
-  { id: 'document',     label: 'Document Delivery',   icon: 'document' },
-  { id: 'shopping',     label: 'Shopping Run',        icon: 'shopping' },
-  { id: 'bill_payment', label: 'Bill Payment',        icon: 'bill' },
-  { id: 'other',        label: 'Other',               icon: 'errand' },
+  { id: 'ZIMRA', label: 'ZIMRA / Tax', iconAsset: zimraIcon },
+  { id: 'bank_queue', label: 'Bank Queue', iconAsset: bankIcon },
+  { id: 'document', label: 'Document Delivery', iconAsset: documentIcon },
+  { id: 'shopping', label: 'Shopping Run', iconAsset: shoppingIcon },
+  { id: 'bill_payment', label: 'Bill Payment', iconAsset: billIcon },
+  { id: 'other', label: 'Other', iconAsset: otherIcon },
 ]
 
 
@@ -144,7 +150,7 @@ export default function ErrandPage() {
                     : 'border-gray-200 bg-white'
                   }`}
               >
-                <span className="text-2xl"><Icon name={t.icon} size={22} /></span>
+                <span className={`h-10 w-10 rounded-xl flex items-center justify-center ${form.task_type === t.id ? 'bg-green-600 text-white' : 'bg-green-50 text-green-700'}`}><img src={t.iconAsset} alt="" aria-hidden="true" className="w-6 h-6" /></span>
                 <span className="text-xs font-medium text-gray-700 leading-tight">{t.label}</span>
               </button>
             ))}
