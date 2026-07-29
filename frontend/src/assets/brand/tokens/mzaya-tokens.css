@@ -1,0 +1,15 @@
+:root {
+  --mzaya-green: #00A651;
+  --mzaya-green-dark: #007D3D;
+  --mzaya-green-light: #34C76F;
+  --mzaya-mint: #E8F8EF;
+  --mzaya-navy: #071B33;
+  --mzaya-white: #FFFFFF;
+  --mzaya-surface-subtle: #F7F8FA;
+  --mzaya-text-secondary: #667085;
+  --mzaya-border: #E4E7EC;
+  --mzaya-radius-sm: 10px;
+  --mzaya-radius-md: 16px;
+  --mzaya-radius-lg: 24px;
+  --mzaya-shadow-card: 0 8px 24px rgba(7,27,51,.08);
+}

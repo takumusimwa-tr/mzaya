@@ -1,0 +1,29 @@
+{
+  "brand": {
+    "primary": "#00A651",
+    "primaryDark": "#007D3D",
+    "primaryLight": "#34C76F",
+    "mint": "#E8F8EF"
+  },
+  "text": {
+    "primary": "#071B33",
+    "secondary": "#667085",
+    "inverse": "#FFFFFF"
+  },
+  "surface": {
+    "default": "#FFFFFF",
+    "subtle": "#F7F8FA",
+    "elevated": "#FFFFFF",
+    "dark": "#071B33"
+  },
+  "border": {
+    "default": "#E4E7EC",
+    "strong": "#D0D5DD"
+  },
+  "status": {
+    "success": "#00A651",
+    "warning": "#F79009",
+    "error": "#D92D20",
+    "info": "#1570EF"
+  }
+}
