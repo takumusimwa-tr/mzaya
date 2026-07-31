@@ -1,210 +1,136 @@
-# Mzaya Batch 08.1.5 — Provider Webhooks & Automated Reconciliation
+# Mzaya Batch 08.2.1 — Tax, Compliance & Financial Governance
 
-This batch completes the finance platform's provider-integration layer with
-durable webhook ingestion, signature verification, retries, dead-letter states,
-and scheduled reconciliation runs.
+This batch establishes the governance layer above the finance platform.
 
 ## Database
 
 ```bash
-psql "$DATABASE_URL" -f backend/migrations/provider_webhooks.sql
+psql "$DATABASE_URL" -f backend/migrations/tax_compliance_foundation.sql
 ```
 
 ## Register and export models
 
-- `ProviderWebhookEvent`
-- `ProviderWebhookAttempt`
-- `ReconciliationRun`
+- `TaxJurisdiction`
+- `TaxRate`
+- `InvoiceSequence`
+- `TaxInvoice`
+- `FinancialPeriod`
+- `ComplianceAuditLog`
 
 Suggested associations:
 
 ```js
-ProviderWebhookEvent.hasMany(ProviderWebhookAttempt, {
-  foreignKey: 'webhook_event_id',
-  as: 'attempts',
+TaxJurisdiction.hasMany(TaxRate, {
+  foreignKey: 'jurisdiction_id',
+  as: 'rates',
 });
 
-ProviderWebhookAttempt.belongsTo(ProviderWebhookEvent, {
-  foreignKey: 'webhook_event_id',
-  as: 'event',
+TaxInvoice.belongsTo(TaxJurisdiction, {
+  foreignKey: 'jurisdiction_id',
+  as: 'jurisdiction',
 });
 ```
 
-## Route mounting order
-
-Webhook routes must be mounted before the global JSON body parser when exact
-raw-body verification is required:
+## Route mounts
 
 ```js
-app.use(
-  '/api/provider-webhooks',
-  require('./routes/providerWebhook.routes')
-);
-
-app.use(express.json());
-
-app.use(
-  '/api/provider-webhook-admin',
-  require('./routes/providerWebhookAdmin.routes')
-);
+app.use('/api/tax', require('./routes/tax.routes'));
+app.use('/api/invoices', require('./routes/invoice.routes'));
+app.use('/api/compliance', require('./routes/compliance.routes'));
 ```
 
-## Provider signature verification
+All routes are administrator-only.
 
-Production verification belongs in:
+## Financial periods
+
+Apply the ledger guard before new postings:
+
+```js
+await assertLedgerPostingPeriod({
+  occurredAt: payload.occurredAt || new Date(),
+});
+```
+
+The period-close action blocks subsequent postings for the covered dates.
+
+## Invoice sequencing
+
+Configure one sequence per jurisdiction, document type, and fiscal year.
+
+Example:
 
 ```text
-backend/src/services/providerSignature.service.js
+prefix: ZW-INV-
+next_number: 1
+padding: 6
+result: ZW-INV-000001
 ```
 
-The Paynow branch is intentionally disabled except in explicit test mode:
+Sequence generation uses a row lock to prevent duplicate numbers.
 
-```env
-PAYNOW_WEBHOOK_VERIFICATION_MODE=disabled
+## Tax calculation
+
+Tax rates are stored in basis points:
+
+```text
+1500 basis points = 15.00%
 ```
 
-Do not enable production processing until verification matches official
-provider documentation.
+Tax is calculated using integer minor units.
 
-For generic HMAC testing:
+## Current scope
 
-```env
-GENERIC_WEBHOOK_SECRET=replace-me
-```
+- VAT and generic tax-type foundation
+- Effective-dated rates
+- Jurisdiction management
+- Sequential invoices
+- Credit-note numbering foundation
+- Monthly financial periods
+- Close and reopen controls
+- Immutable compliance audit log
+- Tax summary reporting
 
-## Processor job
+## Important legal note
 
-```js
-const {
-  startProviderWebhookProcessor,
-} = require('./jobs/providerWebhookProcessor.job');
+This package provides technical infrastructure, not a determination of current
+Zimbabwe tax obligations. Production tax rates, fiscal-device requirements,
+invoice wording, registration thresholds, withholding rules, and reporting
+formats must be configured after review by qualified Zimbabwe tax and legal
+professionals.
 
-const providerWebhookProcessor =
-  startProviderWebhookProcessor({ logger });
-```
-
-The processor runs every two minutes and uses exponential retry delays.
-
-Optional:
-
-```env
-WEBHOOK_MAX_ATTEMPTS=8
-```
-
-Terminal failures move to `dead_letter`.
-
-## Reconciliation automation
-
-Inject provider statement adapters:
-
-```js
-const {
-  runAutomatedReconciliation,
-} = require(
-  './services/reconciliationAutomation.service'
-);
-
-const {
-  startReconciliationAutomation,
-} = require(
-  './jobs/reconciliationAutomation.job'
-);
-
-const reconciliationAutomation =
-  startReconciliationAutomation({
-    logger,
-    runAutomatedReconciliation,
-    providers: [
-      {
-        name: 'paynow',
-        adapter: paynowStatementAdapter,
-      },
-    ],
-  });
-```
-
-Adapter contract:
-
-```js
-adapter.fetchStatement({ statementDate })
-```
-
-Each returned record should contain:
-
-```js
-{
-  providerReference,
-  internalReference,
-  recordType,
-  currency,
-  amountMinor,
-  payload
-}
-```
-
-## Socket.IO
-
-```js
-const {
-  initializeProviderWebhookEventBridge,
-} = require('./realtime/providerWebhookEventBridge');
-
-const closeProviderWebhookBridge =
-  initializeProviderWebhookEventBridge(io);
-```
-
-Call `closeProviderWebhookBridge()` during graceful shutdown.
-
-## Frontend route
+## Frontend routes
 
 ```jsx
-<Route
-  path="/admin/finance/providers"
-  element={<ProviderOperations />}
-/>
+<Route path="/admin/finance/tax" element={<TaxCenter />} />
+<Route path="/admin/finance/invoices" element={<InvoiceManagement />} />
+<Route path="/admin/finance/compliance" element={<ComplianceDashboard />} />
 ```
 
-Protect it with the existing administrator route guard.
+Protect all routes with the existing administrator guard.
 
-## Capabilities
+## Scheduler
 
-- Raw provider webhook ingestion
-- Signature-verification boundary
-- Duplicate-event protection
-- Durable event storage
-- Asynchronous processing
-- Exponential retries
-- Dead-letter state
-- Manual administrator retries
-- Payment-status routing
-- Refund-status routing
-- Chargeback registration
-- Automatic reconciliation records
-- Scheduled statement reconciliation
-- Reconciliation run history
-- Real-time finance dashboard invalidation
-- Provider operations interface
+```js
+const {
+  startFinancialPeriodJob,
+} = require('./jobs/financialPeriod.job');
 
-## Security and controls
+const financialPeriodJob =
+  startFinancialPeriodJob({ logger });
+```
 
-- Never trust unsigned provider requests.
-- Do not log secrets or full authorization headers.
-- Keep provider integration keys server-side.
-- Store the original webhook payload once.
-- Processing is idempotent by provider event ID.
-- Manual retries remain administrator-only.
-- Finance dashboards receive refresh signals, not raw provider payloads.
-- Raw payload retention should follow the final privacy policy.
+Stop it during graceful shutdown.
 
 ## Verification
 
 ```bash
 cd backend
-npm test -- providerSignature.test.js
-npm test -- providerWebhookProcessor.test.js
-node --check src/services/providerWebhook.service.js
-node --check src/services/providerWebhookProcessor.service.js
-node --check src/services/reconciliationAutomation.service.js
+npm test -- taxCalculation.test.js
+npm test -- invoiceNumber.test.js
+npm test -- financialPeriod.test.js
+node --check src/services/taxCalculation.service.js
+node --check src/services/invoiceGeneration.service.js
+node --check src/services/financialPeriod.service.js
 npm run lint
 ```
 
@@ -212,20 +138,4 @@ npm run lint
 cd frontend
 npm run lint
 npm run build
-```
-
-## Finance milestone complete
-
-```text
-08.1.1 Payment Ledger Core
-08.1.2 Refunds, Chargebacks & Disputes
-08.1.3 Vendor & Mzaya Settlement Engine
-08.1.4 Finance Operations Dashboard
-08.1.5 Provider Webhooks & Automated Reconciliation
-```
-
-The next major milestone is:
-
-```text
-08.2 — Tax, Compliance & Financial Governance
 ```

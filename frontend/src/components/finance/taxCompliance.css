@@ -1,0 +1,150 @@
+.tax-center,
+.invoice-management,
+.compliance-dashboard {
+  width: min(1180px, calc(100% - 32px));
+  margin: 0 auto;
+  padding: 42px 0 60px;
+  color: #121714;
+}
+
+.tax-center h1,
+.invoice-management h1,
+.compliance-dashboard h1 {
+  margin: 4px 0;
+  font-size: clamp(32px, 4vw, 46px);
+  letter-spacing: -.04em;
+}
+
+.tax-center > header p:last-child,
+.compliance-dashboard > header p:last-child {
+  margin: 0;
+  color: #728077;
+}
+
+.tax-center__controls {
+  margin: 24px 0;
+  padding: 18px;
+  border: 1px solid #dde4df;
+  border-radius: 18px;
+  background: #fff;
+}
+
+.tax-center__controls label {
+  display: grid;
+  gap: 7px;
+  max-width: 360px;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.tax-center__controls select {
+  min-height: 44px;
+  padding: 0 12px;
+  border: 1px solid #d7e0da;
+  border-radius: 12px;
+  background: #fff;
+  font: inherit;
+}
+
+.tax-rate-table,
+.financial-period-table,
+.compliance-audit-table,
+.invoice-management__list {
+  overflow: hidden;
+  border: 1px solid #dde4df;
+  border-radius: 18px;
+  background: #fff;
+}
+
+.tax-rate-table__header,
+.tax-rate-table__row {
+  display: grid;
+  grid-template-columns: 1.3fr 1fr 100px 120px;
+  gap: 14px;
+  padding: 14px 16px;
+}
+
+.tax-rate-table__header {
+  background: #eef2ef;
+  color: #4d5a53;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.tax-rate-table__row {
+  border-top: 1px solid #eef2ef;
+}
+
+.compliance-dashboard__grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 18px;
+  margin-top: 26px;
+}
+
+.financial-period-table article,
+.compliance-audit-table article,
+.invoice-management__list article {
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  gap: 14px;
+  align-items: center;
+  padding: 15px 16px;
+  border-top: 1px solid #eef2ef;
+}
+
+.financial-period-table article:first-child,
+.compliance-audit-table article:first-child,
+.invoice-management__list article:first-child {
+  border-top: 0;
+}
+
+.financial-period-table article > div,
+.compliance-audit-table article > div,
+.invoice-management__list article > div {
+  display: grid;
+  gap: 4px;
+}
+
+.financial-period-table span,
+.compliance-audit-table span,
+.invoice-management__list span {
+  color: #728077;
+  font-size: 12px;
+}
+
+.period-status {
+  padding: 6px 9px;
+  border-radius: 999px;
+  background: #eef2ef;
+  color: #136b57;
+  font-weight: 800;
+  text-transform: capitalize;
+}
+
+.financial-period-table button {
+  min-height: 38px;
+  padding: 0 12px;
+  border: 1px solid #d5dfd9;
+  border-radius: 11px;
+  background: #fff;
+  color: #136b57;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.tax-compliance-state {
+  padding: 72px 24px;
+  text-align: center;
+}
+
+@media (max-width: 860px) {
+  .compliance-dashboard__grid {
+    grid-template-columns: 1fr;
+  }
+
+  .tax-rate-table__header,
+  .tax-rate-table__row {
+    grid-template-columns: 1fr 1fr;
+  }
+}
