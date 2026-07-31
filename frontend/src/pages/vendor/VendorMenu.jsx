@@ -1,200 +1,414 @@
-import { useState } from 'react'
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+/**
+ * ============================================================================
+ * MZAYA
+ * Page: VendorMenu
+ * Path: frontend/src/pages/vendor/VendorMenu.jsx
+ * ----------------------------------------------------------------------------
+ *
+ * Purpose
+ * -------
+ * Manages the current branch's sellable menu catalogue.
+ *
+ * Preserved Integration
+ * ---------------------
+ * • GET /vendors/my
+ * • POST /vendors/:vendorId/menu
+ * • PUT /vendors/:vendorId/menu/:itemId
+ * • DELETE /vendors/:vendorId/menu/:itemId
+ * • React Query key: ['my-vendor', branchId]
+ *
+ * Change Log
+ * ----------
+ * July 2026 — Premium UI Integration: premium catalogue layout and canonical
+ * menu-item card extraction.
+ * ============================================================================
+ */
+
+import { useMemo, useState } from 'react'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { Plus, Search, UtensilsCrossed, X } from 'lucide-react'
 import api from '../../api/api'
 import useActiveBranch from '../../store/useActiveBranch'
 import LoadingScreen from '../../components/ui/LoadingScreen'
 import Button from '../../components/ui/Button'
 import Input from '../../components/ui/Input'
 import ImageUpload from '../../components/ImageUpload'
-import imageUrl from '../../utils/imageUrl'
-import Icon from '../../components/ui/Icon'
+import VendorEmptyState from '../../components/vendor/VendorEmptyState'
+import VendorMenuItemCard from '../../components/vendor/VendorMenuItemCard'
+
+const EMPTY_FORM = {
+  name: '',
+  description: '',
+  price_usd: '',
+  category: '',
+  image_url: '',
+  prep_minutes: '',
+}
 
 export default function VendorMenu() {
   const queryClient = useQueryClient()
-  const branchId = useActiveBranch((s) => s.branchId)
-  const [showForm,  setShowForm]  = useState(false)
-  const [editItem,  setEditItem]  = useState(null)
-  const [form, setForm] = useState({ name: '', description: '', price_usd: '', category: '', image_url: '', prep_minutes: '' })
+  const branchId = useActiveBranch((state) => state.branchId)
+  const [showForm, setShowForm] = useState(false)
+  const [editItem, setEditItem] = useState(null)
+  const [form, setForm] = useState(EMPTY_FORM)
+  const [query, setQuery] = useState('')
   const [error, setError] = useState('')
 
-  const { data: vendorData, isLoading } = useQuery({
+  const {
+    data: vendorData,
+    isLoading,
+    isError,
+    error: loadError,
+    refetch,
+  } = useQuery({
     queryKey: ['my-vendor', branchId],
-    queryFn:  () => api.get('/vendors/my', { params: branchId ? { branch_id: branchId } : {} }).then((r) => r.data.vendor),
+    queryFn: () =>
+      api
+        .get('/vendors/my', {
+          params: branchId ? { branch_id: branchId } : {},
+        })
+        .then((response) => response.data.vendor),
   })
 
-  const handleChange = (e) => setForm({ ...form, [e.target.name]: e.target.value })
+  const invalidateVendor = () =>
+    queryClient.invalidateQueries({ queryKey: ['my-vendor'] })
 
   const saveItem = useMutation({
     mutationFn: (data) => {
-      if (editItem) return api.put(`/vendors/${vendorData.id}/menu/${editItem.id}`, data)
+      if (editItem) {
+        return api.put(
+          `/vendors/${vendorData.id}/menu/${editItem.id}`,
+          data
+        )
+      }
       return api.post(`/vendors/${vendorData.id}/menu`, data)
     },
     onSuccess: () => {
-      queryClient.invalidateQueries(['my-vendor'])
-      setShowForm(false)
-      setEditItem(null)
-      setForm({ name: '', description: '', price_usd: '', category: '', image_url: '', prep_minutes: '' })
+      invalidateVendor()
+      closeForm()
     },
-    onError: (err) => setError(err.response?.data?.error || 'Could not save item'),
+    onError: (requestError) =>
+      setError(requestError.response?.data?.error || 'Could not save item'),
   })
 
   const deleteItem = useMutation({
-    mutationFn: (itemId) => api.delete(`/vendors/${vendorData.id}/menu/${itemId}`),
-    onSuccess:  () => queryClient.invalidateQueries(['my-vendor']),
+    mutationFn: (itemId) =>
+      api.delete(`/vendors/${vendorData.id}/menu/${itemId}`),
+    onSuccess: invalidateVendor,
   })
 
   const toggleStock = useMutation({
     mutationFn: ({ itemId, available }) =>
-      api.put(`/vendors/${vendorData.id}/menu/${itemId}`, { is_available: available }),
-    onSuccess:  () => queryClient.invalidateQueries(['my-vendor']),
+      api.put(`/vendors/${vendorData.id}/menu/${itemId}`, {
+        is_available: available,
+      }),
+    onSuccess: invalidateVendor,
   })
 
-  const openEdit = (item) => {
-    setEditItem(item)
-    setForm({ name: item.name, description: item.description || '', price_usd: item.price_usd, category: item.category || '', image_url: item.image_url || '', prep_minutes: item.prep_minutes || '' })
+  const menuItems = vendorData?.menuItems || []
+
+  const filtered = useMemo(() => {
+    const normalized = query.trim().toLowerCase()
+    if (!normalized) return menuItems
+    return menuItems.filter((item) =>
+      [item.name, item.description, item.category]
+        .filter(Boolean)
+        .some((value) => value.toLowerCase().includes(normalized))
+    )
+  }, [menuItems, query])
+
+  const grouped = useMemo(
+    () =>
+      filtered.reduce((groups, item) => {
+        const category = item.category || 'Menu'
+        groups[category] ||= []
+        groups[category].push(item)
+        return groups
+      }, {}),
+    [filtered]
+  )
+
+  function openCreate() {
+    setEditItem(null)
+    setForm(EMPTY_FORM)
+    setError('')
     setShowForm(true)
   }
 
-  const handleSubmit = (e) => {
-    e.preventDefault()
+  function openEdit(item) {
+    setEditItem(item)
+    setForm({
+      name: item.name || '',
+      description: item.description || '',
+      price_usd: item.price_usd ?? '',
+      category: item.category || '',
+      image_url: item.image_url || '',
+      prep_minutes: item.prep_minutes || '',
+    })
     setError('')
-    if (!form.name || !form.price_usd) {
+    setShowForm(true)
+  }
+
+  function closeForm() {
+    setShowForm(false)
+    setEditItem(null)
+    setForm(EMPTY_FORM)
+    setError('')
+  }
+
+  function handleChange(event) {
+    setForm((current) => ({
+      ...current,
+      [event.target.name]: event.target.value,
+    }))
+  }
+
+  function handleSubmit(event) {
+    event.preventDefault()
+    setError('')
+
+    if (!form.name.trim() || form.price_usd === '') {
       setError('Name and price are required')
       return
     }
-    saveItem.mutate({ ...form, price_usd: parseFloat(form.price_usd), prep_minutes: parseInt(form.prep_minutes) || 0 })
+
+    const parsedPrice = Number.parseFloat(form.price_usd)
+    if (!Number.isFinite(parsedPrice) || parsedPrice < 0) {
+      setError('Enter a valid price')
+      return
+    }
+
+    saveItem.mutate({
+      ...form,
+      name: form.name.trim(),
+      price_usd: parsedPrice,
+      prep_minutes: Number.parseInt(form.prep_minutes, 10) || 0,
+    })
   }
 
   if (isLoading) return <LoadingScreen message="Loading menu..." />
 
-  const menuItems = vendorData?.menuItems || []
-  const grouped   = menuItems.reduce((acc, item) => {
-    const cat = item.category || 'Menu'
-    if (!acc[cat]) acc[cat] = []
-    acc[cat].push(item)
-    return acc
-  }, {})
+  if (isError || !vendorData) {
+    return (
+      <div className="h-screen overflow-y-auto px-6 py-8">
+        <VendorEmptyState
+          icon={UtensilsCrossed}
+          title="Menu unavailable"
+          message={
+            loadError?.response?.data?.error ||
+            'We could not load this branch’s catalogue.'
+          }
+          actionLabel="Try again"
+          onAction={refetch}
+        />
+      </div>
+    )
+  }
 
   return (
-    <div className="h-screen overflow-y-auto">
-     <div className="w-full pb-10">
-      <div className="flex items-center justify-between px-8 pt-14 pb-4">
-        <h1 className="text-xl font-bold text-gray-900">Menu</h1>
-        <button
-          onClick={() => { setShowForm(true); setEditItem(null); setForm({ name: '', description: '', price_usd: '', category: '', image_url: '', prep_minutes: '' }) }}
-          className="bg-[#00A651] text-white px-4 py-2 rounded-xl text-sm font-semibold active:scale-95"
-        >
-          + Add item
-        </button>
-      </div>
+    <div
+      className="h-screen overflow-y-auto"
+      style={{ background: 'var(--mzaya-background)' }}
+    >
+      <main className="mx-auto w-full max-w-7xl px-5 py-7 sm:px-8">
+        <header className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <p
+              className="text-[10px] font-semibold uppercase tracking-[0.16em]"
+              style={{ color: 'var(--mzaya-primary)' }}
+            >
+              Catalogue
+            </p>
+            <h1
+              className="mt-2 text-[28px] font-semibold tracking-[-0.04em]"
+              style={{ color: 'var(--mzaya-text-primary)' }}
+            >
+              Menu
+            </h1>
+            <p
+              className="mt-2 text-[12px]"
+              style={{ color: 'var(--mzaya-text-muted)' }}
+            >
+              Keep products, pricing and availability accurate.
+            </p>
+          </div>
 
-      {/* Add/Edit form */}
+          <Button leadingIcon={Plus} onClick={openCreate}>
+            Add item
+          </Button>
+        </header>
+
+        <div className="relative mt-6 max-w-xl">
+          <Search
+            size={17}
+            strokeWidth={1.8}
+            aria-hidden="true"
+            className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2"
+            style={{ color: 'var(--mzaya-text-muted)' }}
+          />
+          <input
+            type="search"
+            value={query}
+            onChange={(event) => setQuery(event.target.value)}
+            placeholder="Search menu items"
+            className="h-12 w-full rounded-[17px] border bg-white pl-11 pr-4 text-[12px] outline-none focus-visible:[box-shadow:var(--mzaya-focus-ring)]"
+            style={{
+              borderColor: 'var(--mzaya-border)',
+              color: 'var(--mzaya-text-primary)',
+              boxShadow: 'var(--mzaya-shadow-sm)',
+            }}
+          />
+        </div>
+
+        <section className="mt-7 space-y-8" aria-label="Menu catalogue">
+          {!menuItems.length ? (
+            <VendorEmptyState
+              icon={UtensilsCrossed}
+              title="Your menu is empty"
+              message="Add the first product customers can order from this branch."
+              actionLabel="Add item"
+              onAction={openCreate}
+            />
+          ) : !filtered.length ? (
+            <VendorEmptyState
+              icon={Search}
+              title="No matching items"
+              message="Try another product name, description or category."
+              compact
+            />
+          ) : (
+            Object.entries(grouped).map(([category, items]) => (
+              <section key={category} aria-labelledby={`category-${category}`}>
+                <div className="mb-3 flex items-center justify-between">
+                  <h2
+                    id={`category-${category}`}
+                    className="text-[12px] font-semibold uppercase tracking-[0.14em]"
+                    style={{ color: 'var(--mzaya-text-muted)' }}
+                  >
+                    {category}
+                  </h2>
+                  <span
+                    className="text-[10px]"
+                    style={{ color: 'var(--mzaya-text-muted)' }}
+                  >
+                    {items.length} item{items.length === 1 ? '' : 's'}
+                  </span>
+                </div>
+
+                <div className="grid gap-4 lg:grid-cols-2">
+                  {items.map((item) => (
+                    <VendorMenuItemCard
+                      key={item.id}
+                      item={item}
+                      busy={
+                        toggleStock.isPending || deleteItem.isPending
+                      }
+                      onToggleAvailability={(selectedItem, unavailable) =>
+                        toggleStock.mutate({
+                          itemId: selectedItem.id,
+                          available: unavailable,
+                        })
+                      }
+                      onEdit={openEdit}
+                      onDelete={(selectedItem) =>
+                        deleteItem.mutate(selectedItem.id)
+                      }
+                    />
+                  ))}
+                </div>
+              </section>
+            ))
+          )}
+        </section>
+      </main>
+
       {showForm && (
-        <div className="fixed inset-0 bg-black/50 z-[60] flex items-end">
-          <div className="bg-white rounded-t-3xl w-full max-w-md mx-auto flex flex-col" style={{ maxHeight: '90vh' }}>
-            <div className="flex items-center justify-between p-6 pb-3 flex-shrink-0">
-              <h2 className="text-lg font-bold text-gray-900">{editItem ? 'Edit item' : 'Add menu item'}</h2>
-              <button onClick={() => { setShowForm(false); setEditItem(null) }} className="text-gray-400 text-2xl">×</button>
+        <div
+          className="fixed inset-0 z-[70] flex items-end justify-center bg-black/45 sm:items-center sm:p-6"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="vendor-menu-form-title"
+        >
+          <div
+            className="flex max-h-[92vh] w-full max-w-xl flex-col rounded-t-[28px] bg-white sm:rounded-[28px]"
+            style={{ boxShadow: 'var(--mzaya-shadow-xl)' }}
+          >
+            <div
+              className="flex items-center justify-between border-b px-6 py-5"
+              style={{ borderColor: 'var(--mzaya-border)' }}
+            >
+              <div>
+                <h2
+                  id="vendor-menu-form-title"
+                  className="text-[19px] font-semibold"
+                  style={{ color: 'var(--mzaya-text-primary)' }}
+                >
+                  {editItem ? 'Edit item' : 'Add menu item'}
+                </h2>
+                <p
+                  className="mt-1 text-[10px]"
+                  style={{ color: 'var(--mzaya-text-muted)' }}
+                >
+                  Customer-visible product information
+                </p>
+              </div>
+
+              <button
+                type="button"
+                onClick={closeForm}
+                className="flex h-10 w-10 items-center justify-center rounded-[13px] outline-none focus-visible:[box-shadow:var(--mzaya-focus-ring)]"
+                style={{
+                  background: 'var(--mzaya-surface-muted)',
+                  color: 'var(--mzaya-text-secondary)',
+                }}
+                aria-label="Close form"
+              >
+                <X size={18} strokeWidth={1.8} />
+              </button>
             </div>
 
-            <form onSubmit={handleSubmit} className="flex flex-col gap-3 px-6 pb-6 overflow-y-auto">
-              {error && <div className="p-3 bg-red-50 rounded-xl"><p className="text-sm text-red-600">{error}</p></div>}
+            <form
+              onSubmit={handleSubmit}
+              className="space-y-4 overflow-y-auto px-6 py-5"
+            >
+              {error && (
+                <div
+                  className="rounded-[14px] px-4 py-3 text-[12px]"
+                  style={{
+                    background: 'var(--mzaya-error-soft)',
+                    color: 'var(--mzaya-error)',
+                  }}
+                >
+                  {error}
+                </div>
+              )}
+
               <ImageUpload
                 currentUrl={form.image_url}
-                onUploaded={(url) => setForm((f) => ({ ...f, image_url: url }))}
-                label="Add food photo"
+                onUploaded={(url) =>
+                  setForm((current) => ({ ...current, image_url: url }))
+                }
+                label="Add product photo"
               />
-              <Input label="Item name" name="name" value={form.name} onChange={handleChange} placeholder="e.g. Streetwise Two" required />
-              <Input label="Description (optional)" name="description" value={form.description} onChange={handleChange} placeholder="e.g. 2 pieces chicken with chips" />
-              <Input label="Price (USD)" name="price_usd" type="number" value={form.price_usd} onChange={handleChange} placeholder="e.g. 3.50" required />
-              <Input label="Category" name="category" value={form.category} onChange={handleChange} placeholder="e.g. Chicken, Burgers, Drinks" />
-              <Input label="Prep time (minutes)" name="prep_minutes" type="number" value={form.prep_minutes} onChange={handleChange} placeholder="e.g. 15 — leave 0 if ready immediately" />
-              <Button type="submit" size="lg" loading={saveItem.isPending} className="mt-2 bg-[#00A651] hover:bg-[#00873F]">
+
+              <Input label="Item name" name="name" value={form.name} onChange={handleChange} required />
+              <Input label="Description" name="description" value={form.description} onChange={handleChange} />
+              <Input label="Price (USD)" name="price_usd" type="number" step="0.01" min="0" value={form.price_usd} onChange={handleChange} required />
+              <Input label="Category" name="category" value={form.category} onChange={handleChange} />
+              <Input label="Preparation time (minutes)" name="prep_minutes" type="number" min="0" value={form.prep_minutes} onChange={handleChange} />
+
+              <Button
+                type="submit"
+                size="lg"
+                loading={saveItem.isPending}
+                className="w-full"
+              >
                 {editItem ? 'Save changes' : 'Add to menu'}
               </Button>
             </form>
           </div>
         </div>
       )}
-
-      {/* Menu list */}
-      <div className="px-8 flex flex-col gap-6">
-        {!menuItems.length ? (
-          <div className="text-center py-16">
-            <div className="mb-3 flex justify-center text-gray-300"><Icon name="food" size={40} /></div>
-            <p className="text-gray-500 text-sm">No menu items yet</p>
-            <p className="text-gray-400 text-xs mt-1">Tap + Add item to get started</p>
-          </div>
-        ) : (
-          Object.entries(grouped).map(([category, items]) => (
-            <div key={category}>
-              <h2 className="text-sm font-bold text-gray-500 uppercase tracking-wide mb-3">{category}</h2>
-              <div className="flex flex-col gap-3">
-                {items.map((item) => {
-                  const outOfStock = item.is_available === false
-                  return (
-                  <div key={item.id}
-                    className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100"
-                    style={outOfStock ? { opacity: 0.55 } : undefined}>
-                    <div className="flex items-start gap-3">
-                      <div className="w-16 h-16 rounded-xl bg-gray-100 flex-shrink-0 overflow-hidden flex items-center justify-center">
-                        {item.image_url
-                          ? <img src={imageUrl(item.image_url, 300)} alt={item.name} className="w-full h-full object-cover" />
-                          : <Icon name="food" size={24} className="opacity-30" />
-                        }
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2">
-                          <p className="font-semibold text-gray-900">{item.name}</p>
-                          {outOfStock && (
-                            <span className="text-[10px] font-bold uppercase px-2 py-0.5 rounded-full bg-red-50 text-red-500">
-                              Out of stock
-                            </span>
-                          )}
-                        </div>
-                        {item.description && <p className="text-xs text-gray-400 mt-0.5 truncate">{item.description}</p>}
-                        <div className="flex items-center gap-2 mt-1">
-                          <p className="text-green-600 font-bold">US${Number(item.price_usd).toFixed(2)}</p>
-                          {item.prep_minutes > 0 && (
-                            <span className="text-[11px] text-gray-400">· ~{item.prep_minutes} min prep</span>
-                          )}
-                        </div>
-                      </div>
-                      <div className="flex gap-2 ml-1">
-                        <button
-                          onClick={() => toggleStock.mutate({ itemId: item.id, available: outOfStock })}
-                          disabled={toggleStock.isPending}
-                          className="text-xs px-3 py-1.5 rounded-lg font-medium active:scale-95 disabled:opacity-50"
-                          style={outOfStock
-                            ? { background: '#EDFAF3', color: '#00A651' }
-                            : { background: '#FFF4E5', color: '#B8860B' }
-                          }
-                        >
-                          {outOfStock ? 'Mark available' : 'Out of stock'}
-                        </button>
-                        <button
-                          onClick={() => openEdit(item)}
-                          className="text-xs bg-gray-100 text-gray-600 px-3 py-1.5 rounded-lg font-medium active:scale-95"
-                        >
-                          Edit
-                        </button>
-                        <button
-                          onClick={() => deleteItem.mutate(item.id)}
-                          className="text-xs bg-red-50 text-red-500 px-3 py-1.5 rounded-lg font-medium active:scale-95"
-                        >
-                          Delete
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                  )
-                })}
-              </div>
-            </div>
-          ))
-        )}
-      </div>
-     </div>
     </div>
   )
 }

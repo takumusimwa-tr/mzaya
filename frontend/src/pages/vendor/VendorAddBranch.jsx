@@ -1,98 +1,305 @@
+/**
+ * ============================================================================
+ * MZAYA
+ * Page: VendorAddBranch
+ * Path: frontend/src/pages/vendor/VendorAddBranch.jsx
+ * ----------------------------------------------------------------------------
+ * Purpose
+ * -------
+ * Adds a new location under the authenticated vendor's existing brand.
+ *
+ * Responsibilities
+ * ----------------
+ * • Fetches supported cities.
+ * • Validates and submits vendorAPI.addBranch(form).
+ * • Invalidates the existing ['my-branches'] query after success.
+ *
+ * Non-Responsibilities
+ * --------------------
+ * • Does not approve, activate or select the new branch.
+ * • Does not invent branch editing or geocoding behavior.
+ *
+ * Integration Contract
+ * --------------------
+ * Form payload: branch_name, city_id, address, phone.
+ *
+ * Change Log
+ * ----------
+ * July 2026 — Premium branch-creation refactor preserving current API.
+ * ============================================================================
+ */
+
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
-import { vendorAPI, cityAPI } from '../../api/api'
-import Icon from '../../components/ui/Icon'
+import { ArrowLeft, MapPin, Store } from 'lucide-react'
+import { cityAPI, vendorAPI } from '../../api/api'
+import VendorApplicationSuccess from '../../components/vendor/VendorApplicationSuccess'
+import VendorFormSection from '../../components/vendor/VendorFormSection'
+import VendorStatusBanner from '../../components/vendor/VendorStatusBanner'
 
 export default function VendorAddBranch() {
   const navigate = useNavigate()
   const queryClient = useQueryClient()
-  const [form, setForm] = useState({ branch_name: '', city_id: '', address: '', phone: '' })
+  const [form, setForm] = useState({
+    branch_name: '',
+    city_id: '',
+    address: '',
+    phone: '',
+  })
   const [status, setStatus] = useState('')
-  const [error, setError]   = useState('')
+  const [error, setError] = useState('')
 
-  const { data: cities } = useQuery({
+  const {
+    data: cities,
+    isLoading: citiesLoading,
+    isError: citiesError,
+  } = useQuery({
     queryKey: ['cities'],
-    queryFn:  () => cityAPI.list().then((r) => r.data.cities),
+    queryFn: () => cityAPI.list().then((response) => response.data.cities),
   })
 
-  const set = (k, v) => setForm((f) => ({ ...f, [k]: v }))
+  function setField(key, value) {
+    setForm((current) => ({ ...current, [key]: value }))
+  }
 
-  const submit = async () => {
+  async function submit(event) {
+    event.preventDefault()
     setError('')
+
     if (!form.branch_name.trim()) return setError('Enter a branch name')
-    if (!form.city_id)            return setError('Select a city')
-    if (!form.address.trim())     return setError('Enter the address')
-    if (!form.phone.trim())       return setError('Enter a contact phone')
+    if (!form.city_id) return setError('Select a city')
+    if (!form.address.trim()) return setError('Enter the address')
+    if (!form.phone.trim()) return setError('Enter a contact phone')
 
     setStatus('submitting')
     try {
       await vendorAPI.addBranch(form)
-      queryClient.invalidateQueries(['my-branches'])
+      queryClient.invalidateQueries({ queryKey: ['my-branches'] })
       setStatus('done')
-    } catch (err) {
+    } catch (requestError) {
       setStatus('')
-      setError(err.response?.data?.error || 'Could not add branch')
+      setError(
+        requestError.response?.data?.error || 'Could not add branch'
+      )
     }
   }
 
   if (status === 'done') {
     return (
-      <div className="min-h-screen bg-white flex flex-col items-center justify-center px-8 text-center">
-        <div className="mb-4 flex justify-center" style={{ color: '#00A651' }}><Icon name="store" size={56} /></div>
-        <h1 className="text-2xl font-black text-gray-900 mb-2">Branch added</h1>
-        <p className="text-gray-500 text-sm mb-8 max-w-sm">
-          Your new branch is pending approval. Once approved it'll appear in your branch switcher
-          and start receiving orders in its city.
-        </p>
-        <button onClick={() => navigate('/vendor')}
-          className="w-full max-w-xs py-4 rounded-2xl text-white font-bold" style={{ background: '#00A651' }}>
-          Back to dashboard
-        </button>
-      </div>
+      <VendorApplicationSuccess
+        eyebrow="Branch submitted"
+        title="Your new location was added"
+        message="The branch remains pending until approved. Once approved, it will appear in the branch switcher and can receive orders."
+        actionLabel="Back to vendor dashboard"
+        onAction={() => navigate('/vendor')}
+      />
     )
   }
 
   return (
-    <div className="min-h-screen bg-white">
-      <div className="px-6 pt-12 pb-6" style={{ background: '#00A651' }}>
-        <button onClick={() => navigate(-1)} className="text-white/80 text-sm mb-4">← Back</button>
-        <h1 className="text-2xl font-black text-white">Add a branch</h1>
-        <p className="text-white/80 text-sm mt-1">A new location under your existing brand.</p>
-      </div>
+    <div
+      className="min-h-screen"
+      style={{ background: 'var(--mzaya-background)' }}
+    >
+      <header
+        className="border-b"
+        style={{
+          borderColor: 'var(--mzaya-border)',
+          background: 'var(--mzaya-surface)',
+        }}
+      >
+        <div className="mx-auto max-w-3xl px-5 py-6 sm:px-8">
+          <button
+            type="button"
+            onClick={() => navigate(-1)}
+            className="inline-flex items-center gap-2 rounded-[12px] px-2 py-2 text-[11px] font-semibold outline-none focus-visible:[box-shadow:var(--mzaya-focus-ring)]"
+            style={{ color: 'var(--mzaya-text-secondary)' }}
+          >
+            <ArrowLeft size={15} strokeWidth={1.8} aria-hidden="true" />
+            Back
+          </button>
 
-      <div className="w-full px-8 py-6 flex flex-col gap-4">
-        {error && <div className="p-3 bg-red-50 border border-red-100 rounded-xl text-sm text-red-600">{error}</div>}
-
-        <Field label="Branch name" value={form.branch_name} onChange={(v) => set('branch_name', v)} placeholder="e.g. Borrowdale, Bulawayo" />
-
-        <div>
-          <label className="text-xs text-gray-500">City</label>
-          <select value={form.city_id} onChange={(e) => set('city_id', e.target.value)}
-            className="w-full mt-1 px-4 py-3 rounded-xl border border-gray-200 text-sm outline-none focus:border-green-500">
-            <option value="">Select city</option>
-            {cities?.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
-          </select>
+          <div className="mt-6 flex items-start gap-4">
+            <div
+              className="flex h-12 w-12 shrink-0 items-center justify-center rounded-[17px]"
+              style={{
+                background: 'var(--mzaya-primary-soft)',
+                color: 'var(--mzaya-primary)',
+              }}
+            >
+              <Store size={22} strokeWidth={1.8} aria-hidden="true" />
+            </div>
+            <div>
+              <p
+                className="text-[10px] font-semibold uppercase tracking-[0.16em]"
+                style={{ color: 'var(--mzaya-primary)' }}
+              >
+                Branch management
+              </p>
+              <h1
+                className="mt-2 text-[28px] font-semibold tracking-[-0.04em]"
+                style={{ color: 'var(--mzaya-text-primary)' }}
+              >
+                Add a branch
+              </h1>
+              <p
+                className="mt-2 text-[12px] leading-6"
+                style={{ color: 'var(--mzaya-text-muted)' }}
+              >
+                Register another physical location under your existing business.
+              </p>
+            </div>
+          </div>
         </div>
+      </header>
 
-        <Field label="Address" value={form.address} onChange={(v) => set('address', v)} placeholder="Street address" />
-        <Field label="Contact phone" value={form.phone} onChange={(v) => set('phone', v)} placeholder="07X XXX XXXX" />
+      <main className="mx-auto max-w-3xl px-5 py-7 sm:px-8">
+        <form onSubmit={submit} className="space-y-4">
+          {error && <VendorStatusBanner tone="error" message={error} />}
+          {citiesError && (
+            <VendorStatusBanner
+              tone="error"
+              message="Cities could not be loaded. Refresh before submitting."
+            />
+          )}
 
-        <button onClick={submit} disabled={status === 'submitting'}
-          className="w-full py-4 rounded-2xl text-white font-bold mt-2 disabled:opacity-60" style={{ background: '#00A651' }}>
-          {status === 'submitting' ? 'Adding…' : 'Add branch'}
-        </button>
-      </div>
+          <VendorFormSection
+            title="Location details"
+            description="Use details that distinguish this location from your other branches."
+          >
+            <div className="grid gap-4 sm:grid-cols-2">
+              <Field
+                name="branch-name"
+                label="Branch name"
+                value={form.branch_name}
+                onChange={(value) => setField('branch_name', value)}
+                placeholder="e.g. Borrowdale, Bulawayo"
+                required
+              />
+
+              <div>
+                <label
+                  htmlFor="branch-city"
+                  className="text-[11px] font-medium"
+                  style={{ color: 'var(--mzaya-text-secondary)' }}
+                >
+                  City *
+                </label>
+                <select
+                  id="branch-city"
+                  value={form.city_id}
+                  onChange={(event) => setField('city_id', event.target.value)}
+                  disabled={citiesLoading || citiesError}
+                  required
+                  className="mt-2 h-12 w-full rounded-[15px] border bg-white px-4 text-[12px] outline-none disabled:opacity-60 focus-visible:[box-shadow:var(--mzaya-focus-ring)]"
+                  style={{
+                    borderColor: 'var(--mzaya-border)',
+                    color: 'var(--mzaya-text-primary)',
+                  }}
+                >
+                  <option value="">
+                    {citiesLoading ? 'Loading cities…' : 'Select city'}
+                  </option>
+                  {cities?.map((city) => (
+                    <option key={city.id} value={city.id}>
+                      {city.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <Field
+                name="branch-address"
+                label="Street address"
+                value={form.address}
+                onChange={(value) => setField('address', value)}
+                placeholder="Physical collection address"
+                required
+                className="sm:col-span-2"
+              />
+
+              <Field
+                name="branch-phone"
+                label="Contact phone"
+                value={form.phone}
+                onChange={(value) => setField('phone', value)}
+                placeholder="07X XXX XXXX"
+                required
+                className="sm:col-span-2"
+              />
+            </div>
+          </VendorFormSection>
+
+          <div
+            className="flex items-start gap-3 rounded-[18px] border px-4 py-4"
+            style={{
+              borderColor: 'var(--mzaya-border)',
+              background: 'var(--mzaya-surface)',
+            }}
+          >
+            <MapPin
+              className="mt-0.5 shrink-0"
+              size={17}
+              strokeWidth={1.8}
+              aria-hidden="true"
+              style={{ color: 'var(--mzaya-primary)' }}
+            />
+            <p
+              className="text-[11px] leading-5"
+              style={{ color: 'var(--mzaya-text-muted)' }}
+            >
+              This location will stay pending until approved. Approval and
+              branch activation remain controlled by the existing backend.
+            </p>
+          </div>
+
+          <button
+            type="submit"
+            disabled={status === 'submitting' || citiesLoading || citiesError}
+            className="w-full rounded-[16px] py-4 text-[12px] font-semibold text-white outline-none disabled:opacity-60 focus-visible:[box-shadow:var(--mzaya-focus-ring)]"
+            style={{ background: 'var(--mzaya-primary)' }}
+          >
+            {status === 'submitting' ? 'Adding branch…' : 'Add branch'}
+          </button>
+        </form>
+      </main>
     </div>
   )
 }
 
-function Field({ label, value, onChange, placeholder }) {
+function Field({
+  name,
+  label,
+  value,
+  onChange,
+  placeholder,
+  required = false,
+  className = '',
+}) {
   return (
-    <div>
-      <label className="text-xs text-gray-500">{label}</label>
-      <input type="text" value={value} onChange={(e) => onChange(e.target.value)} placeholder={placeholder}
-        className="w-full mt-1 px-4 py-3 rounded-xl border border-gray-200 text-sm outline-none focus:border-green-500" />
+    <div className={className}>
+      <label
+        htmlFor={name}
+        className="text-[11px] font-medium"
+        style={{ color: 'var(--mzaya-text-secondary)' }}
+      >
+        {label}
+        {required && ' *'}
+      </label>
+      <input
+        id={name}
+        type="text"
+        value={value}
+        onChange={(event) => onChange(event.target.value)}
+        placeholder={placeholder}
+        required={required}
+        className="mt-2 h-12 w-full rounded-[15px] border bg-white px-4 text-[12px] outline-none focus-visible:[box-shadow:var(--mzaya-focus-ring)]"
+        style={{
+          borderColor: 'var(--mzaya-border)',
+          color: 'var(--mzaya-text-primary)',
+        }}
+      />
     </div>
   )
 }

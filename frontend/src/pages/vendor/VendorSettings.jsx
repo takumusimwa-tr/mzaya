@@ -1,213 +1,362 @@
-import { useState, useEffect } from 'react'
+/**
+ * ============================================================================
+ * MZAYA
+ * Page: VendorSettings
+ * Path: frontend/src/pages/vendor/VendorSettings.jsx
+ * ----------------------------------------------------------------------------
+ * Purpose
+ * -------
+ * Edits the selected vendor branch's customer-facing profile and opening hours.
+ *
+ * Responsibilities
+ * ----------------
+ * • Fetches the active branch through GET /vendors/my.
+ * • Seeds and owns the editable form state.
+ * • Persists supported fields through PUT /vendors/:vendorId.
+ * • Navigates to the existing add-branch route.
+ *
+ * Non-Responsibilities
+ * --------------------
+ * • Does not invent verification, banking, tax or delivery-radius contracts.
+ * • Does not auto-save; changes are submitted explicitly.
+ *
+ * Integration Contract
+ * --------------------
+ * Query key: ['my-vendor', branchId]
+ * Mutation payload: name, description, phone, address, logo_url, cover_url,
+ * opening_hours.
+ *
+ * Accessibility
+ * -------------
+ * Uses labelled controls, semantic sections, live feedback and visible focus.
+ *
+ * Change Log
+ * ----------
+ * July 2026 — Premium UI refactor with reusable form and hours components.
+ * ============================================================================
+ */
+
+import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { Save } from 'lucide-react'
 import api from '../../api/api'
 import useActiveBranch from '../../store/useActiveBranch'
 import ImageUpload from '../../components/ImageUpload'
 import LoadingScreen from '../../components/ui/LoadingScreen'
-
-const DAYS = [
-  { key: 'mon', label: 'Monday' },
-  { key: 'tue', label: 'Tuesday' },
-  { key: 'wed', label: 'Wednesday' },
-  { key: 'thu', label: 'Thursday' },
-  { key: 'fri', label: 'Friday' },
-  { key: 'sat', label: 'Saturday' },
-  { key: 'sun', label: 'Sunday' },
-]
-
-const DEFAULT_HOURS = { open: '08:00', close: '22:00', closed: false }
+import VendorBranchCard from '../../components/vendor/VendorBranchCard'
+import VendorFormSection from '../../components/vendor/VendorFormSection'
+import VendorHoursEditor, {
+  DEFAULT_VENDOR_HOURS,
+  VENDOR_DAYS,
+} from '../../components/vendor/VendorHoursEditor'
+import VendorStatusBanner from '../../components/vendor/VendorStatusBanner'
 
 export default function VendorSettings() {
   const queryClient = useQueryClient()
   const navigate = useNavigate()
-  const branchId = useActiveBranch((s) => s.branchId)
-  const [form, setForm]   = useState(null)
+  const branchId = useActiveBranch((state) => state.branchId)
+  const [form, setForm] = useState(null)
   const [hours, setHours] = useState({})
   const [saved, setSaved] = useState(false)
   const [error, setError] = useState('')
 
-  const { data: vendor, isLoading } = useQuery({
+  const {
+    data: vendor,
+    isLoading,
+    isError,
+    error: loadError,
+    refetch,
+  } = useQuery({
     queryKey: ['my-vendor', branchId],
-    queryFn:  () => api.get('/vendors/my', { params: branchId ? { branch_id: branchId } : {} }).then((r) => r.data.vendor),
+    queryFn: () =>
+      api
+        .get('/vendors/my', {
+          params: branchId ? { branch_id: branchId } : {},
+        })
+        .then((response) => response.data.vendor),
   })
 
   useEffect(() => {
     if (!vendor) return
-    // Seed the editable settings form from the loaded vendor record.
-    // eslint-disable-next-line react-hooks/set-state-in-effect
+
     setForm({
-      name:        vendor.name || '',
+      name: vendor.name || '',
       description: vendor.description || '',
-      phone:       vendor.phone || '',
-      address:     vendor.address || '',
-      logo_url:    vendor.logo_url || null,
-      cover_url:   vendor.cover_url || null,
+      phone: vendor.phone || '',
+      address: vendor.address || '',
+      logo_url: vendor.logo_url || null,
+      cover_url: vendor.cover_url || null,
     })
-    // Seed hours from stored opening_hours, filling missing days with defaults.
-    const seeded = {}
-    for (const d of DAYS) {
-      seeded[d.key] = vendor.opening_hours?.[d.key] || { ...DEFAULT_HOURS }
+
+    const seededHours = {}
+    for (const day of VENDOR_DAYS) {
+      seededHours[day.key] = {
+        ...DEFAULT_VENDOR_HOURS,
+        ...(vendor.opening_hours?.[day.key] || {}),
+      }
     }
-    setHours(seeded)
+    setHours(seededHours)
   }, [vendor])
 
-  const saveMut = useMutation({
+  const saveMutation = useMutation({
     mutationFn: (patch) => api.put(`/vendors/${vendor.id}`, patch),
     onSuccess: () => {
       setSaved(true)
-      queryClient.invalidateQueries(['my-vendor'])
-      setTimeout(() => setSaved(false), 2000)
+      setError('')
+      queryClient.invalidateQueries({ queryKey: ['my-vendor'] })
+      window.setTimeout(() => setSaved(false), 2200)
     },
-    onError: (err) => setError(err.response?.data?.error || 'Could not save'),
+    onError: (requestError) =>
+      setError(requestError.response?.data?.error || 'Could not save settings'),
   })
 
-  const save = () => {
+  function updateField(key, value) {
+    setSaved(false)
+    setForm((current) => ({ ...current, [key]: value }))
+  }
+
+  function updateDay(dayKey, patch) {
+    setSaved(false)
+    setHours((current) => ({
+      ...current,
+      [dayKey]: { ...current[dayKey], ...patch },
+    }))
+  }
+
+  function save() {
     setError('')
-    if (!form.name.trim()) { setError('Business name is required'); return }
-    saveMut.mutate({ ...form, opening_hours: hours })
+    if (!form.name.trim()) {
+      setError('Business name is required')
+      return
+    }
+    saveMutation.mutate({ ...form, opening_hours: hours })
   }
 
-  const setDay = (key, patch) => {
-    setHours((h) => ({ ...h, [key]: { ...h[key], ...patch } }))
+  if (isLoading || (!form && !isError)) {
+    return <LoadingScreen message="Loading settings..." />
   }
 
-  if (isLoading || !form) return <LoadingScreen message="Loading settings..." />
-
-  return (
-    <div className="h-screen overflow-y-auto bg-gray-50">
-      <div className="w-full px-8 py-8">
-        <div className="flex items-center justify-between mb-6">
-          <h1 className="text-2xl font-black text-gray-900">Business settings</h1>
-          {saved && <span className="text-sm font-semibold text-green-600">Saved ✓</span>}
-        </div>
-
-        {/* Branches — always-visible entry to add another location */}
-        <div className="mb-6 p-4 rounded-2xl border border-gray-100 bg-white flex items-center justify-between">
-          <div>
-            <p className="font-bold text-gray-800 text-sm">Branches</p>
-            <p className="text-xs text-gray-400 mt-0.5">Add another location under your brand</p>
-          </div>
-          <button onClick={() => navigate('/vendor/branches/new')}
-            className="px-4 py-2 rounded-xl text-white text-sm font-semibold active:scale-95 transition-transform"
-            style={{ background: '#00A651' }}>
-            + Add branch
-          </button>
-        </div>
-
-        {error && (
-          <div className="mb-4 p-3 bg-red-50 border border-red-100 rounded-xl text-sm text-red-600">{error}</div>
-        )}
-
-        {/* Cover + logo */}
-        <div className="bg-white rounded-2xl p-5 border border-gray-100 mb-5">
-          <h2 className="text-sm font-bold text-gray-700 mb-3">Branding</h2>
-          <div className="mb-4">
-            <p className="text-xs text-gray-500 mb-2">Cover image</p>
-            <ImageUpload
-              currentUrl={form.cover_url}
-              onUploaded={(url) => setForm((f) => ({ ...f, cover_url: url }))}
-              label="Upload cover"
-              shape="wide"
-            />
-          </div>
-          <div>
-            <p className="text-xs text-gray-500 mb-2">Logo</p>
-            <div className="max-w-[160px]">
-              <ImageUpload
-                currentUrl={form.logo_url}
-                onUploaded={(url) => setForm((f) => ({ ...f, logo_url: url }))}
-                label="Upload logo"
-                shape="circle"
-              />
-            </div>
-          </div>
-        </div>
-
-        {/* Business info */}
-        <div className="bg-white rounded-2xl p-5 border border-gray-100 mb-5">
-          <h2 className="text-sm font-bold text-gray-700 mb-3">Business details</h2>
-          <div className="flex flex-col gap-3">
-            <Field label="Business name" value={form.name}
-              onChange={(v) => setForm((f) => ({ ...f, name: v }))} />
-            <div>
-              <label className="text-xs text-gray-500">Description</label>
-              <textarea
-                value={form.description}
-                onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
-                rows={2}
-                placeholder="Short description customers will see"
-                className="w-full mt-1 px-4 py-3 rounded-xl border border-gray-200 text-sm outline-none focus:border-green-500 resize-none"
-              />
-            </div>
-            <div className="grid grid-cols-2 gap-3">
-              <Field label="Phone" value={form.phone}
-                onChange={(v) => setForm((f) => ({ ...f, phone: v }))} placeholder="07X XXX XXXX" />
-              <Field label="Address" value={form.address}
-                onChange={(v) => setForm((f) => ({ ...f, address: v }))} />
-            </div>
-          </div>
-        </div>
-
-        {/* Opening hours */}
-        <div className="bg-white rounded-2xl p-5 border border-gray-100 mb-5">
-          <h2 className="text-sm font-bold text-gray-700 mb-1">Opening hours</h2>
-          <p className="text-xs text-gray-400 mb-3">
-            Your store opens and closes automatically based on these hours. Use “Pause orders” on your home screen to close early.
-          </p>
-          <div className="flex flex-col gap-2">
-            {DAYS.map((d) => {
-              const h = hours[d.key] || DEFAULT_HOURS
-              return (
-                <div key={d.key} className="flex items-center gap-3">
-                  <span className="w-24 text-sm text-gray-700">{d.label}</span>
-                  {h.closed ? (
-                    <span className="flex-1 text-sm text-gray-400">Closed</span>
-                  ) : (
-                    <div className="flex-1 flex items-center gap-2">
-                      <input type="time" value={h.open}
-                        onChange={(e) => setDay(d.key, { open: e.target.value })}
-                        className="px-3 py-2 rounded-lg border border-gray-200 text-sm outline-none focus:border-green-500" />
-                      <span className="text-gray-400 text-sm">to</span>
-                      <input type="time" value={h.close}
-                        onChange={(e) => setDay(d.key, { close: e.target.value })}
-                        className="px-3 py-2 rounded-lg border border-gray-200 text-sm outline-none focus:border-green-500" />
-                    </div>
-                  )}
-                  <button onClick={() => setDay(d.key, { closed: !h.closed })}
-                    className="text-xs font-semibold px-3 py-1.5 rounded-lg"
-                    style={h.closed
-                      ? { background: '#EDFAF3', color: '#00A651' }
-                      : { background: '#F3F4F6', color: '#6B7280' }
-                    }>
-                    {h.closed ? 'Set open' : 'Mark closed'}
-                  </button>
-                </div>
-              )
-            })}
-          </div>
-        </div>
-
-        <button onClick={save} disabled={saveMut.isPending}
-          className="w-full py-4 rounded-2xl text-white font-bold active:scale-98 transition-transform disabled:opacity-60"
-          style={{ background: '#00A651' }}>
-          {saveMut.isPending ? 'Saving…' : 'Save settings'}
+  if (isError || !vendor || !form) {
+    return (
+      <div className="h-screen overflow-y-auto px-5 py-8 sm:px-8">
+        <VendorStatusBanner
+          tone="error"
+          title="Settings unavailable"
+          message={
+            loadError?.response?.data?.error ||
+            'We could not load this branch’s business settings.'
+          }
+        />
+        <button
+          type="button"
+          onClick={refetch}
+          className="mt-4 rounded-[14px] px-4 py-3 text-[11px] font-semibold text-white"
+          style={{ background: 'var(--mzaya-primary)' }}
+        >
+          Try again
         </button>
       </div>
+    )
+  }
+
+  return (
+    <div
+      className="h-screen overflow-y-auto"
+      style={{ background: 'var(--mzaya-background)' }}
+    >
+      <main className="mx-auto w-full max-w-6xl px-5 py-7 sm:px-8">
+        <header className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <p
+              className="text-[10px] font-semibold uppercase tracking-[0.16em]"
+              style={{ color: 'var(--mzaya-primary)' }}
+            >
+              Business management
+            </p>
+            <h1
+              className="mt-2 text-[28px] font-semibold tracking-[-0.04em]"
+              style={{ color: 'var(--mzaya-text-primary)' }}
+            >
+              Settings
+            </h1>
+            <p
+              className="mt-2 text-[12px]"
+              style={{ color: 'var(--mzaya-text-muted)' }}
+            >
+              Manage what customers see and when this branch accepts orders.
+            </p>
+          </div>
+
+          <button
+            type="button"
+            onClick={save}
+            disabled={saveMutation.isPending}
+            className="inline-flex items-center justify-center gap-2 rounded-[15px] px-5 py-3.5 text-[12px] font-semibold text-white outline-none disabled:opacity-60 focus-visible:[box-shadow:var(--mzaya-focus-ring)]"
+            style={{ background: 'var(--mzaya-primary)' }}
+          >
+            <Save size={16} strokeWidth={1.8} aria-hidden="true" />
+            {saveMutation.isPending ? 'Saving…' : 'Save settings'}
+          </button>
+        </header>
+
+        <div className="mt-6 space-y-4">
+          {error && <VendorStatusBanner tone="error" message={error} />}
+          {saved && (
+            <VendorStatusBanner
+              tone="success"
+              title="Settings saved"
+              message="Your latest branch information is now active."
+            />
+          )}
+
+          <VendorBranchCard
+            onAddBranch={() => navigate('/vendor/branches/new')}
+          />
+
+          <VendorFormSection
+            title="Brand presentation"
+            description="These images help customers recognise your business across Mzaya."
+          >
+            <div className="grid gap-6 lg:grid-cols-[1.6fr_1fr]">
+              <div>
+                <p
+                  className="mb-2 text-[10px] font-semibold uppercase tracking-[0.12em]"
+                  style={{ color: 'var(--mzaya-text-muted)' }}
+                >
+                  Cover image
+                </p>
+                <ImageUpload
+                  currentUrl={form.cover_url}
+                  onUploaded={(url) => updateField('cover_url', url)}
+                  label="Upload cover"
+                  shape="wide"
+                />
+              </div>
+              <div>
+                <p
+                  className="mb-2 text-[10px] font-semibold uppercase tracking-[0.12em]"
+                  style={{ color: 'var(--mzaya-text-muted)' }}
+                >
+                  Business logo
+                </p>
+                <div className="max-w-[180px]">
+                  <ImageUpload
+                    currentUrl={form.logo_url}
+                    onUploaded={(url) => updateField('logo_url', url)}
+                    label="Upload logo"
+                    shape="circle"
+                  />
+                </div>
+              </div>
+            </div>
+          </VendorFormSection>
+
+          <VendorFormSection
+            title="Business details"
+            description="Customer-facing details for the active branch."
+          >
+            <div className="grid gap-4 sm:grid-cols-2">
+              <VendorField
+                label="Business name"
+                name="vendor-name"
+                value={form.name}
+                onChange={(value) => updateField('name', value)}
+                required
+              />
+              <VendorField
+                label="Contact phone"
+                name="vendor-phone"
+                value={form.phone}
+                onChange={(value) => updateField('phone', value)}
+                placeholder="07X XXX XXXX"
+              />
+              <VendorField
+                label="Address"
+                name="vendor-address"
+                value={form.address}
+                onChange={(value) => updateField('address', value)}
+                className="sm:col-span-2"
+              />
+              <div className="sm:col-span-2">
+                <label
+                  htmlFor="vendor-description"
+                  className="text-[11px] font-medium"
+                  style={{ color: 'var(--mzaya-text-secondary)' }}
+                >
+                  Description
+                </label>
+                <textarea
+                  id="vendor-description"
+                  value={form.description}
+                  onChange={(event) =>
+                    updateField('description', event.target.value)
+                  }
+                  rows={4}
+                  placeholder="Short description customers will see"
+                  className="mt-2 w-full resize-none rounded-[15px] border bg-white px-4 py-3 text-[12px] leading-5 outline-none focus-visible:[box-shadow:var(--mzaya-focus-ring)]"
+                  style={{
+                    borderColor: 'var(--mzaya-border)',
+                    color: 'var(--mzaya-text-primary)',
+                  }}
+                />
+              </div>
+            </div>
+          </VendorFormSection>
+
+          <VendorFormSection
+            title="Opening hours"
+            description="The branch opens and closes automatically from this schedule. Use Pause orders on the dashboard when closing early."
+          >
+            <VendorHoursEditor hours={hours} onDayChange={updateDay} />
+          </VendorFormSection>
+
+          <button
+            type="button"
+            onClick={save}
+            disabled={saveMutation.isPending}
+            className="w-full rounded-[16px] py-4 text-[12px] font-semibold text-white outline-none disabled:opacity-60 focus-visible:[box-shadow:var(--mzaya-focus-ring)]"
+            style={{ background: 'var(--mzaya-primary)' }}
+          >
+            {saveMutation.isPending ? 'Saving settings…' : 'Save settings'}
+          </button>
+        </div>
+      </main>
     </div>
   )
 }
 
-function Field({ label, value, onChange, placeholder }) {
+function VendorField({
+  label,
+  name,
+  value,
+  onChange,
+  placeholder,
+  required = false,
+  className = '',
+}) {
   return (
-    <div>
-      <label className="text-xs text-gray-500">{label}</label>
+    <div className={className}>
+      <label
+        htmlFor={name}
+        className="text-[11px] font-medium"
+        style={{ color: 'var(--mzaya-text-secondary)' }}
+      >
+        {label}
+        {required && <span aria-hidden="true"> *</span>}
+      </label>
       <input
+        id={name}
         type="text"
         value={value}
-        onChange={(e) => onChange(e.target.value)}
+        onChange={(event) => onChange(event.target.value)}
         placeholder={placeholder}
-        className="w-full mt-1 px-4 py-3 rounded-xl border border-gray-200 text-sm outline-none focus:border-green-500"
+        required={required}
+        className="mt-2 h-12 w-full rounded-[15px] border bg-white px-4 text-[12px] outline-none focus-visible:[box-shadow:var(--mzaya-focus-ring)]"
+        style={{
+          borderColor: 'var(--mzaya-border)',
+          color: 'var(--mzaya-text-primary)',
+        }}
       />
     </div>
   )

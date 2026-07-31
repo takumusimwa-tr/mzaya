@@ -1,44 +1,45 @@
-// frontend/src/realtime/socket.js
-// Single Socket.IO client for the app. Connects once (after login) with the
-// user's JWT, and lets screens subscribe to events.
+/**
+ * MZAYA browser Socket.IO singleton.
+ *
+ * Requires `socket.io-client` in frontend dependencies.
+ */
 import { io } from 'socket.io-client'
-
-// Derive the socket origin from the SAME env var the REST client uses.
-// Previously this read VITE_API_ORIGIN — a second env var for the same backend,
-// which is an easy thing to forget in a production config (the app would work
-// while real-time silently failed to connect).
-const API_ORIGIN = (import.meta.env.VITE_API_URL || 'http://localhost:5000/api').replace('/api', '')
 
 let socket = null
 
-export function connectSocket(token) {
-  if (socket?.connected) return socket
-  if (socket) socket.disconnect()
+function apiOrigin() {
+  const configured = import.meta.env.VITE_SOCKET_URL || import.meta.env.VITE_API_URL
+  if (configured) return configured.replace(/\/api\/?$/, '')
+  return 'http://localhost:5000'
+}
 
-  socket = io(API_ORIGIN, {
-    auth: { token },
-    transports: ['websocket'],
-    autoConnect: true,
-  })
+export function getSocket(token) {
+  if (!token) return null
 
-  socket.on('connect_error', (err) => {
-    // Auth failures etc. — quiet, real-time is an enhancement not a hard dep.
-    console.warn('[socket] connect error:', err.message)
-  })
+  if (!socket) {
+    socket = io(apiOrigin(), {
+      autoConnect: false,
+      transports: ['websocket', 'polling'],
+      auth: { token },
+    })
+  } else {
+    socket.auth = { token }
+  }
 
   return socket
+}
+
+export function connectSocket(token) {
+  const instance = getSocket(token)
+  if (instance && !instance.connected) instance.connect()
+  return instance
 }
 
 export function disconnectSocket() {
-  if (socket) { socket.disconnect(); socket = null }
+  if (socket) socket.disconnect()
 }
 
-export function getSocket() {
-  return socket
+export function resetSocket() {
+  if (socket) socket.disconnect()
+  socket = null
 }
-
-// Room helpers
-export function joinVendor(vendorId) { socket?.emit('join:vendor', vendorId) }
-export function leaveVendor(vendorId) { socket?.emit('leave:vendor', vendorId) }
-export function joinCity(cityId) { socket?.emit('join:city', cityId) }
-export function leaveCity(cityId) { socket?.emit('leave:city', cityId) }

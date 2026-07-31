@@ -1,0 +1,60 @@
+.chat-unread-badge {
+  display: inline-grid;
+  place-items: center;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 5px;
+  border-radius: 999px;
+  background: #b42318;
+  color: #fff;
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.push-permission-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 18px;
+  border: 1px solid #dce6df;
+  border-radius: 18px;
+  background: #fff;
+  color: #10241a;
+}
+
+.push-permission-card h3,
+.push-permission-card p {
+  margin: 0;
+}
+
+.push-permission-card > div {
+  display: grid;
+  gap: 6px;
+}
+
+.push-permission-card > div > p:last-child {
+  max-width: 560px;
+  color: #617269;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.push-permission-card button {
+  flex: 0 0 auto;
+  min-height: 42px;
+  padding: 0 16px;
+  border: 0;
+  border-radius: 12px;
+  background: #0d6b45;
+  color: #fff;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+@media (max-width: 640px) {
+  .push-permission-card {
+    align-items: stretch;
+    flex-direction: column;
+  }
+}

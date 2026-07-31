@@ -1,20 +1,68 @@
 :root {
-  --mzaya-green-50: #EFFCF4;
-  --mzaya-green-100: #D9F8E5;
-  --mzaya-green-200: #B5EFCB;
-  --mzaya-green-300: #82E2A8;
-  --mzaya-green-400: #46CE7F;
-  --mzaya-green-500: #16B45F;
-  --mzaya-green-600: #00A651;
-  --mzaya-green-700: #008541;
-  --mzaya-green-800: #007D3D;
-  --mzaya-green-900: #07562F;
-  --mzaya-navy-950: #071B33;
-  --mzaya-sunshine: #FFC107;
-  --mzaya-mint: #E8F8EF;
-  --mzaya-text-primary: #111827;
-  --mzaya-text-secondary: #667085;
-  --mzaya-surface: #FFFFFF;
-  --mzaya-surface-subtle: #F7F8FA;
-  --mzaya-border: #E4E7EC;
+  /* Brand — restrained, premium emerald */
+  --mzaya-green-50: #F1F7F4;
+  --mzaya-green-100: #E2EFE9;
+  --mzaya-green-200: #C4DFD3;
+  --mzaya-green-300: #98C8B5;
+  --mzaya-green-400: #62AA91;
+  --mzaya-green-500: #368A70;
+  --mzaya-green-600: #136B57;
+  --mzaya-green-700: #0F5A4A;
+  --mzaya-green-800: #0B4A3F;
+  --mzaya-green-900: #083A33;
+  --mzaya-green-950: #052A25;
+
+  /* Premium accent — badges, trust and loyalty only */
+  --mzaya-gold-400: #D5B05B;
+  --mzaya-gold-500: #B88B2D;
+  --mzaya-gold-600: #946D20;
+
+  /* Neutral system */
+  --mzaya-neutral-0: #FFFFFF;
+  --mzaya-neutral-50: #F7F9F7;
+  --mzaya-neutral-100: #EEF2EF;
+  --mzaya-neutral-200: #E2E8E4;
+  --mzaya-neutral-300: #C9D2CC;
+  --mzaya-neutral-400: #9DA9A2;
+  --mzaya-neutral-500: #7C8982;
+  --mzaya-neutral-600: #526159;
+  --mzaya-neutral-700: #35423C;
+  --mzaya-neutral-800: #222D28;
+  --mzaya-neutral-900: #121714;
+
+  /* Semantic */
+  --mzaya-success: #167454;
+  --mzaya-success-soft: #E9F4EF;
+  --mzaya-warning: #A56A11;
+  --mzaya-warning-soft: #FFF5DF;
+  --mzaya-error: #B42318;
+  --mzaya-error-soft: #FDECEA;
+  --mzaya-info: #315C8C;
+  --mzaya-info-soft: #EAF1F8;
+
+  /* Product aliases — use these in application code */
+  --mzaya-primary: var(--mzaya-green-600);
+  --mzaya-primary-hover: var(--mzaya-green-700);
+  --mzaya-primary-pressed: var(--mzaya-green-800);
+  --mzaya-primary-soft: var(--mzaya-green-50);
+  --mzaya-primary-surface: var(--mzaya-green-100);
+
+  --mzaya-background: #F6F8F6;
+  --mzaya-canvas: var(--mzaya-background);
+  --mzaya-surface: var(--mzaya-neutral-0);
+  --mzaya-surface-subtle: var(--mzaya-neutral-50);
+  --mzaya-surface-muted: var(--mzaya-neutral-100);
+  --mzaya-border: var(--mzaya-neutral-200);
+  --mzaya-border-strong: var(--mzaya-neutral-300);
+  --mzaya-disabled: var(--mzaya-neutral-300);
+
+  --mzaya-text-primary: var(--mzaya-neutral-900);
+  --mzaya-text-secondary: var(--mzaya-neutral-600);
+  --mzaya-text-muted: var(--mzaya-neutral-500);
+  --mzaya-text-inverse: var(--mzaya-neutral-0);
+
+  /* Compatibility aliases during migration */
+  --mzaya-navy-950: var(--mzaya-green-950);
+  --mzaya-sunshine: var(--mzaya-gold-400);
+  --mzaya-mint: var(--mzaya-green-50);
 }

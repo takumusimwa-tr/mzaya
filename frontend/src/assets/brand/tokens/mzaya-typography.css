@@ -1,6 +1,6 @@
-@import url("https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap");
 :root {
-  --mzaya-font-sans: "Manrope", Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --mzaya-font-sans: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+
   --mzaya-font-size-xs: 0.75rem;
   --mzaya-font-size-sm: 0.875rem;
   --mzaya-font-size-md: 1rem;
@@ -8,4 +8,24 @@
   --mzaya-font-size-xl: 1.375rem;
   --mzaya-font-size-2xl: 1.75rem;
   --mzaya-font-size-3xl: 2.25rem;
+
+  --mzaya-line-height-tight: 1.15;
+  --mzaya-line-height-heading: 1.25;
+  --mzaya-line-height-body: 1.5;
+
+  --mzaya-letter-spacing-tight: -0.025em;
+  --mzaya-letter-spacing-heading: -0.015em;
+  --mzaya-letter-spacing-normal: 0;
+  --mzaya-letter-spacing-label: 0.01em;
+
+  --mzaya-font-weight-regular: 400;
+  --mzaya-font-weight-medium: 500;
+  --mzaya-font-weight-semibold: 600;
+  --mzaya-font-weight-bold: 700;
+}
+
+html {
+  font-family: var(--mzaya-font-sans);
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
 }

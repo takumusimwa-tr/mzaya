@@ -1,0 +1,5 @@
+const presence = new Map();
+function markOnline(userId, socketId) { const state = presence.get(userId) || { sockets: new Set(), lastSeenAt: null }; state.sockets.add(socketId); state.lastSeenAt = null; presence.set(userId, state); return { userId, online: true, lastSeenAt: null }; }
+function markOffline(userId, socketId) { const state = presence.get(userId) || { sockets: new Set(), lastSeenAt: null }; state.sockets.delete(socketId); if (!state.sockets.size) state.lastSeenAt = new Date(); presence.set(userId, state); return { userId, online: state.sockets.size > 0, lastSeenAt: state.lastSeenAt }; }
+function getPresence(userId) { const state = presence.get(userId); return { userId, online: Boolean(state?.sockets?.size), lastSeenAt: state?.lastSeenAt || null }; }
+module.exports = { markOnline, markOffline, getPresence };

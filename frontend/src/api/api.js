@@ -46,12 +46,22 @@ export const orderAPI = {
 
 // ─── Vendors ──────────────────────────────────────────────────────────────────
 export const vendorAPI = {
-  list:     (params) => api.get('/vendors', { params }),
-  getById:  (id)     => api.get(`/vendors/${id}`),
-  register: (data)   => api.post('/vendors', data),   // self-onboarding
-  my:       (branchId) => api.get('/vendors/my', { params: branchId ? { branch_id: branchId } : {} }),
-  branches:  ()       => api.get('/vendors/my/branches'),
-  addBranch: (data)   => api.post('/vendors/my/branches', data),
+  list:       (params) => api.get('/vendors', { params }),
+  getById:    (id) => api.get(`/vendors/${id}`),
+  register:   (data) => api.post('/vendors', data),
+  my:         (branchId) =>
+    api.get('/vendors/my', {
+      params: branchId ? { branch_id: branchId } : {},
+    }),
+  branches:   () => api.get('/vendors/my/branches'),
+  addBranch:  (data) => api.post('/vendors/my/branches', data),
+  update:     (vendorId, data) => api.put(`/vendors/${vendorId}`, data),
+  addMenuItem: (vendorId, data) =>
+    api.post(`/vendors/${vendorId}/menu`, data),
+  updateMenuItem: (vendorId, itemId, data) =>
+    api.put(`/vendors/${vendorId}/menu/${itemId}`, data),
+  deleteMenuItem: (vendorId, itemId) =>
+    api.delete(`/vendors/${vendorId}/menu/${itemId}`),
 };
 
 // ─── Cities ───────────────────────────────────────────────────────────────────

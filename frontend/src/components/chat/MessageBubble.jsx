@@ -1,0 +1,3 @@
+import PropTypes from 'prop-types'
+export default function MessageBubble({message,mine}){return <article className={`message-bubble ${mine?'is-mine':''}`}>{message.type==='image'&&message.metadata?.url&&<img src={message.metadata.url} alt={message.metadata.alt||'Shared'}/>} {message.body&&<p>{message.body}</p>}<footer><time>{new Intl.DateTimeFormat(undefined,{hour:'numeric',minute:'2-digit'}).format(new Date(message.created_at))}</time>{mine&&<span>{message.failed?'Failed':message.pending?'Sending…':message.read_at?'Read':'Sent'}</span>}</footer></article>}
+MessageBubble.propTypes={message:PropTypes.object.isRequired,mine:PropTypes.bool};MessageBubble.defaultProps={mine:false};

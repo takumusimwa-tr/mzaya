@@ -1,30 +1,10 @@
-// backend/src/routes/chat.routes.js
-const express = require('express');
-const router  = express.Router();
-const { authenticate } = require('../middleware/auth.middleware');
-const { loadOrder } = require('../middleware/ownership.middleware');
-const { listMessages, sendMessage, orderContacts } = require('../controllers/chat.controller');
-
-// These routes had NO ownership guard. The controller resolved participants
-// internally, but the route itself would happily run for any signed-in user with
-// any order id — and /contacts returns PHONE NUMBERS. Anyone could have walked the
-// UUID space and harvested customer and Mzaya numbers.
-//
-// loadOrder({ allow: ['any'] }) now proves the caller is actually the customer,
-// the Mzaya, or the vendor on this order before the handler runs.
-router.get('/:id/messages',
-  authenticate,
-  loadOrder({ allow: ['any'] }),
-  listMessages);
-
-router.post('/:id/messages',
-  authenticate,
-  loadOrder({ allow: ['any'] }),
-  sendMessage);
-
-router.get('/:id/contacts',
-  authenticate,
-  loadOrder({ allow: ['any'] }),
-  orderContacts);
-
-module.exports = router;
+const router=require('express').Router();
+const {authenticate}=require('../middleware/auth.middleware');
+const {validateRequest}=require('../middleware/validateRequest');
+const controller=require('../controllers/chat.controller');
+const v=require('../validators/chat.validator');
+router.use(authenticate);
+router.get('/:conversationId',validateRequest(v.conversationIdParamsSchema,'params'),validateRequest(v.chatQuerySchema,'query'),controller.getChat);
+router.post('/:conversationId/messages',validateRequest(v.conversationIdParamsSchema,'params'),validateRequest(v.sendMessageSchema,'body'),controller.send);
+router.patch('/:conversationId/read',validateRequest(v.conversationIdParamsSchema,'params'),validateRequest(v.markReadSchema,'body'),controller.read);
+module.exports=router;

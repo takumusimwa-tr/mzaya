@@ -1,0 +1,130 @@
+.settlement-operations {
+  width: min(1120px, calc(100% - 32px));
+  margin: 0 auto;
+  padding: 42px 0;
+  color: #131915;
+}
+
+.settlement-operations h1,
+.settlement-profile-form h2,
+.settlement-batch-summary h2 {
+  margin: 4px 0 0;
+}
+
+.settlement-operations > header p:last-child {
+  color: #6d7a72;
+}
+
+.settlement-operations__controls {
+  display: grid;
+  grid-template-columns: 1fr 1fr auto;
+  gap: 14px;
+  align-items: end;
+  margin: 28px 0;
+  padding: 20px;
+  border: 1px solid #dfe6e1;
+  border-radius: 18px;
+  background: #fff;
+}
+
+.settlement-operations__controls label,
+.settlement-profile-form label {
+  display: grid;
+  gap: 7px;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.settlement-operations select,
+.settlement-profile-form select,
+.settlement-profile-form input {
+  min-height: 44px;
+  padding: 0 12px;
+  border: 1px solid #d8e2dc;
+  border-radius: 12px;
+  background: #fff;
+  font: inherit;
+}
+
+.settlement-operations button,
+.settlement-profile-form button,
+.settlement-batch-summary button {
+  min-height: 44px;
+  padding: 0 16px;
+  border: 0;
+  border-radius: 12px;
+  background: #126a56;
+  color: #fff;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.settlement-batch-summary {
+  padding: 22px;
+  border: 1px solid #dfe6e1;
+  border-radius: 20px;
+  background: #fff;
+}
+
+.settlement-batch-summary > header {
+  display: flex;
+  justify-content: space-between;
+  gap: 20px;
+}
+
+.settlement-status {
+  align-self: start;
+  padding: 7px 10px;
+  border-radius: 999px;
+  background: #edf3ef;
+  color: #126a56;
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: capitalize;
+}
+
+.settlement-batch-summary__metrics {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+  margin: 22px 0;
+}
+
+.settlement-batch-summary__metrics article {
+  padding: 16px;
+  border-radius: 14px;
+  background: #f5f8f6;
+}
+
+.settlement-batch-summary__metrics span {
+  display: block;
+  color: #6d7a72;
+  font-size: 12px;
+}
+
+.settlement-batch-summary__metrics strong {
+  display: block;
+  margin-top: 6px;
+  font-size: 22px;
+}
+
+.settlement-batch-summary__actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.settlement-profile-form {
+  display: grid;
+  gap: 16px;
+  padding: 22px;
+  border: 1px solid #dfe6e1;
+  border-radius: 20px;
+  background: #fff;
+}
+
+@media (max-width: 760px) {
+  .settlement-operations__controls,
+  .settlement-batch-summary__metrics {
+    grid-template-columns: 1fr;
+  }
+}

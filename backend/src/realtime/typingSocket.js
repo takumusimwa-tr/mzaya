@@ -1,0 +1,4 @@
+const { assertParticipant } = require('../services/conversation.service');
+const { startTyping, stopTyping } = require('../services/typing.service');
+function registerTypingSocket(io, socket) { socket.on('conversation:typing_start', async ({ conversationId }, ack) => { try { await assertParticipant(conversationId, socket.user.id); const state = startTyping({ conversationId, userId: socket.user.id }); socket.to(`conversation:${conversationId}`).emit('conversation:typing_changed', state); ack?.({ ok: true }); } catch (error) { ack?.({ ok: false, error: error.code || 'TYPING_START_FAILED' }); } }); socket.on('conversation:typing_stop', ({ conversationId }) => { const state = stopTyping({ conversationId, userId: socket.user.id }); socket.to(`conversation:${conversationId}`).emit('conversation:typing_changed', state); }); }
+module.exports = { registerTypingSocket };

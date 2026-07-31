@@ -1,0 +1,5 @@
+const { markOnline, markOffline, getPresence } = require('../services/presence.service');
+const { presenceEvents, PRESENCE_EVENT } = require('../events/presence.events');
+function registerPresenceSocket(io, socket) { const userId = socket.user.id; presenceEvents.emit(PRESENCE_EVENT.CHANGED, markOnline(userId, socket.id)); socket.on('presence:get', ({ userId: targetUserId }, ack) => ack?.({ ok: true, presence: getPresence(targetUserId) })); socket.on('disconnect', () => presenceEvents.emit(PRESENCE_EVENT.CHANGED, markOffline(userId, socket.id))); }
+function initializePresenceBridge(io) { const listener = (state) => io.emit('presence:changed', state); presenceEvents.on(PRESENCE_EVENT.CHANGED, listener); return () => presenceEvents.off(PRESENCE_EVENT.CHANGED, listener); }
+module.exports = { registerPresenceSocket, initializePresenceBridge };

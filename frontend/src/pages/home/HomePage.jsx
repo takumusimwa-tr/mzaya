@@ -1,200 +1,228 @@
-import { useState, useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { useNavigate } from 'react-router-dom'
+import {
+  Hammer,
+  PackageCheck,
+  ShoppingBag,
+  ShoppingBasket,
+  UserRound,
+  Utensils,
+} from 'lucide-react'
 import { browseAPI } from '../../api/api'
 import useAuthStore from '../../store/useAuthStore'
 import useCartStore from '../../store/useCartStore'
 import useLocation from '../../hooks/useLocation'
 import LoadingScreen from '../../components/ui/LoadingScreen'
-import imageUrl from '../../utils/imageUrl'
 import { useFavoriteIds } from '../../hooks/useFavorites'
 import { MzayaWordmark } from '../../components/brand/MzayaLockup'
-import Icon from '../../components/ui/Icon'
-import emptyProducts from '../../assets/brand/illustrations/empty-states/mzaya-empty-products.svg'
+import SearchBar from '../../components/ui/SearchBar'
+import ServiceCard from '../../components/home/ServiceCard'
+import MerchantCard from '../../components/home/MerchantCard'
+import { ProductRow, ProductTile } from '../../components/home/ProductCard'
+import { HomeEmptyState, HomeSectionHeading, HomeSkeletonList } from '../../components/home/HomeFeedback'
 
-const CATEGORIES = [
-  { id: 'food',      label: 'Food',      icon: 'food' },
-  { id: 'grocery',   label: 'Grocery',   icon: 'grocery' },
-  { id: 'materials', label: 'Materials', icon: 'materials' },
-  { id: 'errand',    label: 'Errands',   icon: 'errand' },
+const BRAND = {
+  green: '#136B57',
+  greenDark: '#0B4A3F',
+  canvas: '#F6F8F6',
+  surface: '#FFFFFF',
+  surfaceMuted: '#EEF3F0',
+  text: '#121714',
+  textSecondary: '#526159',
+  textMuted: '#7C8982',
+  border: '#E2E8E4',
+}
+
+const SERVICES = [
+  { id: 'food', label: 'Food', description: 'Restaurants & meals', Icon: Utensils },
+  { id: 'grocery', label: 'Groceries', description: 'Daily essentials', Icon: ShoppingBasket },
+  { id: 'materials', label: 'Hardware', description: 'Building supplies', Icon: Hammer },
+  { id: 'errand', label: 'Courier', description: 'Send a package', Icon: PackageCheck },
 ]
 
-// Product-first verticals lead with a carousel of actual items; the rest lead
-// with stores.
-//
-// Food is here deliberately. The instinct to leave it out — "you browse
-// restaurants, not individual burgers" — is a Western framing. Zimbabweans search
-// for the DISH: "who has sadza and beef?", "where's chicken and chips?" — not the
-// brand. And practically: in a city with a handful of restaurants, a store-only
-// list is a dead page, while a dish carousel gives someone something to want
-// immediately.
-//
-// Errands stay store-less by nature — there's nothing to browse.
 const PRODUCT_FIRST = ['food', 'grocery', 'materials']
 
-// What the browsable thing is CALLED in each vertical.
-//
-// Module-level on purpose: HomePage and ProductFirst are separate components, and
-// a const declared inside one is invisible to the other. (It was, briefly —
-// "NOUN is not defined".)
-//
-// Generic "products" reads like a warehouse catalogue when someone just wants
-// lunch.
 const NOUNS = {
-  food:      { search: 'Search dishes, restaurants...',   popular: 'Popular dishes',    stores: 'Restaurants near you' },
-  grocery:   { search: 'Search groceries, stores...',     popular: 'Popular items',     stores: 'Stores near you' },
-  materials: { search: 'Search materials, suppliers...',  popular: 'Popular materials', stores: 'Suppliers near you' },
+  food: {
+    search: 'Search dishes or restaurants',
+    popular: 'Popular dishes',
+    stores: 'Restaurants near you',
+  },
+  grocery: {
+    search: 'Search groceries or stores',
+    popular: 'Popular items',
+    stores: 'Stores near you',
+  },
+  materials: {
+    search: 'Search materials or suppliers',
+    popular: 'Popular materials',
+    stores: 'Suppliers near you',
+  },
 }
-const DEFAULT_NOUN = { search: 'Search restaurants, stores...', popular: 'Popular near you', stores: 'Stores near you' }
+
+const DEFAULT_NOUN = {
+  search: 'Search products or services',
+  popular: 'Popular near you',
+  stores: 'Merchants near you',
+}
+
 const nounFor = (category) => NOUNS[category] || DEFAULT_NOUN
 
 export default function HomePage() {
-  const user       = useAuthStore((s) => s.user)
-  const totalItems = useCartStore((s) => s.totalItems())
-  const navigate   = useNavigate()
+  const user = useAuthStore((state) => state.user)
+  const totalItems = useCartStore((state) => state.totalItems())
+  const navigate = useNavigate()
   const [category, setCategory] = useState('food')
-  const [search,   setSearch]   = useState('')
-  const [focused,  setFocused]  = useState(false)
-  const [activeCat, setActiveCat] = useState(null) // selected product category chip
+  const [search, setSearch] = useState('')
+  const [activeCat, setActiveCat] = useState(null)
 
   const { isFavorite, toggle } = useFavoriteIds()
-  const { city, loading: locLoading } = useLocation()
+  const { city, loading: locationLoading } = useLocation()
   const [selectedCity, setSelectedCity] = useState(null)
-  // Adopt the detected city once, when it first arrives. selectedCity is
-  // intentionally omitted from deps — the guard handles the one-time set.
+
+  // Keep location contextual: it powers availability without becoming decorative UI.
   // eslint-disable-next-line react-hooks/set-state-in-effect, react-hooks/exhaustive-deps
   useEffect(() => { if (city && !selectedCity) setSelectedCity(city) }, [city])
 
   const isProductFirst = PRODUCT_FIRST.includes(category)
   const noun = nounFor(category)
 
-
-  // Brand-first (food): list brands resolved to nearest branch.
-  // Also used for the STORE LIST below the product carousel in product-first mode.
   const { data: brands, isLoading: brandsLoading } = useQuery({
     queryKey: ['browse-brands', category, selectedCity?.id],
-    queryFn:  () => browseAPI.brands({
-      category, city_id: selectedCity?.id,
-      lat: city?.lat, lng: city?.lng,
-    }).then((r) => r.data.brands),
+    queryFn: () => browseAPI.brands({
+      category,
+      city_id: selectedCity?.id,
+      lat: city?.lat,
+      lng: city?.lng,
+    }).then((response) => response.data.brands),
     enabled: category !== 'errand' && !!selectedCity,
   })
 
-  // Product-first (materials/grocery): list products across stores.
   const { data: productData, isLoading: productsLoading } = useQuery({
     queryKey: ['browse-products', category, selectedCity?.id, activeCat, search],
-    queryFn:  () => browseAPI.products({
-      category, city_id: selectedCity?.id, q: search || undefined,
-      lat: city?.lat, lng: city?.lng,
-    }).then((r) => r.data),
+    queryFn: () => browseAPI.products({
+      category,
+      city_id: selectedCity?.id,
+      q: search || undefined,
+      lat: city?.lat,
+      lng: city?.lng,
+    }).then((response) => response.data),
     enabled: isProductFirst && !!selectedCity,
   })
 
-  if (locLoading) return <LoadingScreen message="Finding what's near you..." />
+  if (locationLoading) return <LoadingScreen message="Preparing Mzaya..." />
 
   const hour = new Date().getHours()
   const greeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening'
+  const firstName = user?.name?.trim().split(' ')[0] || 'there'
 
-  // Filtered brand list (client search on brand names).
-  const filteredBrands = (brands || []).filter((b) =>
-    !search || b.name.toLowerCase().includes(search.toLowerCase())
+  const filteredBrands = (brands || []).filter((brand) =>
+    !search || brand.name.toLowerCase().includes(search.toLowerCase())
   )
 
-  // Product list, optionally filtered by the selected category chip.
-  const products = (productData?.products || []).filter((p) =>
-    !activeCat || p.category === activeCat
+  const products = (productData?.products || []).filter((product) =>
+    !activeCat || product.category === activeCat
   )
+
   const productCategories = productData?.categories || []
 
+  const selectService = (serviceId) => {
+    if (serviceId === 'errand') {
+      navigate('/errand')
+      return
+    }
+
+    setCategory(serviceId)
+    setSearch('')
+    setActiveCat(null)
+  }
+
   return (
-    <div className="min-h-screen pb-28" style={{ background: '#F8F8F8' }}>
-
-      {/* ── Top bar ── */}
-      <div className="sticky top-0 z-40 bg-white px-4 pt-12 pb-3" style={{ boxShadow: '0 1px 0 #F0F0F0' }}>
+    <main className="min-h-screen pb-28" style={{ background: BRAND.canvas, color: BRAND.text }}>
+      <header
+        className="sticky top-0 z-40 px-5 pt-11 pb-4"
+        style={{
+          background: 'rgba(255,255,255,0.96)',
+          borderBottom: `1px solid ${BRAND.border}`,
+          backdropFilter: 'blur(18px)',
+        }}
+      >
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-1">
-            <MzayaWordmark size="text-2xl" />
-            {selectedCity && <span className="text-xs text-gray-400 font-medium ml-1 mt-0.5">· {selectedCity.name}</span>}
-          </div>
+          <MzayaWordmark size="text-2xl" />
+
           <div className="flex items-center gap-2">
-            <button onClick={() => navigate('/profile')}
-              className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center active:bg-gray-200">
-              <svg className="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
-              </svg>
-            </button>
-            <button onClick={() => navigate('/cart')}
-              className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center relative active:bg-gray-200">
-              <svg className="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"/>
-              </svg>
+            <IconButton label="Open account" onClick={() => navigate('/profile')}>
+              <UserRound size={18} strokeWidth={1.8} />
+            </IconButton>
+            <IconButton label="Open cart" onClick={() => navigate('/cart')} className="relative">
+              <ShoppingBag size={18} strokeWidth={1.8} />
               {totalItems > 0 && (
-                <span className="absolute -top-0.5 -right-0.5 w-4 h-4 rounded-full text-white flex items-center justify-center font-bold"
-                  style={{ background: '#00A651', fontSize: 9 }}>{totalItems}</span>
+                <span
+                  className="absolute -right-1 -top-1 flex h-[18px] min-w-[18px] items-center justify-center rounded-full px-1 text-[10px] font-bold text-white"
+                  style={{ background: BRAND.green }}
+                >
+                  {Math.min(totalItems, 99)}
+                </span>
               )}
-            </button>
+            </IconButton>
           </div>
         </div>
-      </div>
+      </header>
 
-      {/* ── Greeting + Search ── */}
-      <div className="px-4 pt-4 pb-4 bg-white border-b border-gray-100">
-        <h2 className="text-2xl font-black text-gray-900 mb-3">{greeting}, {user?.name?.split(' ')[0]}! 👋</h2>
-        <div className={`flex items-center gap-3 px-4 py-3 rounded-2xl transition-all ${focused ? 'ring-2 ring-green-500' : ''}`}
-          style={{ background: '#F2F2F2' }}>
-          <svg className="w-4 h-4 flex-shrink-0 text-gray-400" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
-          </svg>
-          <input type="text" value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            onFocus={() => setFocused(true)} onBlur={() => setFocused(false)}
-            placeholder={noun.search}
-            className="flex-1 bg-transparent text-sm text-gray-800 outline-none placeholder-gray-400" />
-          {search && <button onClick={() => setSearch('')} className="text-gray-400 text-xl leading-none">×</button>}
+      <section className="bg-white px-5 pb-6 pt-7">
+        <p className="text-[15px] font-medium" style={{ color: BRAND.textSecondary }}>
+          {greeting}, {firstName}
+        </p>
+        <h1 className="mt-1 text-[30px] font-semibold leading-[1.16] tracking-[-0.035em]" style={{ color: BRAND.text }}>
+          What do you need today?
+        </h1>
+
+        <SearchBar
+          value={search}
+          onChange={setSearch}
+          placeholder={noun.search}
+          ariaLabel={noun.search}
+          className="mt-6"
+        />
+      </section>
+
+      <section className="border-t px-5 py-6" style={{ background: BRAND.surface, borderColor: BRAND.border }}>
+        <div className="mb-4 flex items-end justify-between">
+          <div>
+            <h2 className="text-[18px] font-semibold tracking-[-0.02em]">Services</h2>
+            <p className="mt-1 text-[13px]" style={{ color: BRAND.textMuted }}>
+              One place for everyday needs.
+            </p>
+          </div>
         </div>
-      </div>
 
-      {/* ── Category tabs ── */}
-      <div className="bg-white px-4 pt-4 pb-4 border-b border-gray-100">
-        <div className="flex gap-3 overflow-x-auto no-scrollbar">
-          {CATEGORIES.map((cat) => (
-            <button key={cat.id}
-              onClick={() => {
-                setCategory(cat.id); setSearch(''); setActiveCat(null)
-                if (cat.id === 'errand') navigate('/errand')
-              }}
-              className="flex-shrink-0 flex flex-col items-center gap-1.5 active:opacity-70">
-              <div className="w-14 h-14 rounded-2xl flex items-center justify-center transition-all"
-                style={{
-                  background: category === cat.id ? '#00A651' : '#F5F5F5',
-                  boxShadow: category === cat.id ? '0 4px 12px #00A65140' : 'none',
-                  transform: category === cat.id ? 'scale(1.05)' : 'scale(1)',
-                  color: category === cat.id ? '#FFFFFF' : '#6B7280',
-                }}>
-                <Icon name={cat.icon} size={24} />
-              </div>
-              <span className="text-xs font-semibold" style={{ color: category === cat.id ? '#00A651' : '#888' }}>
-                {cat.label}
-              </span>
-            </button>
+        <div className="grid grid-cols-2 gap-3">
+          {SERVICES.map((service) => (
+            <ServiceCard
+              key={service.id}
+              label={service.label}
+              description={service.description}
+              icon={service.Icon}
+              active={category === service.id}
+              onClick={() => selectService(service.id)}
+            />
           ))}
         </div>
-      </div>
+      </section>
 
-      {/* ── Product-category chips (product-first only) ── */}
       {isProductFirst && productCategories.length > 0 && !search && (
-        <div className="px-4 pt-4 pb-1">
-          <div className="flex gap-2 overflow-x-auto no-scrollbar pb-1">
+        <section className="px-5 pt-5">
+          <div className="flex gap-2 overflow-x-auto pb-1 no-scrollbar">
             <CategoryChip label="All" active={!activeCat} onClick={() => setActiveCat(null)} />
-            {productCategories.map((c) => (
-              <CategoryChip key={c} label={c} active={activeCat === c} onClick={() => setActiveCat(c)} />
+            {productCategories.map((item) => (
+              <CategoryChip key={item} label={item} active={activeCat === item} onClick={() => setActiveCat(item)} />
             ))}
           </div>
-        </div>
+        </section>
       )}
 
-      {/* ── Content ── */}
-      <div className="px-4 mt-4">
+      <section className="px-5 pt-6">
         {isProductFirst ? (
           <ProductFirst
             products={products}
@@ -219,33 +247,48 @@ export default function HomePage() {
             toggle={toggle}
           />
         )}
-      </div>
-    </div>
+      </section>
+    </main>
   )
 }
 
-// ─── Brand-first (food) ───────────────────────────────────────────────────────
+function IconButton({ label, onClick, className = '', children }) {
+  return (
+    <button
+      type="button"
+      aria-label={label}
+      onClick={onClick}
+      className={`flex h-10 w-10 items-center justify-center rounded-full border transition-all active:scale-95 ${className}`}
+      style={{ background: BRAND.surface, borderColor: BRAND.border, color: BRAND.text }}
+    >
+      {children}
+    </button>
+  )
+}
+
+
+
 function BrandFirst({ brands, loading, search, category, navigate, isFavorite, toggle }) {
+  const service = SERVICES.find((item) => item.id === category)
+  const title = search ? `Results for “${search}”` : `${service?.label || 'Merchants'} near you`
+
   return (
     <>
-      <div className="flex items-center justify-between mb-3">
-        <h3 className="text-lg font-black text-gray-900">
-          {search ? `"${search}"` : `${CATEGORIES.find(c => c.id === category)?.label} near you`}
-        </h3>
-        {brands.length > 0 && <span className="text-xs text-gray-400">{brands.length} place{brands.length !== 1 ? 's' : ''}</span>}
-      </div>
-
+      <HomeSectionHeading title={title} count={brands.length} />
       {loading ? (
-        <SkeletonList />
+        <HomeSkeletonList />
       ) : brands.length === 0 ? (
-        <EmptyState search={search} />
+        <HomeEmptyState search={search} />
       ) : (
         <div className="flex flex-col gap-4">
           {brands.map((brand) => (
-            <BrandCard key={brand.id} brand={brand}
+            <MerchantCard
+              key={brand.id}
+              merchant={brand}
               onClick={() => navigate(`/vendor/${brand.branch_id}?brand=${brand.id}`)}
               isFavorite={isFavorite(brand.id)}
-              onToggleFavorite={() => toggle(brand.id)} />
+              onToggleFavorite={() => toggle(brand.id)}
+            />
           ))}
         </div>
       )}
@@ -253,86 +296,25 @@ function BrandFirst({ brands, loading, search, category, navigate, isFavorite, t
   )
 }
 
-function BrandCard({ brand, onClick, isFavorite, onToggleFavorite }) {
-  // The card is a <div>, not a <button>. It contains the favourite button, and
-  // HTML forbids nesting interactive elements — a <button> inside a <button>
-  // gives unpredictable click behaviour. We keep the card keyboard-accessible
-  // with role/tabIndex and an Enter/Space handler.
-  return (
-    <div
-      role="button"
-      tabIndex={0}
-      onClick={onClick}
-      onKeyDown={(e) => {
-        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onClick?.() }
-      }}
-      className="w-full text-left bg-white rounded-2xl overflow-hidden active:scale-98 transition-transform cursor-pointer"
-      style={{ boxShadow: '0 1px 8px rgba(0,0,0,0.06)' }}>
-      <div className="relative h-44 overflow-hidden bg-gray-100">
-        {brand.cover_url
-          ? <img src={imageUrl(brand.cover_url, 800)} alt={brand.name} className="w-full h-full object-cover" />
-          : <div className="w-full h-full flex items-center justify-center" style={{ background: 'linear-gradient(135deg, #f5f5f5, #e8e8e8)' }}><Icon name="store" size={56} className="opacity-20" /></div>
-        }
-        {!brand.is_open && (
-          <div className="absolute inset-0 bg-white/70 flex items-center justify-center">
-            <span className="text-xs font-black text-gray-500 bg-white px-4 py-2 rounded-full border border-gray-200">Closed</span>
-          </div>
-        )}
-        <button type="button"
-          aria-label={isFavorite ? 'Remove from favourites' : 'Add to favourites'}
-          onClick={(e) => { e.stopPropagation(); onToggleFavorite?.() }}
-          className="absolute top-3 right-3 w-8 h-8 rounded-full bg-white/90 flex items-center justify-center shadow-sm active:scale-90 transition-transform">
-          <Icon name="favorite" size={16}
-            className={isFavorite ? '' : 'text-gray-500'}
-            style={isFavorite ? { fill: '#00A651', color: '#00A651' } : undefined} />
-        </button>
-        <div className="absolute bottom-3 left-3 w-12 h-12 bg-white rounded-xl shadow-md flex items-center justify-center border border-gray-100">
-          {brand.logo_url
-            ? <img src={imageUrl(brand.logo_url, 120)} alt="" className="w-full h-full object-cover rounded-xl" />
-            : <span className="text-lg font-black text-gray-500">{brand.name?.charAt(0)}</span>
-          }
-        </div>
-      </div>
-      <div className="px-4 py-3">
-        <div className="flex items-start justify-between">
-          <h3 className="font-black text-gray-900 text-base">{brand.name}</h3>
-          {brand.is_open && <span className="text-xs font-semibold text-green-600 bg-green-50 px-2 py-0.5 rounded-full">Open</span>}
-        </div>
-        <div className="flex items-center gap-2 mt-1">
-          <span className="text-xs font-semibold text-gray-600 inline-flex items-center gap-1">
-            <Icon name="rate" size={12} style={{ fill: '#F59E0B', color: '#F59E0B' }} />
-            {Number(brand.rating || 0).toFixed(1)}
-          </span>
-          <span className="text-gray-200">·</span>
-          <span className="text-xs text-gray-500">15–25 min</span>
-          <span className="text-gray-200">·</span>
-          <span className="text-xs text-gray-500">US$2–4 delivery</span>
-        </div>
-        {/* Brand — no branch address shown to the customer */}
-        {brand.branch_count > 1 && (
-          <p className="text-xs text-gray-400 mt-1">{brand.branch_count} branches near you</p>
-        )}
-      </div>
-    </div>
-  )
-}
-
-// ─── Product-first (materials/grocery): Popular carousel + store list ─────────
 function ProductFirst({ products, brands, loading, storesLoading, search, activeCat, category, navigate, isFavorite, toggle }) {
   const noun = nounFor(category)
-  // When searching, product results take over (flat list — search is product-intent).
+
   if (search) {
     return (
       <>
-        <div className="flex items-center justify-between mb-3">
-          <h3 className="text-lg font-black text-gray-900">"{search}"</h3>
-          {products.length > 0 && <span className="text-xs text-gray-400">{products.length} item{products.length !== 1 ? 's' : ''}</span>}
-        </div>
-        {loading ? <SkeletonList /> : products.length === 0 ? <EmptyState search={search} productMode /> : (
+        <HomeSectionHeading title={`Results for “${search}”`} count={products.length} countLabel="item" />
+        {loading ? (
+          <HomeSkeletonList />
+        ) : products.length === 0 ? (
+          <HomeEmptyState search={search} productMode />
+        ) : (
           <div className="flex flex-col gap-3">
-            {products.map((p) => (
-              <ProductRow key={`${p.branch_id}-${p.item_id}`} product={p}
-                onClick={() => navigate(`/vendor/${p.branch_id}?highlight=${p.item_id}`)} />
+            {products.map((product) => (
+              <ProductRow
+                key={`${product.branch_id}-${product.item_id}`}
+                product={product}
+                onClick={() => navigate(`/vendor/${product.branch_id}?highlight=${product.item_id}`)}
+              />
             ))}
           </div>
         )}
@@ -340,38 +322,40 @@ function ProductFirst({ products, brands, loading, storesLoading, search, active
     )
   }
 
-  // Default: a Popular product teaser carousel, then the store list as the anchor.
   const popular = products.slice(0, 12)
 
   return (
     <>
-      {/* Popular products — horizontal teaser */}
       {!loading && popular.length > 0 && (
-        <div className="mb-6">
-          <h3 className="text-lg font-black text-gray-900 mb-3">
-            {activeCat ? `Popular in ${activeCat}` : noun.popular}
-          </h3>
-          <div className="flex gap-3 overflow-x-auto no-scrollbar pb-1 -mx-4 px-4">
-            {popular.map((p) => (
-              <ProductTile key={`${p.branch_id}-${p.item_id}`} product={p}
-                onClick={() => navigate(`/vendor/${p.branch_id}?highlight=${p.item_id}`)} />
+        <div className="mb-8">
+          <HomeSectionHeading title={activeCat ? `Popular in ${activeCat}` : noun.popular} />
+          <div className="-mx-5 flex gap-3 overflow-x-auto px-5 pb-2 no-scrollbar">
+            {popular.map((product) => (
+              <ProductTile
+                key={`${product.branch_id}-${product.item_id}`}
+                product={product}
+                onClick={() => navigate(`/vendor/${product.branch_id}?highlight=${product.item_id}`)}
+              />
             ))}
           </div>
         </div>
       )}
 
-      {/* Stores — the main list */}
-      <div className="flex items-center justify-between mb-3">
-        <h3 className="text-lg font-black text-gray-900">{noun.stores}</h3>
-        {brands?.length > 0 && <span className="text-xs text-gray-400">{brands.length} store{brands.length !== 1 ? 's' : ''}</span>}
-      </div>
-      {storesLoading ? <SkeletonList /> : !brands?.length ? <EmptyState productMode /> : (
+      <HomeSectionHeading title={noun.stores} count={brands?.length || 0} countLabel="store" />
+      {storesLoading ? (
+        <HomeSkeletonList />
+      ) : !brands?.length ? (
+        <HomeEmptyState productMode />
+      ) : (
         <div className="flex flex-col gap-4">
           {brands.map((brand) => (
-            <BrandCard key={brand.id} brand={brand}
+            <MerchantCard
+              key={brand.id}
+              merchant={brand}
               onClick={() => navigate(`/vendor/${brand.branch_id}?brand=${brand.id}`)}
               isFavorite={isFavorite(brand.id)}
-              onToggleFavorite={() => toggle(brand.id)} />
+              onToggleFavorite={() => toggle(brand.id)}
+            />
           ))}
         </div>
       )}
@@ -379,94 +363,18 @@ function ProductFirst({ products, brands, loading, storesLoading, search, active
   )
 }
 
-// Compact product tile for the horizontal carousel.
-function ProductTile({ product, onClick }) {
-  return (
-    <button onClick={onClick}
-      className="flex-shrink-0 w-36 text-left bg-white rounded-2xl overflow-hidden active:scale-98 transition-transform"
-      style={{ boxShadow: '0 1px 8px rgba(0,0,0,0.06)' }}>
-      <div className="h-28 bg-gray-100 flex items-center justify-center overflow-hidden">
-        {product.image_url
-          ? <img src={imageUrl(product.image_url, 300)} alt={product.name} className="w-full h-full object-cover" />
-          : <Icon name="parcel" size={30} className="opacity-30" />
-        }
-      </div>
-      <div className="p-2.5">
-        <p className="text-sm font-bold text-gray-900 truncate">{product.name}</p>
-        <p className="text-xs text-gray-400 truncate">{product.brand_name}</p>
-        <div className="flex items-center justify-between mt-1">
-          <span className="font-black text-gray-900 text-sm">US${Number(product.price_usd).toFixed(2)}</span>
-          {product.distance_km != null && <span className="text-[10px] text-gray-400">{product.distance_km}km</span>}
-        </div>
-      </div>
-    </button>
-  )
-}
-
-// Full-width product row (used in search results).
-function ProductRow({ product, onClick }) {
-  return (
-    <button onClick={onClick}
-      className="w-full text-left bg-white rounded-2xl p-3 flex items-center gap-3 active:scale-98 transition-transform"
-      style={{ boxShadow: '0 1px 8px rgba(0,0,0,0.06)' }}>
-      <div className="w-20 h-20 rounded-xl bg-gray-100 flex-shrink-0 overflow-hidden flex items-center justify-center">
-        {product.image_url
-          ? <img src={imageUrl(product.image_url, 300)} alt={product.name} className="w-full h-full object-cover" />
-          : <Icon name="parcel" size={24} className="opacity-30" />
-        }
-      </div>
-      <div className="flex-1 min-w-0">
-        <p className="font-bold text-gray-900 truncate">{product.name}</p>
-        {product.description && <p className="text-xs text-gray-400 truncate">{product.description}</p>}
-        <div className="flex items-center gap-2 mt-1">
-          <span className="text-xs font-semibold text-gray-600">{product.brand_name}</span>
-          {product.distance_km != null && (
-            <><span className="text-gray-200">·</span><span className="text-xs text-gray-400">{product.distance_km} km</span></>
-          )}
-        </div>
-      </div>
-      <div className="text-right flex-shrink-0">
-        <p className="font-black text-gray-900">US${Number(product.price_usd).toFixed(2)}</p>
-      </div>
-    </button>
-  )
-}
-
-// ─── shared ───────────────────────────────────────────────────────────────────
 function CategoryChip({ label, active, onClick }) {
   return (
-    <button onClick={onClick}
-      className="flex-shrink-0 px-3 py-2 rounded-full text-xs font-semibold transition-all"
+    <button
+      type="button"
+      onClick={onClick}
+      className="flex-shrink-0 rounded-full border px-4 py-2.5 text-[12px] font-semibold transition-all active:scale-95"
       style={active
-        ? { background: '#00A651', color: '#fff' }
-        : { background: '#fff', color: '#555', border: '1px solid #E5E5E5', boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }
-      }>
+        ? { background: BRAND.greenDark, borderColor: BRAND.greenDark, color: '#FFFFFF' }
+        : { background: BRAND.surface, borderColor: BRAND.border, color: BRAND.textSecondary }
+      }
+    >
       {label}
     </button>
-  )
-}
-
-function SkeletonList() {
-  return (
-    <div className="flex flex-col gap-4">
-      {[1, 2, 3].map((i) => (
-        <div key={i} className="bg-white rounded-2xl overflow-hidden animate-pulse" style={{ boxShadow: '0 1px 8px rgba(0,0,0,0.06)' }}>
-          <div className="h-44 bg-gray-200" />
-          <div className="p-4"><div className="h-4 bg-gray-200 rounded w-2/3 mb-2" /><div className="h-3 bg-gray-100 rounded w-1/2" /></div>
-        </div>
-      ))}
-    </div>
-  )
-}
-
-function EmptyState({ search, productMode }) {
-  return (
-    <div className="text-center py-16 bg-white rounded-2xl" style={{ boxShadow: '0 1px 8px rgba(0,0,0,0.06)' }}>
-      <img src={emptyProducts} alt="" aria-hidden="true" className="mx-auto w-52 max-w-full mb-5 select-none" draggable="false" />
-      <p className="font-bold text-gray-800 mb-1">
-        {search ? 'No results found' : productMode ? 'No products here yet' : 'No vendors here yet'}
-      </p>
-      <p className="text-gray-400 text-sm">{search ? 'Try a different search' : 'New stock coming soon'}</p>
-    </div>
   )
 }

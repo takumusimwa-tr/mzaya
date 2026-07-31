@@ -1,0 +1,2 @@
+const {sendMessageSchema,chatQuerySchema}=require('../src/validators/chat.validator');
+describe('chat validation',()=>{test('accepts text',()=>expect(sendMessageSchema.validate({clientMessageId:'local-1',type:'text',body:'I am outside.'}).error).toBeUndefined());test('rejects excessive page size',()=>expect(chatQuerySchema.validate({limit:500}).error).toBeDefined());});

@@ -1,6 +1,10 @@
 :root {
-  --mzaya-shadow-sm: 0 1px 2px rgba(7, 27, 51, .06);
-  --mzaya-shadow-md: 0 8px 24px rgba(7, 27, 51, .10);
-  --mzaya-shadow-lg: 0 18px 48px rgba(7, 27, 51, .14);
-  --mzaya-focus-ring: 0 0 0 4px rgba(0, 166, 81, .18);
+  --mzaya-shadow-xs: 0 1px 2px rgba(18, 23, 20, 0.04);
+  --mzaya-shadow-sm: 0 4px 14px rgba(18, 23, 20, 0.055);
+  --mzaya-shadow-md: 0 10px 30px rgba(18, 23, 20, 0.075);
+  --mzaya-shadow-lg: 0 20px 56px rgba(18, 23, 20, 0.11);
+
+  --mzaya-focus-ring:
+    0 0 0 3px rgba(19, 107, 87, 0.16),
+    0 0 0 1px rgba(19, 107, 87, 0.72);
 }

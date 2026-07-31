@@ -1,165 +1,211 @@
-const {
-  CATEGORY_TYPE, VEHICLE_TYPE, VEHICLE_RANK, VEHICLE_LADDER, ORDER_STATUS,
-} = require('../config/constants');
-const { calculateFees, convertToZig, feeTierFor } = require('../utils/feeCalculator');
-const { User, Order, Rider, City } = require('../models/associations');
 const { Op } = require('sequelize');
+const {
+  Order,
+  DispatchOffer,
+} = require('../models/associations');
+const { sequelize } = require('../config/db');
+const { findAvailableRiders } = require('./riderAvailability.service');
+const { rankCandidates } = require('./dispatchRanking.service');
+const { publishOrderAssigned } = require('../realtime/orderPublisher');
 
-// ─── Decide which vehicle class an order requires ─────────────────────────────
-// Food & errands are always light (bicycle-level — any vehicle can take them).
-// Grocery/materials scale by weight: walk the ascending ladder and pick the
-// FIRST (smallest) vehicle whose max payload covers the order weight.
-function assignVehicleType(categoryType, weightKg = 0) {
-  if (categoryType === CATEGORY_TYPE.ERRAND || categoryType === CATEGORY_TYPE.FOOD) {
-    return VEHICLE_TYPE.BICYCLE;
-  }
-  const w = Number(weightKg) || 0;
-  const tier = VEHICLE_LADDER.find((t) => w <= t.maxKg);
-  return tier ? tier.cls : VEHICLE_TYPE.TRUCK_10T;
+const OFFER_TIMEOUT_SECONDS = Number(
+  process.env.DISPATCH_OFFER_TIMEOUT_SECONDS || 30
+);
+
+function serviceError(message, status = 400, code = 'DISPATCH_ERROR') {
+  const error = new Error(message);
+  error.status = status;
+  error.code = code;
+  return error;
 }
 
-// ─── Numeric rank for a vehicle string (unknown → 0 so it never over-matches) ──
-function rankOf(vehicle) {
-  return VEHICLE_RANK[vehicle] || 0;
-}
+async function recentAssignmentCounts(riderIds) {
+  if (!riderIds.length) return new Map();
+  const since = new Date(Date.now() - 60 * 60 * 1000);
 
-
-// ─── Find an available rider for auto-dispatch ────────────────────────────────
-// Respects (1) required vehicle class, (2) the order's city, (3) rider online +
-// approved status. Eligible riders have vehicle rank >= required rank; among
-// them, pick the smallest sufficient vehicle (don't send a 10t to a burrito).
-async function findAvailableRider(city, vehicleType) {
-  const requiredRank = rankOf(vehicleType);
-
-  const busyUserIds = await Order.findAll({
+  const offers = await DispatchOffer.findAll({
     where: {
-      status:   { [Op.in]: [ORDER_STATUS.ACCEPTED, ORDER_STATUS.PICKED_UP, ORDER_STATUS.EN_ROUTE] },
-      rider_id: { [Op.ne]: null },
+      rider_id: { [Op.in]: riderIds },
+      status: 'accepted',
+      responded_at: { [Op.gte]: since },
     },
     attributes: ['rider_id'],
     raw: true,
-  }).then((rows) => rows.map((r) => r.rider_id));
+  });
 
-  // Resolve order city string → city_id to match rider.city_id.
-  let cityId = null;
-  if (city && City) {
+  const counts = new Map();
+  offers.forEach(({ rider_id: riderId }) => {
+    const key = String(riderId);
+    counts.set(key, (counts.get(key) || 0) + 1);
+  });
+  return counts;
+}
+
+async function dispatchOrder(orderId) {
+  const order = await Order.findByPk(orderId);
+  if (!order) throw serviceError('Order not found', 404, 'ORDER_NOT_FOUND');
+
+  if (order.rider_id) {
+    throw serviceError('Order already has a Mzaya assigned', 409, 'ALREADY_ASSIGNED');
+  }
+
+  const openOffer = await DispatchOffer.findOne({
+    where: { order_id: order.id, status: 'offered' },
+  });
+  if (openOffer && openOffer.expires_at > new Date()) return openOffer;
+
+  if (!order.pickup_location) {
+    throw serviceError(
+      'Pickup coordinates are required for automatic dispatch',
+      422,
+      'PICKUP_LOCATION_REQUIRED'
+    );
+  }
+
+  const candidates = await findAvailableRiders(order);
+  const counts = await recentAssignmentCounts(
+    candidates.map((candidate) => candidate.userId)
+  );
+  const ranked = rankCandidates({
+    candidates,
+    order,
+    recentAssignmentCounts: counts,
+  });
+
+  const previouslyTried = await DispatchOffer.findAll({
+    where: {
+      order_id: order.id,
+      status: { [Op.in]: ['declined', 'expired', 'cancelled'] },
+    },
+    attributes: ['rider_id'],
+    raw: true,
+  });
+  const excluded = new Set(previouslyTried.map(({ rider_id }) => String(rider_id)));
+  const winner = ranked.find(({ userId }) => !excluded.has(String(userId)));
+
+  if (!winner) {
+    throw serviceError(
+      'No available Mzaya found',
+      409,
+      'NO_AVAILABLE_RIDER'
+    );
+  }
+
+  const offer = await DispatchOffer.create({
+    order_id: order.id,
+    rider_id: winner.userId,
+    status: 'offered',
+    score: winner.score,
+    distance_km: winner.distanceKm,
+    pickup_eta_minutes: winner.eta.pickupEtaMinutes,
+    expires_at: new Date(Date.now() + OFFER_TIMEOUT_SECONDS * 1000),
+  });
+
+  publishOrderAssigned(order, winner.userId);
+  return offer;
+}
+
+async function respondToOffer({ offerId, riderUserId, accept, declineReason }) {
+  return sequelize.transaction(async (transaction) => {
+    const offer = await DispatchOffer.findByPk(offerId, {
+      transaction,
+      lock: transaction.LOCK.UPDATE,
+    });
+
+    if (!offer) throw serviceError('Dispatch offer not found', 404, 'OFFER_NOT_FOUND');
+    if (String(offer.rider_id) !== String(riderUserId)) {
+      throw serviceError('This offer belongs to another Mzaya', 403, 'OFFER_FORBIDDEN');
+    }
+    if (offer.status !== 'offered') {
+      throw serviceError('This dispatch offer is no longer active', 409, 'OFFER_CLOSED');
+    }
+    if (offer.expires_at <= new Date()) {
+      await offer.update(
+        { status: 'expired', responded_at: new Date() },
+        { transaction }
+      );
+      throw serviceError('This dispatch offer has expired', 409, 'OFFER_EXPIRED');
+    }
+
+    const order = await Order.findByPk(offer.order_id, {
+      transaction,
+      lock: transaction.LOCK.UPDATE,
+    });
+    if (!order) throw serviceError('Order not found', 404, 'ORDER_NOT_FOUND');
+    if (order.rider_id) {
+      await offer.update(
+        { status: 'cancelled', responded_at: new Date() },
+        { transaction }
+      );
+      throw serviceError('Order has already been assigned', 409, 'ALREADY_ASSIGNED');
+    }
+
+    if (!accept) {
+      await offer.update({
+        status: 'declined',
+        responded_at: new Date(),
+        decline_reason: declineReason || null,
+      }, { transaction });
+
+      return { accepted: false, orderId: order.id };
+    }
+
+    await offer.update({
+      status: 'accepted',
+      responded_at: new Date(),
+    }, { transaction });
+
+    await order.update({
+      rider_id: riderUserId,
+      status: 'rider_assigned',
+      accepted_at: new Date(),
+    }, { transaction });
+
+    await DispatchOffer.update({
+      status: 'cancelled',
+      responded_at: new Date(),
+    }, {
+      where: {
+        order_id: order.id,
+        id: { [Op.ne]: offer.id },
+        status: 'offered',
+      },
+      transaction,
+    });
+
+    return { accepted: true, order, offer };
+  });
+}
+
+async function expireOffersAndRedispatch() {
+  const expired = await DispatchOffer.findAll({
+    where: {
+      status: 'offered',
+      expires_at: { [Op.lte]: new Date() },
+    },
+  });
+
+  const orderIds = [];
+  for (const offer of expired) {
+    await offer.update({ status: 'expired', responded_at: new Date() });
+    orderIds.push(offer.order_id);
+  }
+
+  const results = [];
+  for (const orderId of [...new Set(orderIds)]) {
     try {
-      const cityRow = await City.findOne({ where: { name: { [Op.iLike]: city } } });
-      if (cityRow) cityId = cityRow.id;
-    } catch (e) {
-      cityId = null;
+      const offer = await dispatchOrder(orderId);
+      results.push({ orderId, offerId: offer.id, redispatched: true });
+    } catch (error) {
+      results.push({ orderId, redispatched: false, code: error.code });
     }
   }
-
-  const riderWhere = { is_online: true, is_approved: true };
-  if (cityId) riderWhere.city_id = cityId;
-  if (busyUserIds.length) riderWhere.user_id = { [Op.notIn]: busyUserIds };
-
-  const candidates = await Rider.findAll({ where: riderWhere });
-
-  const eligible = candidates
-    .filter((r) => rankOf(r.vehicle_type) >= requiredRank)
-    .sort((a, b) => rankOf(a.vehicle_type) - rankOf(b.vehicle_type));
-
-  if (!eligible.length) return null;
-
-  // rider_id on orders references users(id), so return the linked user.
-  const user = await User.findByPk(eligible[0].user_id);
-  return user || null;
-}
-
-function calculateDistanceKm(pickup, dropoff) {
-  if (!pickup?.lat || !dropoff?.lat) return 5;
-  const R    = 6371;
-  const dLat = toRad(dropoff.lat - pickup.lat);
-  const dLng = toRad(dropoff.lng - pickup.lng);
-  const a =
-    Math.sin(dLat / 2) ** 2 +
-    Math.cos(toRad(pickup.lat)) * Math.cos(toRad(dropoff.lat)) *
-    Math.sin(dLng / 2) ** 2;
-  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-}
-
-function toRad(deg) {
-  return deg * (Math.PI / 180);
-}
-
-async function dispatchOrder({
-  order,
-  categoryType,
-  weightKg,
-  pickupLocation,
-  dropoffLocation,
-  subtotalUsd,
-  estimatedDurationMinutes,
-  zigRate,
-  deferDispatch = false, // scheduled orders: compute fees but don't assign a rider yet
-}) {
-  const vehicleType = assignVehicleType(categoryType, weightKg);
-  const distanceKm  = calculateDistanceKm(pickupLocation, dropoffLocation);
-
-  const fees = calculateFees({
-    categoryType,
-    vehicleType: feeTierFor(vehicleType), // map granular class → fee tier
-    distanceKm,
-    subtotalUsd,
-    weightKg,
-    estimatedDurationMinutes,
-  });
-
-  const totalZig = zigRate ? convertToZig(fees.total_usd, zigRate) : null;
-
-  // Scheduled orders lock in fees/vehicle now but stay 'scheduled' with no rider
-  // until the release job flips them to pending near their delivery time.
-  if (deferDispatch) {
-    await order.update({
-      vehicle_type:      vehicleType,
-      subtotal_usd:      fees.subtotal_usd,
-      delivery_fee_usd:  fees.delivery_fee_usd,
-      total_usd:         fees.total_usd,
-      zig_rate_snapshot: zigRate || null,
-      total_zig:         totalZig,
-    });
-    return {
-      vehicleType,
-      distanceKm: parseFloat(distanceKm.toFixed(2)),
-      fees,
-      totalZig,
-      rider: null,
-      dispatched: false,
-      scheduled: true,
-    };
-  }
-
-  const rider = await findAvailableRider(order.city, vehicleType);
-
-  await order.update({
-    vehicle_type:      vehicleType,
-    rider_id:          rider?.id || null,
-    status:            rider ? ORDER_STATUS.ACCEPTED : ORDER_STATUS.PENDING,
-    subtotal_usd:      fees.subtotal_usd,
-    delivery_fee_usd:  fees.delivery_fee_usd,
-    total_usd:         fees.total_usd,
-    zig_rate_snapshot: zigRate || null,
-    total_zig:         totalZig,
-    accepted_at:       rider ? new Date() : null,
-  });
-
-  return {
-    vehicleType,
-    distanceKm: parseFloat(distanceKm.toFixed(2)),
-    fees,
-    totalZig,
-    rider: rider ? { id: rider.id, name: rider.name, phone: rider.phone } : null,
-    dispatched: !!rider,
-  };
+  return results;
 }
 
 module.exports = {
+  OFFER_TIMEOUT_SECONDS,
   dispatchOrder,
-  assignVehicleType,
-  findAvailableRider,
-  calculateDistanceKm,
-  feeTierFor,
-  rankOf,
+  respondToOffer,
+  expireOffersAndRedispatch,
 };

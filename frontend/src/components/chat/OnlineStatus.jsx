@@ -1,0 +1,3 @@
+import PropTypes from 'prop-types'
+export default function OnlineStatus({online,lastSeenAt}){if(online)return <span className="online-status is-online">Online</span>;return <span className="online-status">{lastSeenAt?`Last seen ${new Intl.DateTimeFormat(undefined,{dateStyle:'medium',timeStyle:'short'}).format(new Date(lastSeenAt))}`:'Offline'}</span>}
+OnlineStatus.propTypes={online:PropTypes.bool,lastSeenAt:PropTypes.string};OnlineStatus.defaultProps={online:false,lastSeenAt:null};

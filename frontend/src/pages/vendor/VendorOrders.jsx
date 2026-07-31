@@ -1,3 +1,32 @@
+/**
+ * ============================================================================
+ * MZAYA
+ * Page: VendorOrders
+ * Path: frontend/src/pages/vendor/VendorOrders.jsx
+ * ----------------------------------------------------------------------------
+ *
+ * Purpose
+ * -------
+ * Operates the branch-aware, real-time vendor order console.
+ *
+ * Preserved Integration
+ * ---------------------
+ * • GET /orders/vendor
+ * • PATCH /orders/:id/status
+ * • GET /vehicles
+ * • POST /orders/:id/upgrade-vehicle
+ * • Socket rooms and order:new / order:updated events
+ * • 15-second polling fallback
+ * • Wake Lock and Web Audio order alert behavior
+ * • Existing OrderChat integration
+ *
+ * Change Log
+ * ----------
+ * July 2026 — Premium UI Integration: refined master-detail presentation,
+ * canonical order cards and React Query v5 invalidation syntax.
+ * ============================================================================
+ */
+
 import { useState, useEffect, useRef, useMemo } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import api from '../../api/api'
@@ -8,6 +37,9 @@ import Badge from '../../components/ui/Badge'
 import LoadingScreen from '../../components/ui/LoadingScreen'
 import OrderChat from '../../components/OrderChat'
 import Icon from '../../components/ui/Icon'
+import { MessageCircle, PackageOpen } from 'lucide-react'
+import VendorOrderCard from '../../components/vendor/VendorOrderCard'
+import VendorEmptyState from '../../components/vendor/VendorEmptyState'
 
 // Play a loud, distinct, repeating alert that cuts through a busy kitchen.
 // Uses the Web Audio API (no asset needed) — three rising beeps, repeated twice.
@@ -94,8 +126,8 @@ export default function VendorOrders() {
   }, [vendorId])
 
   // Real-time: refetch orders when this branch gets a new/updated order.
-  useSocketEvent('order:new', () => queryClient.invalidateQueries(['vendor-orders']), [])
-  useSocketEvent('order:updated', () => queryClient.invalidateQueries(['vendor-orders']), [])
+  useSocketEvent('order:new', () => queryClient.invalidateQueries({ queryKey: ['vendor-orders'] }), [])
+  useSocketEvent('order:updated', () => queryClient.invalidateQueries({ queryKey: ['vendor-orders'] }), [])
 
   // Loud alert when the pending count rises.
   useEffect(() => {
@@ -109,7 +141,7 @@ export default function VendorOrders() {
 
   const acceptOrder = useMutation({
     mutationFn: (orderId) => api.patch(`/orders/${orderId}/status`, { status: 'accepted' }),
-    onSuccess:  () => queryClient.invalidateQueries(['vendor-orders']),
+    onSuccess:  () => queryClient.invalidateQueries({ queryKey: ['vendor-orders'] }),
   })
 
   // Vehicle tiers for the truck-upgrade control.
@@ -121,7 +153,7 @@ export default function VendorOrders() {
   const upgradeVehicle = useMutation({
     mutationFn: ({ orderId, vehicle_type }) =>
       api.post(`/orders/${orderId}/upgrade-vehicle`, { vehicle_type }),
-    onSuccess:  () => queryClient.invalidateQueries(['vendor-orders']),
+    onSuccess:  () => queryClient.invalidateQueries({ queryKey: ['vendor-orders'] }),
   })
 
   const grouped = useMemo(() => {
@@ -150,23 +182,24 @@ export default function VendorOrders() {
   if (isLoading) return <LoadingScreen message="Loading orders..." />
 
   return (
-    <div className="h-screen flex flex-col">
-      {/* Top bar with group tabs */}
-      <div className="px-6 pt-6 pb-3 bg-white border-b border-gray-100">
-        <h1 className="text-2xl font-black text-gray-900 mb-4">Orders</h1>
-        <div className="flex gap-2">
+    <div className="h-screen flex flex-col" style={{ background: 'var(--mzaya-background)' }}>
+      <header className="px-5 pt-7 pb-4 sm:px-8 bg-white border-b" style={{ borderColor: 'var(--mzaya-border)' }}>
+        <p className="text-[10px] font-semibold uppercase tracking-[0.16em]" style={{ color: 'var(--mzaya-primary)' }}>Operations</p>
+        <h1 className="mt-2 text-[28px] font-semibold tracking-[-0.04em]" style={{ color: 'var(--mzaya-text-primary)' }}>Orders</h1>
+        <p className="mt-2 text-[12px]" style={{ color: 'var(--mzaya-text-muted)' }}>Review, accept and manage live branch orders.</p>
+        <div className="mt-5 flex gap-2 overflow-x-auto no-scrollbar">
           {GROUPS.map((grp) => {
             const count = grouped[grp.key].length
             const active = group === grp.key
             const isNew = grp.key === 'new' && count > 0
             return (
-              <button key={grp.key} onClick={() => setGroup(grp.key)}
-                className="px-4 py-2 rounded-xl text-sm font-semibold transition-all flex items-center gap-2"
-                style={active
-                  ? { background: '#00A651', color: '#fff' }
-                  : { background: '#F3F4F6', color: '#4B5563' }
-                }>
-                {isNew && <span className="w-2 h-2 rounded-full bg-current animate-pulse" style={{ color: active ? '#fff' : '#00A651' }} />}
+              <button key={grp.key} type="button" onClick={() => setGroup(grp.key)}
+                className="flex items-center gap-2 whitespace-nowrap rounded-[13px] px-4 py-2.5 text-[11px] font-semibold outline-none transition focus-visible:[box-shadow:var(--mzaya-focus-ring)]"
+                style={{
+                  background: active ? 'var(--mzaya-primary)' : 'var(--mzaya-surface-muted)',
+                  color: active ? '#fff' : 'var(--mzaya-text-secondary)',
+                }}>
+                {isNew && <span className="h-2 w-2 rounded-full animate-pulse" style={{ background: active ? '#fff' : 'var(--mzaya-primary)' }} />}
                 {grp.label}
                 <span className="text-xs opacity-80">({count})</span>
               </button>
@@ -175,27 +208,30 @@ export default function VendorOrders() {
         </div>
       </div>
 
-      {/* Master-detail split */}
       <div className="flex-1 flex min-h-0">
-        {/* Master: order list */}
-        <div className="w-80 xl:w-96 shrink-0 border-r border-gray-200 overflow-y-auto bg-gray-50">
+        <aside className="w-[340px] xl:w-[390px] shrink-0 border-r overflow-y-auto p-3 sm:p-4" style={{ borderColor: 'var(--mzaya-border)', background: 'var(--mzaya-background)' }} aria-label="Order list">
           {list.length === 0 ? (
-            <div className="p-8 text-center text-gray-400 text-sm">
-              No {GROUPS.find((g) => g.key === group)?.label.toLowerCase()} orders
-            </div>
+            <VendorEmptyState
+              icon={PackageOpen}
+              title={`No ${GROUPS.find((g) => g.key === group)?.label.toLowerCase()} orders`}
+              message="Orders in this stage will appear here automatically."
+              compact
+            />
           ) : (
-            <div className="p-3 flex flex-col gap-2">
-              {list.map((o) => (
-                <OrderListItem key={o.id} order={o}
-                  selected={o.id === selectedId}
-                  onClick={() => setSelectedId(o.id)} />
+            <div className="flex flex-col gap-3">
+              {list.map((order) => (
+                <VendorOrderCard
+                  key={order.id}
+                  order={order}
+                  selected={order.id === selectedId}
+                  onSelect={(selectedOrder) => setSelectedId(selectedOrder.id)}
+                />
               ))}
             </div>
           )}
-        </div>
+        </aside>
 
-        {/* Detail: selected order */}
-        <div className="flex-1 min-w-0 overflow-y-auto bg-white">
+        <section className="flex-1 min-w-0 overflow-y-auto bg-white" aria-label="Selected order details">
           {selected ? (
             <OrderDetailPane order={selected}
               onChat={() => setChatOrderId(selected.id)}
@@ -207,14 +243,16 @@ export default function VendorOrders() {
               upgradeResult={upgradeVehicle.data}
               upgradeError={upgradeVehicle.error} />
           ) : (
-            <div className="h-full flex items-center justify-center text-gray-300">
-              <div className="text-center">
-                <div className="mb-3 flex justify-center text-gray-300"><Icon name="orders" size={48} /></div>
-                <p className="text-sm">Select an order to see details</p>
-              </div>
+            <div className="flex h-full items-center justify-center p-8">
+              <VendorEmptyState
+                icon={PackageOpen}
+                title="Select an order"
+                message="Choose an order from the list to review its details."
+                compact
+              />
             </div>
           )}
-        </div>
+        </section>
       </div>
 
       {/* Chat sheet */}
@@ -229,35 +267,12 @@ function orderDetail(order) {
   return order.foodDetail || order.groceryDetail || order.materialsDetail || order.errandDetail
 }
 
-function OrderListItem({ order, selected, onClick }) {
-  const detail = orderDetail(order)
-  const itemCount = detail?.items?.length || 0
-  return (
-    <button onClick={onClick}
-      className="text-left rounded-2xl p-3 border transition-all"
-      style={selected
-        ? { background: '#fff', borderColor: '#00A651', boxShadow: '0 2px 8px rgba(255,48,8,0.10)' }
-        : { background: '#fff', borderColor: '#E5E7EB' }
-      }>
-      <div className="flex items-center justify-between mb-1">
-        <span className="text-xs font-mono text-gray-400">#{order.id.slice(0, 8).toUpperCase()}</span>
-        <Badge label={order.status.replace('_', ' ')} type={order.status} />
-      </div>
-      <p className="text-sm text-gray-700 truncate">→ {order.dropoff_address}</p>
-      <div className="flex items-center justify-between mt-1">
-        <span className="text-xs text-gray-400">{itemCount} item{itemCount !== 1 ? 's' : ''}</span>
-        <span className="text-sm font-bold text-gray-900">US${Number(order.subtotal_usd).toFixed(2)}</span>
-      </div>
-    </button>
-  )
-}
-
 function OrderDetailPane({ order, onAccept, accepting, onChat, vehicles, onUpgrade, upgrading, upgradeResult, upgradeError }) {
   const detail = orderDetail(order)
   const placed = new Date(order.createdAt)
 
   return (
-    <div className="p-6 max-w-2xl">
+    <div className="mx-auto max-w-3xl p-5 sm:p-8">
       {/* Header */}
       <div className="flex items-start justify-between mb-6">
         <div>
@@ -285,7 +300,7 @@ function OrderDetailPane({ order, onAccept, accepting, onChat, vehicles, onUpgra
           )}
         </div>
         {detail?.special_instructions && (
-          <div className="mt-3 text-sm rounded-xl px-3 py-2" style={{ background: '#FEF9E7', color: '#8A6D1B' }}>
+          <div className="mt-3 text-sm rounded-xl px-3 py-2" style={{ background: 'var(--mzaya-warning-soft)', color: 'var(--mzaya-warning-text)' }}>
             <Icon name="note" size={12} className="inline" /> {detail.special_instructions}
           </div>
         )}
@@ -319,16 +334,16 @@ function OrderDetailPane({ order, onAccept, accepting, onChat, vehicles, onUpgra
 
       {/* Message the customer & rider */}
       <button onClick={onChat}
-        className="w-full py-3 rounded-2xl font-bold flex items-center justify-center gap-2 active:scale-98 mb-3"
-        style={{ background: '#EDFAF3', color: '#00A651' }}>
+        className="mb-3 flex w-full items-center justify-center gap-2 rounded-[16px] py-3 text-[12px] font-semibold outline-none focus-visible:[box-shadow:var(--mzaya-focus-ring)]"
+        style={{ background: 'var(--mzaya-primary-soft)', color: 'var(--mzaya-primary)' }}>
         <Icon name="chat" size={15} className="inline" /> Message customer & Mzaya
       </button>
 
       {/* Action */}
       {order.status === 'pending' && (
         <button onClick={onAccept} disabled={accepting}
-          className="w-full py-4 rounded-2xl text-white font-bold text-base active:scale-98 transition-transform disabled:opacity-50"
-          style={{ background: '#00A651' }}>
+          className="w-full rounded-[16px] py-4 text-[13px] font-semibold text-white outline-none transition disabled:opacity-50 focus-visible:[box-shadow:var(--mzaya-focus-ring)]"
+          style={{ background: 'var(--mzaya-primary)' }}>
           {accepting ? 'Accepting…' : 'Accept order'}
         </button>
       )}
@@ -365,7 +380,7 @@ function VehicleUpgrade({ order, vehicles, onUpgrade, upgrading, result, error }
       {!open ? (
         <button onClick={() => setOpen(true)}
           className="text-sm font-semibold px-4 py-2.5 rounded-xl"
-          style={{ background: '#FFF4E5', color: '#B8860B' }}>
+          style={{ background: 'var(--mzaya-warning-soft)', color: 'var(--mzaya-warning-text)' }}>
           <Icon name="vehicle" size={15} className="inline" /> Needs a bigger vehicle?
         </button>
       ) : (
@@ -380,7 +395,7 @@ function VehicleUpgrade({ order, vehicles, onUpgrade, upgrading, result, error }
               <button key={v.value} onClick={() => setPick(v.value)}
                 className="flex items-center justify-between p-2.5 rounded-lg border text-left text-sm transition-all"
                 style={pick === v.value
-                  ? { borderColor: '#00A651', background: '#EDFAF3' }
+                  ? { borderColor: 'var(--mzaya-primary)', background: 'var(--mzaya-primary-soft)' }
                   : { borderColor: '#E5E7EB' }
                 }>
                 <span className="font-semibold text-gray-800">{v.name}</span>
@@ -389,7 +404,7 @@ function VehicleUpgrade({ order, vehicles, onUpgrade, upgrading, result, error }
             ))}
           </div>
           {result && (
-            <p className="text-xs mb-2" style={{ color: '#00A651' }}>{result.message}</p>
+            <p className="text-xs mb-2" style={{ color: 'var(--mzaya-primary)' }}>{result.message}</p>
           )}
           {error && (
             <p className="text-xs mb-2 text-red-500">{error.response?.data?.error || 'Upgrade failed'}</p>
@@ -401,7 +416,7 @@ function VehicleUpgrade({ order, vehicles, onUpgrade, upgrading, result, error }
             </button>
             <button onClick={() => pick && onUpgrade(pick)} disabled={!pick || upgrading}
               className="flex-1 py-2.5 rounded-lg text-white text-sm font-semibold disabled:opacity-50"
-              style={{ background: '#00A651' }}>
+              style={{ background: 'var(--mzaya-primary)' }}>
               {upgrading ? 'Upgrading…' : 'Confirm upgrade'}
             </button>
           </div>

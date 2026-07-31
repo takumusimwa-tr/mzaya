@@ -1,0 +1,151 @@
+.attachment-picker,
+.voice-recorder button {
+  border: 1px solid #d9e4dd;
+  border-radius: 999px;
+  background: #fff;
+  color: #0d6b45;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.attachment-picker {
+  width: 40px;
+  height: 40px;
+  font-size: 22px;
+}
+
+.upload-queue {
+  display: grid;
+  gap: 8px;
+  padding: 10px 14px;
+  background: #f5f8f6;
+}
+
+.upload-progress {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 100px auto;
+  align-items: center;
+  gap: 12px;
+  padding: 11px 13px;
+  border: 1px solid #e1e9e4;
+  border-radius: 14px;
+  background: #fff;
+}
+
+.upload-progress > div {
+  display: grid;
+  gap: 3px;
+}
+
+.upload-progress span,
+.file-bubble small,
+.voice-player small {
+  color: #718078;
+  font-size: 11px;
+}
+
+.upload-progress progress {
+  width: 100%;
+}
+
+.voice-recorder {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.voice-recorder button {
+  padding: 9px 13px;
+}
+
+.voice-recorder audio {
+  width: min(240px, 45vw);
+}
+
+.voice-player {
+  display: grid;
+  gap: 8px;
+  min-width: 220px;
+}
+
+.voice-player__waveform {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  height: 36px;
+}
+
+.voice-player__waveform span {
+  width: 3px;
+  border-radius: 999px;
+  background: currentColor;
+  opacity: .6;
+}
+
+.file-bubble {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  width: 100%;
+  padding: 12px;
+  border: 1px solid #dce6df;
+  border-radius: 14px;
+  background: #fff;
+  color: #10241a;
+  text-align: left;
+  cursor: pointer;
+}
+
+.file-bubble > span:last-child {
+  display: grid;
+  gap: 4px;
+}
+
+.file-bubble__icon {
+  display: grid;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  background: #e9f3ed;
+  color: #0d6b45;
+  font-size: 10px;
+  font-weight: 900;
+}
+
+.image-viewer {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: grid;
+  place-items: center;
+  padding: 32px;
+  background: rgba(8, 20, 13, .92);
+}
+
+.image-viewer img {
+  max-width: min(1200px, 94vw);
+  max-height: 88vh;
+  object-fit: contain;
+}
+
+.image-viewer > button {
+  position: absolute;
+  top: 18px;
+  right: 22px;
+  border: 0;
+  background: transparent;
+  color: #fff;
+  font-size: 34px;
+  cursor: pointer;
+}
+
+@media (max-width: 640px) {
+  .upload-progress {
+    grid-template-columns: 1fr auto;
+  }
+
+  .upload-progress progress {
+    grid-column: 1 / -1;
+  }
+}
