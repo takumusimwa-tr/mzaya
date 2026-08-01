@@ -105,7 +105,7 @@ export default function VendorMenu() {
     onSuccess: invalidateVendor,
   })
 
-  const menuItems = vendorData?.menuItems || []
+  const menuItems = useMemo(() => vendorData?.menuItems || [], [vendorData])
 
   const filtered = useMemo(() => {
     const normalized = query.trim().toLowerCase()

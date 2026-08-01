@@ -34,7 +34,7 @@ function normalizeHeaders(headers = {}) {
 }
 
 function deriveEventIdentity({
-  provider,
+  provider: _provider,
   headers,
   payload,
   rawBody,

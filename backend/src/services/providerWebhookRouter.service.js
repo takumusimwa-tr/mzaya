@@ -1,7 +1,6 @@
 const {
   Payment,
   Refund,
-  Chargeback,
 } = require('../models/associations');
 const {
   ingestReconciliationRecord,

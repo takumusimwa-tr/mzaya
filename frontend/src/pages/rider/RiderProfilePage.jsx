@@ -37,7 +37,6 @@ export default function RiderProfilePage() {
   useEffect(() => {
     // Seed the editable form from the loaded profile.
     if (profile) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
       setVehicleType(profile.vehicle_type || '')
       setCityId(profile.city_id || '')
       setPlate(profile.vehicle_plate || '')

@@ -4,8 +4,8 @@
  * without changing settlement orchestration.
  */
 async function submitPayout({
-  settlement,
-  profile,
+  settlement: _settlement,
+  profile: _profile,
 }) {
   if (process.env.SETTLEMENT_PAYOUT_MODE !== 'enabled') {
     return {

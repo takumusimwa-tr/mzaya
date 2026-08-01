@@ -1,0 +1,18 @@
+$ npm run lint
+exit=127
+
+> frontend@0.0.0 lint
+> eslint .
+
+
+sh: 1: eslint: Permission denied
+
+
+$ npm run build
+exit=127
+
+> frontend@0.0.0 build
+> vite build
+
+
+sh: 1: vite: Permission denied

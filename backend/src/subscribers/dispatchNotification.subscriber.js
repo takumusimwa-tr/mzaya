@@ -1,8 +1,4 @@
 const {
-  notificationEvents,
-  NOTIFICATION_EVENT,
-} = require('../events/notification.events');
-const {
   notifyRecipient,
 } = require('../services/notificationOrchestrator.service');
 

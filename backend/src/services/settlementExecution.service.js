@@ -1,4 +1,3 @@
-const { sequelize } = require('../config/db');
 const {
   SettlementBatch,
   Settlement,

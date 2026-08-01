@@ -1,6 +1,6 @@
 const router = require('express').Router();
 const { authenticate } = require('../middleware/auth.middleware');
-const { authorize } = require('../middleware/authorize.middleware');
+const { requireRole: authorize } = require('../middleware/auth.middleware');
 const { validateRequest } = require('../middleware/validateRequest');
 const controller = require('../controllers/support.controller');
 const {

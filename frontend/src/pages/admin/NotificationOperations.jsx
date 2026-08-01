@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useState, useCallback } from 'react'
 import api from '../../api/api'
 import '../../components/notifications/notifications.css'
 
@@ -11,7 +11,7 @@ export default function NotificationOperations() {
   const [loading, setLoading] = useState(true)
   const [message, setMessage] = useState('')
 
-  const load = async () => {
+  const load = useCallback(async () => {
     setLoading(true)
 
     try {
@@ -27,11 +27,11 @@ export default function NotificationOperations() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [status])
 
   useEffect(() => {
     load()
-  }, [status])
+  }, [load])
 
   const failedCount = useMemo(
     () => Number(summary?.deliveries?.failed || 0),

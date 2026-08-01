@@ -1,18 +1,27 @@
-
+# Secrets — never commit
 .env
 backend/.env
+frontend/.env
 ml-service/.env
+
+# Dependencies
+node_modules/
 backend/node_modules/
+frontend/node_modules/
 ml-service/venv/
+
+# Runtime uploads (user data, not source — Cloudinary serves these in prod)
+backend/uploads/
+
+# Python
 __pycache__/
 *.pyc
 *.pkl
 
-# test scratch output
-*.txt
-backend/*.txt
+# Build output
+frontend/dist/
 
-# test scratch output
+# Test scratch output (scoped — a global *.txt would swallow real docs)
 backend/jr.txt
 backend/jesterr.txt
 backend/test-output.txt

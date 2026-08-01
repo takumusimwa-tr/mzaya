@@ -14,12 +14,12 @@ export default function useTaxCenter() {
     refresh().finally(() => setLoading(false))
   }, [refresh])
 
-  const loadRates = async (jurisdictionId) => {
+  const loadRates = useCallback(async (jurisdictionId) => {
     const { data } = await api.get(
       `/tax/jurisdictions/${jurisdictionId}/rates`
     )
     return data.rates || []
-  }
+  }, [])
 
   return {
     jurisdictions,

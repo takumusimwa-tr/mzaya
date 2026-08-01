@@ -21,7 +21,7 @@ export default function TaxCenter() {
 
   useEffect(() => {
     if (selectedId) loadRates(selectedId).then(setRates)
-  }, [selectedId])
+  }, [selectedId, loadRates])
 
   if (loading) {
     return <p className="tax-compliance-state">Loading tax center…</p>

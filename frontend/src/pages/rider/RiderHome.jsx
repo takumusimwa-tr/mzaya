@@ -39,7 +39,6 @@ export default function RiderHome() {
   useEffect(() => {
     // Seed the online toggle from the loaded profile once it arrives.
     if (riderProfile) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
       setOnline(riderProfile.is_online)
     }
   }, [riderProfile])

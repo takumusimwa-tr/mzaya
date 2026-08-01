@@ -170,7 +170,6 @@ export default function VendorOrders() {
   // Auto-select the first order in the current group if none selected / stale.
   useEffect(() => {
     // Keep a valid selection as the list changes — legitimate state sync.
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     if (!list.length) { setSelectedId(null); return }
     if (!selectedId || !list.some((o) => o.id === selectedId)) {
       setSelectedId(list[0].id)
@@ -206,7 +205,7 @@ export default function VendorOrders() {
             )
           })}
         </div>
-      </div>
+      </header>
 
       <div className="flex-1 flex min-h-0">
         <aside className="w-[340px] xl:w-[390px] shrink-0 border-r overflow-y-auto p-3 sm:p-4" style={{ borderColor: 'var(--mzaya-border)', background: 'var(--mzaya-background)' }} aria-label="Order list">

@@ -4,7 +4,7 @@ function providerError(message, code = 'EMAIL_PROVIDER_ERROR') {
   return error;
 }
 
-async function sendEmail({ to, subject, text, html, metadata = {} }) {
+async function sendEmail({ to, subject: _subject, text: _text, html: _html, metadata = {} }) {
   if (!to) throw providerError('Email recipient is required', 'EMAIL_RECIPIENT_REQUIRED');
 
   if (process.env.NOTIFICATION_EMAIL_MODE !== 'enabled') {

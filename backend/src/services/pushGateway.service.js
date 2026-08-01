@@ -8,11 +8,11 @@ function disabledResult() {
 
 async function sendPushMessage({
   token,
-  title,
-  body,
-  data,
-  badge,
-  collapseKey,
+  title: _title,
+  body: _body,
+  data: _data,
+  badge: _badge,
+  collapseKey: _collapseKey,
 }) {
   if (!token) {
     const error = new Error('Push token is required');

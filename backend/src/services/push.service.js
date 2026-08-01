@@ -4,7 +4,7 @@ function providerError(message, code = 'PUSH_PROVIDER_ERROR') {
   return error;
 }
 
-async function sendPush({ token, title, body, data = {} }) {
+async function sendPush({ token, title: _title, body: _body, data = {} }) {
   if (!token) throw providerError('Push token is required', 'PUSH_TOKEN_REQUIRED');
 
   if (process.env.NOTIFICATION_PUSH_MODE !== 'enabled') {

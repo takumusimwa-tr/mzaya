@@ -1,6 +1,6 @@
 const router = require('express').Router();
 const { authenticate } = require('../middleware/auth.middleware');
-const { authorizeRoles } = require('../middleware/authorizeRoles');
+const { requireRole: authorizeRoles } = require('../middleware/auth.middleware');
 const { validateRequest } = require('../middleware/validateRequest');
 const {
   healthSummary,

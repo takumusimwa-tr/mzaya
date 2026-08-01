@@ -82,7 +82,10 @@ export default function HomePage() {
   const [selectedCity, setSelectedCity] = useState(null)
 
   // Keep location contextual: it powers availability without becoming decorative UI.
-  // eslint-disable-next-line react-hooks/set-state-in-effect, react-hooks/exhaustive-deps
+  // Adopt the detected city once, when it first arrives. selectedCity is
+  // intentionally omitted — the guard makes this a one-time set, and including
+  // it would re-run the effect after every manual city change.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => { if (city && !selectedCity) setSelectedCity(city) }, [city])
 
   const isProductFirst = PRODUCT_FIRST.includes(category)

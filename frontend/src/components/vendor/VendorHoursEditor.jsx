@@ -25,6 +25,7 @@
 
 import VendorBusinessHoursRow from './VendorBusinessHoursRow'
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const VENDOR_DAYS = [
   { key: 'mon', label: 'Monday' },
   { key: 'tue', label: 'Tuesday' },
@@ -35,6 +36,7 @@ export const VENDOR_DAYS = [
   { key: 'sun', label: 'Sunday' },
 ]
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const DEFAULT_VENDOR_HOURS = {
   open: '08:00',
   close: '22:00',

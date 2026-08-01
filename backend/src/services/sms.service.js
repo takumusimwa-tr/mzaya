@@ -4,7 +4,7 @@ function providerError(message, code = 'SMS_PROVIDER_ERROR') {
   return error;
 }
 
-async function sendSms({ to, message, metadata = {} }) {
+async function sendSms({ to, message: _message, metadata = {} }) {
   if (!to) throw providerError('SMS recipient is required', 'SMS_RECIPIENT_REQUIRED');
 
   if (process.env.NOTIFICATION_SMS_MODE !== 'enabled') {

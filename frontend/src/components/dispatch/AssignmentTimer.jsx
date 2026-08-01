@@ -1,8 +1,10 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 
 export default function AssignmentTimer({ expiresAt, onExpire }) {
-  const calculate = () =>
-    Math.max(0, Math.ceil((new Date(expiresAt).getTime() - Date.now()) / 1000))
+  const calculate = useCallback(
+    () => Math.max(0, Math.ceil((new Date(expiresAt).getTime() - Date.now()) / 1000)),
+    [expiresAt],
+  )
 
   const [seconds, setSeconds] = useState(calculate)
 
@@ -17,7 +19,7 @@ export default function AssignmentTimer({ expiresAt, onExpire }) {
     }, 250)
 
     return () => window.clearInterval(timer)
-  }, [expiresAt, onExpire])
+  }, [calculate, onExpire])
 
   return (
     <span aria-live="polite" className="font-semibold tabular-nums">

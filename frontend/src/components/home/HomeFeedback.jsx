@@ -1,4 +1,5 @@
-import { PackageOpen, Store } from 'lucide-react'
+import { Store } from 'lucide-react'
+import emptyProducts from '../../assets/brand/illustrations/empty-states/mzaya-empty-products.svg'
 
 export function HomeSectionHeading({ title, count, countLabel = 'place' }) {
   return (
@@ -32,13 +33,17 @@ export function HomeSkeletonList() {
 }
 
 export function HomeEmptyState({ search, productMode = false }) {
-  const Icon = productMode ? PackageOpen : Store
-
   return (
     <div className="rounded-[24px] border bg-white px-6 py-14 text-center" style={{ borderColor: 'var(--mzaya-border)' }}>
-      <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl" style={{ background: 'var(--mzaya-surface-muted)', color: 'var(--mzaya-green-800)' }}>
-        <Icon aria-hidden="true" size={22} strokeWidth={1.6} />
-      </div>
+      {productMode ? (
+        // Brand guideline: the no-products card uses the Mzaya illustration.
+        <img src={emptyProducts} alt="" aria-hidden="true"
+          className="mx-auto w-52 max-w-full select-none" draggable="false" />
+      ) : (
+        <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl" style={{ background: 'var(--mzaya-surface-muted)', color: 'var(--mzaya-green-800)' }}>
+          <Store aria-hidden="true" size={22} strokeWidth={1.6} />
+        </div>
+      )}
       <p className="mt-4 text-[15px] font-semibold" style={{ color: 'var(--mzaya-text-primary)' }}>
         {search ? 'Nothing matched that search' : productMode ? 'No products available yet' : 'No merchants available yet'}
       </p>

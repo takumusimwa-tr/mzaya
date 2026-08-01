@@ -363,7 +363,7 @@ async function createInternalNote({
   metadata = {},
 }) {
   return sequelize.transaction(async (transaction) => {
-    const ticket = await assertAgent(ticketId, authorId);
+    await assertAgent(ticketId, authorId); // authorization guard — throws if not agent
 
     const note = await SupportInternalNote.create({
       ticket_id: ticketId,

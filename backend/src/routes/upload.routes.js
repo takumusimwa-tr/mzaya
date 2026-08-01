@@ -3,7 +3,7 @@ const router  = express.Router();
 const multer  = require('multer');
 const path    = require('path');
 const { authenticate } = require('../middleware/auth.middleware');
-const { uploadImage, UPLOAD_DIR, USE_CLOUDINARY } = require('../controllers/upload.controller');
+const { uploadImage, UPLOAD_DIR, USE_CLOUDINARY } = require('../controllers/imageUpload.controller');
 
 // When Cloudinary is enabled we keep the file in memory and stream it up.
 // Otherwise we write to local disk (dev fallback).

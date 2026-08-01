@@ -1,5 +1,4 @@
 const { Op } = require('sequelize');
-const { sequelize } = require('../config/db');
 const {
   ProviderWebhookEvent,
   ProviderWebhookAttempt,

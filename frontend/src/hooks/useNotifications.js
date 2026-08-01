@@ -2,6 +2,21 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import api from '../api/api'
 import useSocket from './useSocket'
 
+// Fire a browser notification if the user has granted permission; ask once if
+// they haven't decided; no-op (silently) when denied or unsupported. `onClick`
+// focuses the app and runs the callback — used to deep-link into the order.
+export function sendNotification(title, body, onClick) {
+  if (typeof Notification === 'undefined') return
+  const show = () => {
+    const n = new Notification(title, { body, icon: '/brand/app-icons/mzaya-app-icon-192.png' })
+    if (onClick) n.onclick = () => { window.focus(); onClick(); n.close() }
+  }
+  if (Notification.permission === 'granted') show()
+  else if (Notification.permission !== 'denied') {
+    Notification.requestPermission().then((p) => { if (p === 'granted') show() })
+  }
+}
+
 export default function useNotifications({ token, initialLimit = 20 }) {
   const { socket, connected, connectionError } = useSocket(token)
   const [notifications, setNotifications] = useState([])

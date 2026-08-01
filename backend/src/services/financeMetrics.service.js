@@ -1,4 +1,4 @@
-const { Op, literal } = require('sequelize');
+const { Op } = require('sequelize');
 const {
   LedgerTransaction,
   LedgerEntry,
