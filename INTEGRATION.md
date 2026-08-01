@@ -1,157 +1,157 @@
-# Mzaya Batch 08.3.1 — Bank Statement Imports & Automated Reconciliation
+# Mzaya Batch 08.3.2 — Treasury FX, Cash Pooling & Exposure Management
 
-This batch extends Treasury 08.3.0 with durable statement imports, row-level
-normalization, duplicate protection, match scoring, automatic reconciliation,
-and human review.
+This batch completes the core treasury layer with FX rates, currency exposure,
+internal transfers, cash pools, concentration planning, limits and alerts.
 
 ## Database
 
 ```bash
-psql "$DATABASE_URL" -f backend/migrations/bank_statement_automation.sql
+psql "$DATABASE_URL" -f backend/migrations/treasury_fx_cash_pooling.sql
 ```
 
 ## Register and export models
 
-- `BankStatementImport`
-- `BankStatementImportRow`
-- `TreasuryReconciliation`
-- `TreasuryReconciliationCandidate`
-- `TreasuryReconciliationReview`
+- `TreasuryFxRate`
+- `TreasuryFxExposure`
+- `TreasuryFxDeal`
+- `TreasuryTransfer`
+- `TreasuryCashPool`
+- `TreasuryCashPoolMember`
+- `TreasuryLimit`
+- `TreasuryAlert`
+- `LiquidityForecastVersion`
 
-Required associations:
+Suggested associations:
 
 ```js
-BankStatementImport.hasMany(BankStatementImportRow, {
-  foreignKey: 'statement_import_id',
-  as: 'rows',
+TreasuryCashPool.hasMany(TreasuryCashPoolMember, {
+  foreignKey: 'cash_pool_id',
+  as: 'members',
 });
 
-TreasuryReconciliationCandidate.belongsTo(LedgerTransaction, {
-  foreignKey: 'ledger_transaction_id',
-  as: 'ledgerTransaction',
+TreasuryCashPoolMember.belongsTo(BankAccount, {
+  foreignKey: 'bank_account_id',
+  as: 'bankAccount',
 });
 ```
 
 ## Route mounts
 
 ```js
+app.use('/api/fx', require('./routes/fx.routes'));
 app.use(
-  '/api/bank-statement-imports',
-  require('./routes/bankStatementImport.routes')
+  '/api/treasury-transfers',
+  require('./routes/treasuryTransfer.routes')
 );
-
+app.use('/api/cash-pools', require('./routes/cashPool.routes'));
 app.use(
-  '/api/treasury-reconciliation-review',
-  require('./routes/treasuryReconciliationReview.routes')
+  '/api/treasury-risk',
+  require('./routes/treasuryRisk.routes')
 );
 ```
 
 All routes are administrator-only.
 
-## Import behavior
+## FX rates
 
-Supported normalized input formats:
+FX rates are effective-dated and provider-sourced. Do not silently reuse stale
+rates. Production adapters should deactivate expired rates and preserve source
+metadata.
 
-```text
-csv
-xlsx
-json
-api
-```
+## Treasury transfers
 
-The HTTP route receives parsed rows. File parsing should occur in a dedicated
-upload worker so large files do not block the API.
-
-Each row is retained with:
-
-- original raw data
-- normalized data
-- row number
-- processing status
-- error details
-
-Duplicate bank transactions are blocked by bank account and provider reference.
-
-## Match scoring
-
-The reconciliation engine scores candidates using:
+Transfers support:
 
 ```text
-55% amount similarity
-20% transaction-date proximity
-15% reference similarity
-10% description similarity
+internal
+cash_pool
+fx_conversion
 ```
 
-Default auto-match threshold:
+Apply maker-checker approval from Batch 08.2.3 before execution.
+
+## Cash pooling
+
+The cash pool service creates a sweep plan only. It does not execute bank
+transfers automatically.
+
+Sweep directions:
+
+```text
+to_header
+from_header
+both
+```
+
+Each sweep must become a controlled treasury transfer.
+
+## Exposure monitoring
+
+Exposure is currently derived from available bank cash minus pending settlement
+obligations by currency.
+
+Reporting conversion requires a current FX rate.
+
+## Limits and alerts
+
+Treasury limits may monitor:
+
+- FX exposure
+- minimum liquidity
+- concentration risk
+- single-bank exposure
+- payment-batch size
+- forecast reserve gap
+
+Open alerts remain visible until acknowledged or resolved.
+
+## Exposure job
+
+```js
+const {
+  startTreasuryExposureJob,
+} = require('./jobs/treasuryExposure.job');
+
+const treasuryExposureJob =
+  startTreasuryExposureJob({ logger });
+```
+
+Optional configuration:
 
 ```env
-TREASURY_AUTO_MATCH_THRESHOLD=0.93
+TREASURY_EXPOSURE_CURRENCIES=USD,ZWL
+TREASURY_REPORTING_CURRENCY=USD
 ```
 
-Only high-confidence matches are automatically confirmed. Lower-confidence
-matches remain available for human review.
-
-## Automated reconciliation job
-
-```js
-const {
-  startAutomatedTreasuryReconciliation,
-} = require('./jobs/automatedTreasuryReconciliation.job');
-
-const automatedTreasuryReconciliation =
-  startAutomatedTreasuryReconciliation({ logger });
-```
-
-Stop it during graceful shutdown.
-
-## Socket.IO
-
-```js
-const {
-  initializeTreasuryReconciliationEventBridge,
-} = require('./realtime/treasuryReconciliationEventBridge');
-
-const closeTreasuryReconciliationBridge =
-  initializeTreasuryReconciliationEventBridge(io);
-```
-
-Call the returned cleanup function during graceful shutdown.
-
-## Frontend
-
-Suggested route:
+## Frontend route
 
 ```jsx
 <Route
-  path="/admin/finance/treasury/statements"
-  element={<BankStatementOperations />}
+  path="/admin/finance/treasury/risk"
+  element={<TreasuryRiskDashboard />}
 />
 ```
 
-`ReconciliationCandidateList` should be embedded in the existing reconciliation
-detail panel.
-
 ## Controls
 
-- Preserve original statement files in private storage.
-- Store import hashes to strengthen duplicate-file protection.
-- Require manual review for low-confidence matches.
-- Never auto-create ledger transactions from statement text alone.
-- Keep bank transaction and ledger transaction currencies identical.
-- Record all manual accept and reject decisions.
-- Require maker-checker approval for reconciliation overrides above policy
-  thresholds.
+- Require approval for all treasury transfers.
+- Never convert currencies without an explicit rate.
+- Preserve FX rate source and timestamp.
+- Do not auto-execute cash pool sweep plans.
+- Keep transfer execution separate from planning.
+- Reconcile completed transfers against bank statements.
+- Set conservative exposure limits before enabling alerts in production.
 
 ## Verification
 
 ```bash
 cd backend
-npm test -- bankStatementParser.test.js
-npm test -- reconciliationScoring.test.js
-node --check src/services/bankStatementImport.service.js
-node --check src/services/automatedTreasuryReconciliation.service.js
-node --check src/services/treasuryReconciliationReview.service.js
+npm test -- fxRate.test.js
+npm test -- cashPooling.test.js
+node --check src/services/fxRate.service.js
+node --check src/services/fxExposure.service.js
+node --check src/services/treasuryTransfer.service.js
+node --check src/services/cashPooling.service.js
 npm run lint
 ```
 
