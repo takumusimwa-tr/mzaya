@@ -1,0 +1,95 @@
+.bank-statements-page {
+  width: min(1180px, calc(100% - 32px));
+  margin: 0 auto;
+  padding: 42px 0 60px;
+  color: #121714;
+}
+
+.bank-statements-page h1 {
+  margin: 4px 0;
+  font-size: clamp(32px, 4vw, 46px);
+  letter-spacing: -.04em;
+}
+
+.bank-statements-page > header p:last-child {
+  margin: 0;
+  color: #728077;
+}
+
+.bank-statements-grid {
+  display: grid;
+  gap: 12px;
+  margin-top: 26px;
+}
+
+.statement-import-card,
+.reconciliation-candidate-list article {
+  display: grid;
+  grid-template-columns: 1fr 140px auto;
+  gap: 18px;
+  align-items: center;
+  padding: 17px 18px;
+  border: 1px solid #dde5df;
+  border-radius: 16px;
+  background: #fff;
+}
+
+.statement-import-card > div,
+.reconciliation-candidate-list article > div {
+  display: grid;
+  gap: 4px;
+}
+
+.statement-import-card span,
+.reconciliation-candidate-list span {
+  color: #728077;
+  font-size: 12px;
+}
+
+.statement-import-status {
+  padding: 6px 9px;
+  border-radius: 999px;
+  background: #eef3ef;
+  color: #126a56;
+  font-weight: 800;
+  text-transform: capitalize;
+}
+
+.reconciliation-candidate-list {
+  display: grid;
+  gap: 10px;
+}
+
+.reconciliation-candidate-list__actions {
+  display: flex !important;
+  gap: 8px;
+}
+
+.reconciliation-candidate-list button {
+  min-height: 38px;
+  padding: 0 12px;
+  border: 1px solid #d5dfd9;
+  border-radius: 11px;
+  background: #fff;
+  color: #126a56;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.reconciliation-candidate-list button:last-child {
+  border-color: #126a56;
+  background: #126a56;
+  color: #fff;
+}
+
+.bank-statements-state {
+  padding: 72px 24px;
+  text-align: center;
+}
+
+@media (max-width: 700px) {
+  .statement-import-card,
+  .reconciliation-candidate-list article {
+    grid-template-columns: 1fr;
+  }
+}

@@ -1,152 +1,157 @@
-# Mzaya Batch 08.3.0 — Treasury, Banking & Cash Management
+# Mzaya Batch 08.3.1 — Bank Statement Imports & Automated Reconciliation
 
-This batch adds the treasury operating layer above the immutable ledger,
-settlements, provider reconciliation, tax and financial controls.
+This batch extends Treasury 08.3.0 with durable statement imports, row-level
+normalization, duplicate protection, match scoring, automatic reconciliation,
+and human review.
 
 ## Database
 
 ```bash
-psql "$DATABASE_URL" -f backend/migrations/treasury_cash_management.sql
+psql "$DATABASE_URL" -f backend/migrations/bank_statement_automation.sql
 ```
 
 ## Register and export models
 
-- `TreasuryAccount`
-- `BankAccount`
 - `BankStatementImport`
-- `BankTransaction`
+- `BankStatementImportRow`
 - `TreasuryReconciliation`
-- `CashMovement`
-- `TreasuryPaymentBatch`
-- `TreasuryPaymentBatchItem`
-- `LiquiditySnapshot`
+- `TreasuryReconciliationCandidate`
+- `TreasuryReconciliationReview`
 
-Suggested associations:
+Required associations:
 
 ```js
-TreasuryAccount.hasMany(BankAccount, {
-  foreignKey: 'treasury_account_id',
-  as: 'bankAccounts',
+BankStatementImport.hasMany(BankStatementImportRow, {
+  foreignKey: 'statement_import_id',
+  as: 'rows',
 });
 
-BankAccount.belongsTo(TreasuryAccount, {
-  foreignKey: 'treasury_account_id',
-  as: 'treasuryAccount',
-});
-
-TreasuryPaymentBatch.hasMany(TreasuryPaymentBatchItem, {
-  foreignKey: 'batch_id',
-  as: 'items',
+TreasuryReconciliationCandidate.belongsTo(LedgerTransaction, {
+  foreignKey: 'ledger_transaction_id',
+  as: 'ledgerTransaction',
 });
 ```
 
 ## Route mounts
 
 ```js
-app.use('/api/treasury', require('./routes/treasury.routes'));
 app.use(
-  '/api/treasury-reconciliation',
-  require('./routes/treasuryReconciliation.routes')
+  '/api/bank-statement-imports',
+  require('./routes/bankStatementImport.routes')
 );
+
 app.use(
-  '/api/treasury-payment-batches',
-  require('./routes/paymentBatch.routes')
+  '/api/treasury-reconciliation-review',
+  require('./routes/treasuryReconciliationReview.routes')
 );
 ```
 
 All routes are administrator-only.
 
-## Bank integrations
+## Import behavior
 
-Store only tokenized account references. Never store raw bank credentials,
-full account numbers, PINs, or online-banking passwords.
-
-Provider adapters should update:
-
-- current balance
-- available balance
-- last synced time
-- bank transactions
-- statement import status
-
-## Reconciliation
-
-Bank transactions may be matched to ledger transactions.
-
-Statuses:
+Supported normalized input formats:
 
 ```text
-unmatched
-matched
-discrepancy
-ignored
+csv
+xlsx
+json
+api
 ```
 
-Exact matches require equal amounts. Manual matches retain the difference.
+The HTTP route receives parsed rows. File parsing should occur in a dedicated
+upload worker so large files do not block the API.
 
-## Payment batches
+Each row is retained with:
 
-Payment batches are single-currency collections of approved outgoing payments.
-Use Financial Controls from 08.2.3 before approval and submission.
+- original raw data
+- normalized data
+- row number
+- processing status
+- error details
 
-Recommended workflow:
+Duplicate bank transactions are blocked by bank account and provider reference.
+
+## Match scoring
+
+The reconciliation engine scores candidates using:
 
 ```text
-draft
-approved
-submitted
-completed / failed
+55% amount similarity
+20% transaction-date proximity
+15% reference similarity
+10% description similarity
 ```
 
-## Liquidity snapshots
+Default auto-match threshold:
+
+```env
+TREASURY_AUTO_MATCH_THRESHOLD=0.93
+```
+
+Only high-confidence matches are automatically confirmed. Lower-confidence
+matches remain available for human review.
+
+## Automated reconciliation job
 
 ```js
 const {
-  startLiquiditySnapshotJob,
-} = require('./jobs/liquiditySnapshot.job');
+  startAutomatedTreasuryReconciliation,
+} = require('./jobs/automatedTreasuryReconciliation.job');
 
-const liquiditySnapshotJob =
-  startLiquiditySnapshotJob({ logger });
+const automatedTreasuryReconciliation =
+  startAutomatedTreasuryReconciliation({ logger });
 ```
 
-Optional:
+Stop it during graceful shutdown.
 
-```env
-TREASURY_SNAPSHOT_CURRENCIES=USD,ZWL
+## Socket.IO
+
+```js
+const {
+  initializeTreasuryReconciliationEventBridge,
+} = require('./realtime/treasuryReconciliationEventBridge');
+
+const closeTreasuryReconciliationBridge =
+  initializeTreasuryReconciliationEventBridge(io);
 ```
 
-## Frontend route
+Call the returned cleanup function during graceful shutdown.
+
+## Frontend
+
+Suggested route:
 
 ```jsx
 <Route
-  path="/admin/finance/treasury"
-  element={<TreasuryDashboard />}
+  path="/admin/finance/treasury/statements"
+  element={<BankStatementOperations />}
 />
 ```
 
-Protect with the administrator route guard.
+`ReconciliationCandidateList` should be embedded in the existing reconciliation
+detail panel.
 
 ## Controls
 
-- Keep bank data encrypted at rest.
-- Require maker-checker approval for transfers and payment batches.
-- Reconcile bank activity daily.
-- Preserve imported statements and reconciliation evidence.
-- Keep treasury balances separated by currency.
-- Never infer foreign-exchange conversions silently.
-- Treat liquidity dashboards as operational management views, not audited
-  financial statements.
+- Preserve original statement files in private storage.
+- Store import hashes to strengthen duplicate-file protection.
+- Require manual review for low-confidence matches.
+- Never auto-create ledger transactions from statement text alone.
+- Keep bank transaction and ledger transaction currencies identical.
+- Record all manual accept and reject decisions.
+- Require maker-checker approval for reconciliation overrides above policy
+  thresholds.
 
 ## Verification
 
 ```bash
 cd backend
-npm test -- liquidity.test.js
-npm test -- treasuryForecast.test.js
-npm test -- paymentBatch.test.js
-node --check src/services/liquidity.service.js
-node --check src/services/treasuryReconciliation.service.js
-node --check src/services/paymentBatch.service.js
+npm test -- bankStatementParser.test.js
+npm test -- reconciliationScoring.test.js
+node --check src/services/bankStatementImport.service.js
+node --check src/services/automatedTreasuryReconciliation.service.js
+node --check src/services/treasuryReconciliationReview.service.js
 npm run lint
 ```
 
