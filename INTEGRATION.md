@@ -1,162 +1,134 @@
-# Mzaya Batch 08.3.3 — Treasury Execution, FX Deals & Liquidity Forecasting
+# Mzaya Batch 08.4.0 — Financial Close, Trial Balance & Statements
 
-This batch adds the controlled execution layer for treasury transfers, the FX
-deal lifecycle, and versioned liquidity scenario forecasting.
+This batch adds the accounting close layer above the immutable ledger,
+reconciliation, treasury, settlements, tax, and financial controls.
 
 ## Database
 
 ```bash
-psql "$DATABASE_URL" -f backend/migrations/treasury_execution_forecasting.sql
+psql "$DATABASE_URL" -f backend/migrations/financial_close_reporting.sql
 ```
 
 ## Register and export models
 
-- `TreasuryTransferAttempt`
-- `TreasuryTransferAudit`
-- `LiquidityForecastScenario`
-- `LiquidityForecastVersion`
-- `LiquidityForecastLine`
+- `FinancialCloseCycle`
+- `FinancialCloseTask`
+- `TrialBalanceSnapshot`
+- `TrialBalanceLine`
+- `FinancialStatementSnapshot`
+- `CloseAdjustment`
+- `CloseAdjustmentLine`
 
 Required associations:
 
 ```js
-TreasuryTransfer.hasMany(TreasuryTransferAttempt, {
-  foreignKey: 'treasury_transfer_id',
-  as: 'attempts',
+FinancialCloseCycle.hasMany(FinancialCloseTask, {
+  foreignKey: 'close_cycle_id',
+  as: 'tasks',
 });
 
-LiquidityForecastVersion.hasMany(LiquidityForecastLine, {
-  foreignKey: 'forecast_version_id',
+TrialBalanceSnapshot.hasMany(TrialBalanceLine, {
+  foreignKey: 'snapshot_id',
   as: 'lines',
 });
 ```
 
-## Route mounts
+## Route mount
 
 ```js
 app.use(
-  '/api/treasury-execution',
-  require('./routes/treasuryExecution.routes')
-);
-
-app.use('/api/fx-deals', require('./routes/fxDeal.routes'));
-
-app.use(
-  '/api/liquidity-forecasts',
-  require('./routes/liquidityForecast.routes')
+  '/api/financial-close',
+  require('./routes/financialClose.routes')
 );
 ```
 
-## Treasury transfer workflow
+All routes are administrator-only.
+
+## Close workflow
 
 ```text
-draft
-  ↓
-approved
-  ↓
-processing
-  ↓
-completed / failed
+period opened
+   ↓
+close cycle started
+   ↓
+reconciliation tasks completed
+   ↓
+settlement and tax review
+   ↓
+trial balance generated
+   ↓
+financial statements generated
+   ↓
+management sign-off
+   ↓
+period closed
 ```
 
-The requester cannot approve the same transfer.
+## Trial balance
 
-Production execution belongs inside:
+The trial balance aggregates posted ledger entries by payment account and
+currency. It preserves:
 
-```text
-backend/src/services/treasuryTransferGateway.service.js
-```
+- debit total
+- credit total
+- account-level net balance
+- snapshot type
+- generation timestamp
+- preparer identity
 
-Keep disabled until a real bank adapter is configured:
+A close cannot complete without a balanced final trial balance.
 
-```env
-TREASURY_TRANSFER_MODE=disabled
-```
+## Financial statements
 
-## Execution accounting
+The included statement builders provide the technical foundation for:
 
-Bank balances are updated only after the provider confirms success.
+- income statement
+- balance sheet
 
-Completed transfers must also be represented in the immutable ledger and later
-reconciled against imported bank statements. Add the final ledger posting when
-the treasury bank-account ledger mapping is confirmed.
+Final account mappings must be confirmed before production use. Account types
+must be normalized so revenue, expense, asset, liability, and equity accounts
+are classified consistently.
 
-## FX deals
+## Close adjustments
 
-FX deals support:
+Use close adjustments for approved period-end entries only. Each adjustment
+must:
 
-- booked
-- approved
-- settled
-- failed
-- cancelled
-
-The included settlement service records provider and external references.
-
-## Liquidity forecasts
-
-Scenarios can represent:
-
-```text
-base
-upside
-downside
-stress
-```
-
-Scenario assumptions may include:
-
-- inflow multiplier
-- outflow multiplier
-- confidence ratio
-- delayed collections
-- accelerated settlement outflows
-
-Forecast lines preserve daily inflow, outflow, net movement, and closing cash.
-
-## Retry job
-
-```js
-const {
-  startTreasuryTransferRetryJob,
-} = require('./jobs/treasuryTransferRetry.job');
-
-const treasuryTransferRetryJob =
-  startTreasuryTransferRetryJob({ logger });
-```
-
-Automated retries should remain disabled or tightly controlled until the bank
-provider's idempotency behavior is verified.
+- balance debits and credits
+- pass maker-checker approval
+- post through the immutable ledger
+- preserve the resulting ledger transaction
+- remain linked to the close cycle
 
 ## Frontend route
 
 ```jsx
 <Route
-  path="/admin/finance/treasury/execution"
-  element={<TreasuryExecutionDashboard />}
+  path="/admin/finance/close"
+  element={<FinancialCloseDashboard />}
 />
 ```
 
 ## Controls
 
-- Require maker-checker approval.
-- Use transfer reference as provider idempotency key.
-- Never update balances before provider confirmation.
-- Never retry blindly against providers without idempotency support.
-- Reconcile all completed transfers.
-- Preserve all execution attempts and provider responses.
-- Require approved FX rates for cross-currency transfers.
-- Keep forecast assumptions versioned and auditable.
+- Do not complete a close with unresolved reconciliation exceptions.
+- Require a balanced final trial balance.
+- Require management sign-off.
+- Preserve all trial-balance and statement versions.
+- Do not overwrite approved statement snapshots.
+- Reopening a completed close must use Financial Controls from Batch 08.2.3.
+- Tax and treasury reporting remain operational views until professionally
+  reviewed and mapped to final accounting policies.
 
 ## Verification
 
 ```bash
 cd backend
-npm test -- treasuryTransferExecution.test.js
-npm test -- liquidityForecast.test.js
-node --check src/services/treasuryTransferExecution.service.js
-node --check src/services/liquidityForecast.service.js
-node --check src/services/fxDeal.service.js
+npm test -- financialStatements.test.js
+npm test -- financialClose.test.js
+node --check src/services/trialBalance.service.js
+node --check src/services/financialClose.service.js
+node --check src/services/financialStatements.service.js
 npm run lint
 ```
 

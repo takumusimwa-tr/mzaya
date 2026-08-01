@@ -1,0 +1,106 @@
+.financial-close-page {
+  width: min(1220px, calc(100% - 32px));
+  margin: 0 auto;
+  padding: 42px 0 60px;
+  color: #121714;
+}
+
+.financial-close-page h1 {
+  margin: 4px 0;
+  font-size: clamp(32px, 4vw, 48px);
+  letter-spacing: -.04em;
+}
+
+.financial-close-page > header p:last-child {
+  margin: 0;
+  color: #728077;
+}
+
+.financial-close-grid {
+  display: grid;
+  gap: 18px;
+  margin-top: 26px;
+}
+
+.close-cycle-card {
+  overflow: hidden;
+  border: 1px solid #dde5df;
+  border-radius: 20px;
+  background: #fff;
+}
+
+.close-cycle-card > header,
+.close-cycle-card > footer {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  align-items: center;
+  padding: 18px;
+}
+
+.close-cycle-card > header > div {
+  display: grid;
+  gap: 4px;
+}
+
+.close-cycle-card span {
+  color: #728077;
+  font-size: 12px;
+}
+
+.close-cycle-status,
+.close-task-status {
+  padding: 6px 9px;
+  border-radius: 999px;
+  background: #eef3ef;
+  color: #126a56 !important;
+  font-weight: 800;
+  text-transform: capitalize;
+}
+
+.close-checklist article {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  gap: 16px;
+  align-items: center;
+  padding: 14px 18px;
+  border-top: 1px solid #eef2ef;
+}
+
+.close-checklist article > div {
+  display: grid;
+  gap: 4px;
+}
+
+.close-cycle-card button {
+  min-height: 38px;
+  padding: 0 12px;
+  border: 1px solid #d5dfd9;
+  border-radius: 11px;
+  background: #fff;
+  color: #126a56;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.close-cycle-card footer button:last-child {
+  border-color: #126a56;
+  background: #126a56;
+  color: #fff;
+}
+
+.financial-close-state {
+  padding: 72px 24px;
+  text-align: center;
+}
+
+@media (max-width: 720px) {
+  .close-checklist article {
+    grid-template-columns: 1fr;
+  }
+
+  .close-cycle-card > footer {
+    align-items: stretch;
+    flex-direction: column;
+  }
+}
