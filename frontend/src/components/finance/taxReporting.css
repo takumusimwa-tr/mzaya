@@ -1,0 +1,110 @@
+.tax-reporting-center {
+  width: min(1220px, calc(100% - 32px));
+  margin: 0 auto;
+  padding: 42px 0 60px;
+  color: #121714;
+}
+
+.tax-reporting-center h1 {
+  margin: 4px 0;
+  font-size: clamp(32px, 4vw, 46px);
+  letter-spacing: -.04em;
+}
+
+.tax-reporting-center > header p:last-child {
+  margin: 0;
+  color: #728077;
+}
+
+.tax-reporting-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 18px;
+  margin-top: 26px;
+}
+
+.tax-registration-table,
+.tax-filing-calendar,
+.tax-return-table {
+  overflow: hidden;
+  border: 1px solid #dde5df;
+  border-radius: 18px;
+  background: #fff;
+}
+
+.tax-registration-table article,
+.tax-filing-calendar article,
+.tax-return-table article {
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  gap: 16px;
+  align-items: center;
+  padding: 15px 16px;
+  border-top: 1px solid #eef2ef;
+}
+
+.tax-registration-table article:first-child,
+.tax-filing-calendar article:first-child,
+.tax-return-table article:first-child {
+  border-top: 0;
+}
+
+.tax-registration-table article > div,
+.tax-filing-calendar article > div,
+.tax-return-table article > div {
+  display: grid;
+  gap: 4px;
+}
+
+.tax-registration-table span,
+.tax-filing-calendar span,
+.tax-return-table span {
+  color: #728077;
+  font-size: 12px;
+}
+
+.tax-filing-status {
+  padding: 6px 9px;
+  border-radius: 999px;
+  background: #eef3ef;
+  color: #126a56;
+  font-weight: 800;
+  text-transform: capitalize;
+}
+
+.tax-reporting-returns {
+  margin-top: 22px;
+}
+
+.tax-return-table__actions {
+  display: flex !important;
+  gap: 8px;
+}
+
+.tax-return-table button {
+  min-height: 38px;
+  padding: 0 12px;
+  border: 1px solid #d5dfd9;
+  border-radius: 11px;
+  background: #fff;
+  color: #126a56;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.tax-reporting-state {
+  padding: 72px 24px;
+  text-align: center;
+}
+
+@media (max-width: 860px) {
+  .tax-reporting-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .tax-registration-table article,
+  .tax-filing-calendar article,
+  .tax-return-table article {
+    grid-template-columns: 1fr;
+  }
+}

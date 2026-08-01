@@ -1,136 +1,158 @@
-# Mzaya Batch 08.2.1 — Tax, Compliance & Financial Governance
+# Mzaya Batch 08.2.2 — Tax Reporting & Statutory Operations
 
-This batch establishes the governance layer above the finance platform.
+This batch extends 08.2.1 with tax registrations, filing calendars, return
+preparation and approval, withholding records, invoice documents and statutory
+reporting controls.
 
 ## Database
 
 ```bash
-psql "$DATABASE_URL" -f backend/migrations/tax_compliance_foundation.sql
+psql "$DATABASE_URL" -f backend/migrations/tax_reporting_operations.sql
 ```
 
 ## Register and export models
 
-- `TaxJurisdiction`
-- `TaxRate`
-- `InvoiceSequence`
-- `TaxInvoice`
-- `FinancialPeriod`
-- `ComplianceAuditLog`
+- `TaxRegistration`
+- `TaxFilingPeriod`
+- `TaxReturn`
+- `WithholdingTaxRecord`
+- `TaxReturnAudit`
 
 Suggested associations:
 
 ```js
-TaxJurisdiction.hasMany(TaxRate, {
-  foreignKey: 'jurisdiction_id',
-  as: 'rates',
+TaxFilingPeriod.hasMany(TaxReturn, {
+  foreignKey: 'filing_period_id',
+  as: 'returns',
 });
 
-TaxInvoice.belongsTo(TaxJurisdiction, {
-  foreignKey: 'jurisdiction_id',
-  as: 'jurisdiction',
+TaxReturn.belongsTo(TaxFilingPeriod, {
+  foreignKey: 'filing_period_id',
+  as: 'filingPeriod',
+});
+
+TaxReturn.belongsTo(TaxRegistration, {
+  foreignKey: 'registration_id',
+  as: 'registration',
+});
+
+TaxReturn.hasMany(TaxReturnAudit, {
+  foreignKey: 'tax_return_id',
+  as: 'audit',
 });
 ```
 
-## Route mounts
+## Route mount
 
 ```js
-app.use('/api/tax', require('./routes/tax.routes'));
-app.use('/api/invoices', require('./routes/invoice.routes'));
-app.use('/api/compliance', require('./routes/compliance.routes'));
+app.use(
+  '/api/tax-reporting',
+  require('./routes/taxReporting.routes')
+);
 ```
 
 All routes are administrator-only.
 
-## Financial periods
+## Return workflow
 
-Apply the ledger guard before new postings:
+```text
+draft
+  ↓
+approved
+  ↓
+submitted
+```
+
+A return is prepared from issued tax invoices and configured adjustments.
+
+The included calculation intentionally sets input tax to zero until purchase
+tax evidence and supplier invoice ingestion are added. Do not infer input tax
+credits without supporting records.
+
+## Withholding tax
+
+The withholding service stores:
+
+- gross amount
+- basis-point rate
+- withheld amount
+- payee
+- source settlement or payment
+- remittance state
+- certificate number
+
+Production rates and applicability must be configured only after professional
+tax review.
+
+## Invoice PDF documents
+
+Use `generateInvoiceDocument()` with injected adapters:
 
 ```js
-await assertLedgerPostingPeriod({
-  occurredAt: payload.occurredAt || new Date(),
+await generateInvoiceDocument({
+  invoiceId,
+  renderer: invoicePdfRenderer,
+  storage: privateStorage,
 });
 ```
 
-The period-close action blocks subsequent postings for the covered dates.
+The renderer should produce a compliant PDF using the finalized legal invoice
+layout. Storage must remain private.
 
-## Invoice sequencing
-
-Configure one sequence per jurisdiction, document type, and fiscal year.
-
-Example:
-
-```text
-prefix: ZW-INV-
-next_number: 1
-padding: 6
-result: ZW-INV-000001
-```
-
-Sequence generation uses a row lock to prevent duplicate numbers.
-
-## Tax calculation
-
-Tax rates are stored in basis points:
-
-```text
-1500 basis points = 15.00%
-```
-
-Tax is calculated using integer minor units.
-
-## Current scope
-
-- VAT and generic tax-type foundation
-- Effective-dated rates
-- Jurisdiction management
-- Sequential invoices
-- Credit-note numbering foundation
-- Monthly financial periods
-- Close and reopen controls
-- Immutable compliance audit log
-- Tax summary reporting
-
-## Important legal note
-
-This package provides technical infrastructure, not a determination of current
-Zimbabwe tax obligations. Production tax rates, fiscal-device requirements,
-invoice wording, registration thresholds, withholding rules, and reporting
-formats must be configured after review by qualified Zimbabwe tax and legal
-professionals.
-
-## Frontend routes
-
-```jsx
-<Route path="/admin/finance/tax" element={<TaxCenter />} />
-<Route path="/admin/finance/invoices" element={<InvoiceManagement />} />
-<Route path="/admin/finance/compliance" element={<ComplianceDashboard />} />
-```
-
-Protect all routes with the existing administrator guard.
-
-## Scheduler
+## Filing deadline job
 
 ```js
 const {
-  startFinancialPeriodJob,
-} = require('./jobs/financialPeriod.job');
+  startTaxFilingDeadlineJob,
+} = require('./jobs/taxFilingDeadline.job');
 
-const financialPeriodJob =
-  startFinancialPeriodJob({ logger });
+const taxFilingDeadlineJob =
+  startTaxFilingDeadlineJob({ logger });
 ```
 
 Stop it during graceful shutdown.
+
+## Socket.IO
+
+```js
+const {
+  initializeTaxReportingEventBridge,
+} = require('./realtime/taxReportingEventBridge');
+
+const closeTaxReportingBridge =
+  initializeTaxReportingEventBridge(io);
+```
+
+Call `closeTaxReportingBridge()` during graceful shutdown.
+
+## Frontend route
+
+```jsx
+<Route
+  path="/admin/finance/tax-reporting"
+  element={<TaxReportingCenter />}
+/>
+```
+
+Protect it with the existing administrator route guard.
+
+## Important legal limitation
+
+This batch is a technical workflow foundation. It does not establish current
+Zimbabwe tax rates, filing deadlines, fiscal-device rules, invoice wording,
+tax registration thresholds, withholding obligations, or accepted submission
+formats. Those values must be configured from current official guidance and
+reviewed by qualified Zimbabwe tax professionals before production use.
 
 ## Verification
 
 ```bash
 cd backend
-npm test -- taxCalculation.test.js
-npm test -- invoiceNumber.test.js
-npm test -- financialPeriod.test.js
-node --check src/services/taxCalculation.service.js
-node --check src/services/invoiceGeneration.service.js
-node --check src/services/financialPeriod.service.js
+npm test -- taxReturn.service.test.js
+npm test -- withholdingTax.test.js
+node --check src/services/taxReturn.service.js
+node --check src/services/taxReturnCalculation.service.js
+node --check src/services/invoiceDocument.service.js
 npm run lint
 ```
 
