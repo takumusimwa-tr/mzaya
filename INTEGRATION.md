@@ -1,158 +1,64 @@
-# Mzaya Batch 08.2.2 — Tax Reporting & Statutory Operations
+# Mzaya Batch 08.2.3 — Financial Controls & Approval Governance
 
-This batch extends 08.2.1 with tax registrations, filing calendars, return
-preparation and approval, withholding records, invoice documents and statutory
-reporting controls.
+This batch introduces maker-checker controls, approval policies, thresholds,
+control exceptions, and administrator review workflows.
 
 ## Database
 
 ```bash
-psql "$DATABASE_URL" -f backend/migrations/tax_reporting_operations.sql
+psql "$DATABASE_URL" -f backend/migrations/financial_controls_governance.sql
 ```
 
-## Register and export models
+## Model integration
 
-- `TaxRegistration`
-- `TaxFilingPeriod`
-- `TaxReturn`
-- `WithholdingTaxRecord`
-- `TaxReturnAudit`
-
-Suggested associations:
+Export the four models from `financialControlModels.js` through the existing
+associations module and add:
 
 ```js
-TaxFilingPeriod.hasMany(TaxReturn, {
-  foreignKey: 'filing_period_id',
-  as: 'returns',
+FinancialApprovalRequest.belongsTo(FinancialControlPolicy, {
+  foreignKey: 'policy_id',
+  as: 'policy',
 });
 
-TaxReturn.belongsTo(TaxFilingPeriod, {
-  foreignKey: 'filing_period_id',
-  as: 'filingPeriod',
-});
-
-TaxReturn.belongsTo(TaxRegistration, {
-  foreignKey: 'registration_id',
-  as: 'registration',
-});
-
-TaxReturn.hasMany(TaxReturnAudit, {
-  foreignKey: 'tax_return_id',
-  as: 'audit',
+FinancialApprovalRequest.hasMany(FinancialApprovalDecision, {
+  foreignKey: 'approval_request_id',
+  as: 'decisions',
 });
 ```
 
 ## Route mount
 
 ```js
-app.use(
-  '/api/tax-reporting',
-  require('./routes/taxReporting.routes')
-);
+app.use('/api/financial-controls', require('./routes/financialControl.routes'));
 ```
 
-All routes are administrator-only.
+## Recommended protected actions
 
-## Return workflow
+- high-value refunds
+- settlement submissions
+- financial-period reopening
+- manual ledger adjustments
+- tax-return submission
+- reconciliation overrides
+- payout destination changes
 
-```text
-draft
-  ↓
-approved
-  ↓
-submitted
-```
+## Maker-checker behavior
 
-A return is prepared from issued tax invoices and configured adjustments.
-
-The included calculation intentionally sets input tax to zero until purchase
-tax evidence and supplier invoice ingestion are added. Do not infer input tax
-credits without supporting records.
-
-## Withholding tax
-
-The withholding service stores:
-
-- gross amount
-- basis-point rate
-- withheld amount
-- payee
-- source settlement or payment
-- remittance state
-- certificate number
-
-Production rates and applicability must be configured only after professional
-tax review.
-
-## Invoice PDF documents
-
-Use `generateInvoiceDocument()` with injected adapters:
-
-```js
-await generateInvoiceDocument({
-  invoiceId,
-  renderer: invoicePdfRenderer,
-  storage: privateStorage,
-});
-```
-
-The renderer should produce a compliant PDF using the finalized legal invoice
-layout. Storage must remain private.
-
-## Filing deadline job
-
-```js
-const {
-  startTaxFilingDeadlineJob,
-} = require('./jobs/taxFilingDeadline.job');
-
-const taxFilingDeadlineJob =
-  startTaxFilingDeadlineJob({ logger });
-```
-
-Stop it during graceful shutdown.
-
-## Socket.IO
-
-```js
-const {
-  initializeTaxReportingEventBridge,
-} = require('./realtime/taxReportingEventBridge');
-
-const closeTaxReportingBridge =
-  initializeTaxReportingEventBridge(io);
-```
-
-Call `closeTaxReportingBridge()` during graceful shutdown.
+When `require_distinct_creator=true`, the request creator cannot approve the
+same action. Policies can require multiple approvals and specific roles.
 
 ## Frontend route
 
 ```jsx
-<Route
-  path="/admin/finance/tax-reporting"
-  element={<TaxReportingCenter />}
-/>
+<Route path="/admin/finance/controls" element={<FinancialControlsDashboard />} />
 ```
-
-Protect it with the existing administrator route guard.
-
-## Important legal limitation
-
-This batch is a technical workflow foundation. It does not establish current
-Zimbabwe tax rates, filing deadlines, fiscal-device rules, invoice wording,
-tax registration thresholds, withholding obligations, or accepted submission
-formats. Those values must be configured from current official guidance and
-reviewed by qualified Zimbabwe tax professionals before production use.
 
 ## Verification
 
 ```bash
 cd backend
-npm test -- taxReturn.service.test.js
-npm test -- withholdingTax.test.js
-node --check src/services/taxReturn.service.js
-node --check src/services/taxReturnCalculation.service.js
-node --check src/services/invoiceDocument.service.js
+npm test -- financialApproval.test.js
+node --check src/services/financialApproval.service.js
 npm run lint
 ```
 
