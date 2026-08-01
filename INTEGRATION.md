@@ -1,157 +1,162 @@
-# Mzaya Batch 08.3.2 — Treasury FX, Cash Pooling & Exposure Management
+# Mzaya Batch 08.3.3 — Treasury Execution, FX Deals & Liquidity Forecasting
 
-This batch completes the core treasury layer with FX rates, currency exposure,
-internal transfers, cash pools, concentration planning, limits and alerts.
+This batch adds the controlled execution layer for treasury transfers, the FX
+deal lifecycle, and versioned liquidity scenario forecasting.
 
 ## Database
 
 ```bash
-psql "$DATABASE_URL" -f backend/migrations/treasury_fx_cash_pooling.sql
+psql "$DATABASE_URL" -f backend/migrations/treasury_execution_forecasting.sql
 ```
 
 ## Register and export models
 
-- `TreasuryFxRate`
-- `TreasuryFxExposure`
-- `TreasuryFxDeal`
-- `TreasuryTransfer`
-- `TreasuryCashPool`
-- `TreasuryCashPoolMember`
-- `TreasuryLimit`
-- `TreasuryAlert`
+- `TreasuryTransferAttempt`
+- `TreasuryTransferAudit`
+- `LiquidityForecastScenario`
 - `LiquidityForecastVersion`
+- `LiquidityForecastLine`
 
-Suggested associations:
+Required associations:
 
 ```js
-TreasuryCashPool.hasMany(TreasuryCashPoolMember, {
-  foreignKey: 'cash_pool_id',
-  as: 'members',
+TreasuryTransfer.hasMany(TreasuryTransferAttempt, {
+  foreignKey: 'treasury_transfer_id',
+  as: 'attempts',
 });
 
-TreasuryCashPoolMember.belongsTo(BankAccount, {
-  foreignKey: 'bank_account_id',
-  as: 'bankAccount',
+LiquidityForecastVersion.hasMany(LiquidityForecastLine, {
+  foreignKey: 'forecast_version_id',
+  as: 'lines',
 });
 ```
 
 ## Route mounts
 
 ```js
-app.use('/api/fx', require('./routes/fx.routes'));
 app.use(
-  '/api/treasury-transfers',
-  require('./routes/treasuryTransfer.routes')
+  '/api/treasury-execution',
+  require('./routes/treasuryExecution.routes')
 );
-app.use('/api/cash-pools', require('./routes/cashPool.routes'));
+
+app.use('/api/fx-deals', require('./routes/fxDeal.routes'));
+
 app.use(
-  '/api/treasury-risk',
-  require('./routes/treasuryRisk.routes')
+  '/api/liquidity-forecasts',
+  require('./routes/liquidityForecast.routes')
 );
 ```
 
-All routes are administrator-only.
-
-## FX rates
-
-FX rates are effective-dated and provider-sourced. Do not silently reuse stale
-rates. Production adapters should deactivate expired rates and preserve source
-metadata.
-
-## Treasury transfers
-
-Transfers support:
+## Treasury transfer workflow
 
 ```text
-internal
-cash_pool
-fx_conversion
+draft
+  ↓
+approved
+  ↓
+processing
+  ↓
+completed / failed
 ```
 
-Apply maker-checker approval from Batch 08.2.3 before execution.
+The requester cannot approve the same transfer.
 
-## Cash pooling
-
-The cash pool service creates a sweep plan only. It does not execute bank
-transfers automatically.
-
-Sweep directions:
+Production execution belongs inside:
 
 ```text
-to_header
-from_header
-both
+backend/src/services/treasuryTransferGateway.service.js
 ```
 
-Each sweep must become a controlled treasury transfer.
+Keep disabled until a real bank adapter is configured:
 
-## Exposure monitoring
+```env
+TREASURY_TRANSFER_MODE=disabled
+```
 
-Exposure is currently derived from available bank cash minus pending settlement
-obligations by currency.
+## Execution accounting
 
-Reporting conversion requires a current FX rate.
+Bank balances are updated only after the provider confirms success.
 
-## Limits and alerts
+Completed transfers must also be represented in the immutable ledger and later
+reconciled against imported bank statements. Add the final ledger posting when
+the treasury bank-account ledger mapping is confirmed.
 
-Treasury limits may monitor:
+## FX deals
 
-- FX exposure
-- minimum liquidity
-- concentration risk
-- single-bank exposure
-- payment-batch size
-- forecast reserve gap
+FX deals support:
 
-Open alerts remain visible until acknowledged or resolved.
+- booked
+- approved
+- settled
+- failed
+- cancelled
 
-## Exposure job
+The included settlement service records provider and external references.
+
+## Liquidity forecasts
+
+Scenarios can represent:
+
+```text
+base
+upside
+downside
+stress
+```
+
+Scenario assumptions may include:
+
+- inflow multiplier
+- outflow multiplier
+- confidence ratio
+- delayed collections
+- accelerated settlement outflows
+
+Forecast lines preserve daily inflow, outflow, net movement, and closing cash.
+
+## Retry job
 
 ```js
 const {
-  startTreasuryExposureJob,
-} = require('./jobs/treasuryExposure.job');
+  startTreasuryTransferRetryJob,
+} = require('./jobs/treasuryTransferRetry.job');
 
-const treasuryExposureJob =
-  startTreasuryExposureJob({ logger });
+const treasuryTransferRetryJob =
+  startTreasuryTransferRetryJob({ logger });
 ```
 
-Optional configuration:
-
-```env
-TREASURY_EXPOSURE_CURRENCIES=USD,ZWL
-TREASURY_REPORTING_CURRENCY=USD
-```
+Automated retries should remain disabled or tightly controlled until the bank
+provider's idempotency behavior is verified.
 
 ## Frontend route
 
 ```jsx
 <Route
-  path="/admin/finance/treasury/risk"
-  element={<TreasuryRiskDashboard />}
+  path="/admin/finance/treasury/execution"
+  element={<TreasuryExecutionDashboard />}
 />
 ```
 
 ## Controls
 
-- Require approval for all treasury transfers.
-- Never convert currencies without an explicit rate.
-- Preserve FX rate source and timestamp.
-- Do not auto-execute cash pool sweep plans.
-- Keep transfer execution separate from planning.
-- Reconcile completed transfers against bank statements.
-- Set conservative exposure limits before enabling alerts in production.
+- Require maker-checker approval.
+- Use transfer reference as provider idempotency key.
+- Never update balances before provider confirmation.
+- Never retry blindly against providers without idempotency support.
+- Reconcile all completed transfers.
+- Preserve all execution attempts and provider responses.
+- Require approved FX rates for cross-currency transfers.
+- Keep forecast assumptions versioned and auditable.
 
 ## Verification
 
 ```bash
 cd backend
-npm test -- fxRate.test.js
-npm test -- cashPooling.test.js
-node --check src/services/fxRate.service.js
-node --check src/services/fxExposure.service.js
-node --check src/services/treasuryTransfer.service.js
-node --check src/services/cashPooling.service.js
+npm test -- treasuryTransferExecution.test.js
+npm test -- liquidityForecast.test.js
+node --check src/services/treasuryTransferExecution.service.js
+node --check src/services/liquidityForecast.service.js
+node --check src/services/fxDeal.service.js
 npm run lint
 ```
 

@@ -1,0 +1,78 @@
+.treasury-execution-page {
+  width: min(1220px, calc(100% - 32px));
+  margin: 0 auto;
+  padding: 42px 0 60px;
+  color: #121714;
+}
+
+.treasury-execution-page h1 {
+  margin: 4px 0;
+  font-size: clamp(32px, 4vw, 48px);
+  letter-spacing: -.04em;
+}
+
+.treasury-execution-page > header p:last-child {
+  margin: 0 0 26px;
+  color: #728077;
+}
+
+.treasury-transfer-table {
+  overflow: hidden;
+  border: 1px solid #dde5df;
+  border-radius: 18px;
+  background: #fff;
+}
+
+.treasury-transfer-table article,
+.liquidity-forecast-card {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto 110px auto;
+  gap: 16px;
+  align-items: center;
+  padding: 16px 18px;
+  border-top: 1px solid #eef2ef;
+}
+
+.treasury-transfer-table article:first-child {
+  border-top: 0;
+}
+
+.treasury-transfer-table article > div,
+.liquidity-forecast-card > div {
+  display: grid;
+  gap: 4px;
+}
+
+.treasury-transfer-table span,
+.liquidity-forecast-card span {
+  color: #728077;
+  font-size: 12px;
+}
+
+.treasury-transfer-table__actions {
+  display: flex !important;
+  gap: 8px;
+}
+
+.treasury-transfer-table button {
+  min-height: 38px;
+  padding: 0 12px;
+  border: 1px solid #126a56;
+  border-radius: 11px;
+  background: #126a56;
+  color: #fff;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.treasury-execution-state {
+  padding: 72px 24px;
+  text-align: center;
+}
+
+@media (max-width: 760px) {
+  .treasury-transfer-table article,
+  .liquidity-forecast-card {
+    grid-template-columns: 1fr;
+  }
+}
