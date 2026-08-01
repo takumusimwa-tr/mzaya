@@ -1,134 +1,147 @@
-# Mzaya Batch 08.4.0 — Financial Close, Trial Balance & Statements
+# Mzaya Batch 08.4.1 — Budgeting, Forecasting & Variance Analysis
 
-This batch adds the accounting close layer above the immutable ledger,
-reconciliation, treasury, settlements, tax, and financial controls.
+This batch introduces FP&A capabilities above the ledger, close, treasury,
+settlement, and tax layers.
 
 ## Database
 
 ```bash
-psql "$DATABASE_URL" -f backend/migrations/financial_close_reporting.sql
+psql "$DATABASE_URL" -f backend/migrations/budgeting_forecasting_variance.sql
 ```
 
 ## Register and export models
 
-- `FinancialCloseCycle`
-- `FinancialCloseTask`
-- `TrialBalanceSnapshot`
-- `TrialBalanceLine`
-- `FinancialStatementSnapshot`
-- `CloseAdjustment`
-- `CloseAdjustmentLine`
+- `Budget`
+- `BudgetVersion`
+- `BudgetLine`
+- `BudgetAllocation`
+- `Forecast`
+- `ForecastVersion`
+- `ForecastLine`
+- `VarianceReport`
+- `VarianceReportLine`
 
 Required associations:
 
 ```js
-FinancialCloseCycle.hasMany(FinancialCloseTask, {
-  foreignKey: 'close_cycle_id',
-  as: 'tasks',
+Budget.hasMany(BudgetVersion, {
+  foreignKey: 'budget_id',
+  as: 'versions',
 });
 
-TrialBalanceSnapshot.hasMany(TrialBalanceLine, {
-  foreignKey: 'snapshot_id',
+BudgetVersion.hasMany(BudgetLine, {
+  foreignKey: 'budget_version_id',
+  as: 'lines',
+});
+
+Forecast.hasMany(ForecastVersion, {
+  foreignKey: 'forecast_id',
+  as: 'versions',
+});
+
+ForecastVersion.hasMany(ForecastLine, {
+  foreignKey: 'forecast_version_id',
+  as: 'lines',
+});
+
+VarianceReport.hasMany(VarianceReportLine, {
+  foreignKey: 'variance_report_id',
   as: 'lines',
 });
 ```
 
-## Route mount
+## Route mounts
 
 ```js
+app.use('/api/budgets', require('./routes/budget.routes'));
+app.use('/api/forecasts', require('./routes/forecast.routes'));
 app.use(
-  '/api/financial-close',
-  require('./routes/financialClose.routes')
+  '/api/variance-reports',
+  require('./routes/variance.routes')
 );
 ```
 
-All routes are administrator-only.
-
-## Close workflow
+## Budget workflow
 
 ```text
-period opened
-   ↓
-close cycle started
-   ↓
-reconciliation tasks completed
-   ↓
-settlement and tax review
-   ↓
-trial balance generated
-   ↓
-financial statements generated
-   ↓
-management sign-off
-   ↓
-period closed
+draft
+  ↓
+approved
+  ↓
+active
+  ↓
+superseded
 ```
 
-## Trial balance
+Budget creators cannot approve their own versions.
 
-The trial balance aggregates posted ledger entries by payment account and
-currency. It preserves:
+## Forecasting
 
-- debit total
-- credit total
-- account-level net balance
-- snapshot type
-- generation timestamp
-- preparer identity
+Forecasts support:
 
-A close cannot complete without a balanced final trial balance.
+```text
+base
+upside
+downside
+stress
+```
 
-## Financial statements
+The forecast service applies growth and confidence assumptions while preserving
+integer minor units.
 
-The included statement builders provide the technical foundation for:
+## Variance analysis
 
-- income statement
-- balance sheet
+Supported report types:
 
-Final account mappings must be confirmed before production use. Account types
-must be normalized so revenue, expense, asset, liability, and equity accounts
-are classified consistently.
+```text
+actual_vs_budget
+actual_vs_forecast
+```
 
-## Close adjustments
+Variance favorability rules:
 
-Use close adjustments for approved period-end entries only. Each adjustment
-must:
+- revenue above comparator is favorable
+- expense below comparator is favorable
 
-- balance debits and credits
-- pass maker-checker approval
-- post through the immutable ledger
-- preserve the resulting ledger transaction
-- remain linked to the close cycle
+## Scheduled variance generation
 
-## Frontend route
+```js
+const {
+  startBudgetVarianceJob,
+} = require('./jobs/budgetVariance.job');
+
+const budgetVarianceJob =
+  startBudgetVarianceJob({ logger });
+```
+
+## Frontend routes
 
 ```jsx
-<Route
-  path="/admin/finance/close"
-  element={<FinancialCloseDashboard />}
-/>
+<Route path="/admin/finance/budgets" element={<BudgetDashboard />} />
+<Route path="/admin/finance/forecasts" element={<ForecastDashboard />} />
+<Route path="/admin/finance/variance" element={<VarianceDashboard />} />
 ```
 
 ## Controls
 
-- Do not complete a close with unresolved reconciliation exceptions.
-- Require a balanced final trial balance.
-- Require management sign-off.
-- Preserve all trial-balance and statement versions.
-- Do not overwrite approved statement snapshots.
-- Reopening a completed close must use Financial Controls from Batch 08.2.3.
-- Tax and treasury reporting remain operational views until professionally
-  reviewed and mapped to final accounting policies.
+- Require maker-checker approval for budget versions.
+- Preserve every approved budget and forecast version.
+- Never overwrite historical assumptions.
+- Map departments and cost centers consistently.
+- Keep actuals sourced from the immutable ledger.
+- Do not treat forecasts as commitments.
+- Variance reports should be regenerated after material close adjustments.
 
 ## Verification
 
 ```bash
 cd backend
-npm test -- financialStatements.test.js
-npm test -- financialClose.test.js
-node --check src/services/trialBalance.service.js
-node --check src/services/financialClose.service.js
-node --check src/services/financialStatements.service.js
+npm test -- budget.test.js
+npm test -- forecast.test.js
+npm test -- variance.test.js
+node --check src/services/budget.service.js
+node --check src/services/forecast.service.js
+node --check src/services/variance.service.js
 npm run lint
 ```
 
