@@ -1,64 +1,152 @@
-# Mzaya Batch 08.2.3 — Financial Controls & Approval Governance
+# Mzaya Batch 08.3.0 — Treasury, Banking & Cash Management
 
-This batch introduces maker-checker controls, approval policies, thresholds,
-control exceptions, and administrator review workflows.
+This batch adds the treasury operating layer above the immutable ledger,
+settlements, provider reconciliation, tax and financial controls.
 
 ## Database
 
 ```bash
-psql "$DATABASE_URL" -f backend/migrations/financial_controls_governance.sql
+psql "$DATABASE_URL" -f backend/migrations/treasury_cash_management.sql
 ```
 
-## Model integration
+## Register and export models
 
-Export the four models from `financialControlModels.js` through the existing
-associations module and add:
+- `TreasuryAccount`
+- `BankAccount`
+- `BankStatementImport`
+- `BankTransaction`
+- `TreasuryReconciliation`
+- `CashMovement`
+- `TreasuryPaymentBatch`
+- `TreasuryPaymentBatchItem`
+- `LiquiditySnapshot`
+
+Suggested associations:
 
 ```js
-FinancialApprovalRequest.belongsTo(FinancialControlPolicy, {
-  foreignKey: 'policy_id',
-  as: 'policy',
+TreasuryAccount.hasMany(BankAccount, {
+  foreignKey: 'treasury_account_id',
+  as: 'bankAccounts',
 });
 
-FinancialApprovalRequest.hasMany(FinancialApprovalDecision, {
-  foreignKey: 'approval_request_id',
-  as: 'decisions',
+BankAccount.belongsTo(TreasuryAccount, {
+  foreignKey: 'treasury_account_id',
+  as: 'treasuryAccount',
+});
+
+TreasuryPaymentBatch.hasMany(TreasuryPaymentBatchItem, {
+  foreignKey: 'batch_id',
+  as: 'items',
 });
 ```
 
-## Route mount
+## Route mounts
 
 ```js
-app.use('/api/financial-controls', require('./routes/financialControl.routes'));
+app.use('/api/treasury', require('./routes/treasury.routes'));
+app.use(
+  '/api/treasury-reconciliation',
+  require('./routes/treasuryReconciliation.routes')
+);
+app.use(
+  '/api/treasury-payment-batches',
+  require('./routes/paymentBatch.routes')
+);
 ```
 
-## Recommended protected actions
+All routes are administrator-only.
 
-- high-value refunds
-- settlement submissions
-- financial-period reopening
-- manual ledger adjustments
-- tax-return submission
-- reconciliation overrides
-- payout destination changes
+## Bank integrations
 
-## Maker-checker behavior
+Store only tokenized account references. Never store raw bank credentials,
+full account numbers, PINs, or online-banking passwords.
 
-When `require_distinct_creator=true`, the request creator cannot approve the
-same action. Policies can require multiple approvals and specific roles.
+Provider adapters should update:
+
+- current balance
+- available balance
+- last synced time
+- bank transactions
+- statement import status
+
+## Reconciliation
+
+Bank transactions may be matched to ledger transactions.
+
+Statuses:
+
+```text
+unmatched
+matched
+discrepancy
+ignored
+```
+
+Exact matches require equal amounts. Manual matches retain the difference.
+
+## Payment batches
+
+Payment batches are single-currency collections of approved outgoing payments.
+Use Financial Controls from 08.2.3 before approval and submission.
+
+Recommended workflow:
+
+```text
+draft
+approved
+submitted
+completed / failed
+```
+
+## Liquidity snapshots
+
+```js
+const {
+  startLiquiditySnapshotJob,
+} = require('./jobs/liquiditySnapshot.job');
+
+const liquiditySnapshotJob =
+  startLiquiditySnapshotJob({ logger });
+```
+
+Optional:
+
+```env
+TREASURY_SNAPSHOT_CURRENCIES=USD,ZWL
+```
 
 ## Frontend route
 
 ```jsx
-<Route path="/admin/finance/controls" element={<FinancialControlsDashboard />} />
+<Route
+  path="/admin/finance/treasury"
+  element={<TreasuryDashboard />}
+/>
 ```
+
+Protect with the administrator route guard.
+
+## Controls
+
+- Keep bank data encrypted at rest.
+- Require maker-checker approval for transfers and payment batches.
+- Reconcile bank activity daily.
+- Preserve imported statements and reconciliation evidence.
+- Keep treasury balances separated by currency.
+- Never infer foreign-exchange conversions silently.
+- Treat liquidity dashboards as operational management views, not audited
+  financial statements.
 
 ## Verification
 
 ```bash
 cd backend
-npm test -- financialApproval.test.js
-node --check src/services/financialApproval.service.js
+npm test -- liquidity.test.js
+npm test -- treasuryForecast.test.js
+npm test -- paymentBatch.test.js
+node --check src/services/liquidity.service.js
+node --check src/services/treasuryReconciliation.service.js
+node --check src/services/paymentBatch.service.js
 npm run lint
 ```
 
