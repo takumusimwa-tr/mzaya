@@ -1,0 +1,144 @@
+.finance-audit-page {
+  width: min(1240px, calc(100% - 32px));
+  margin: 0 auto;
+  padding: 42px 0 60px;
+  color: #121714;
+}
+
+.finance-audit-page h1 {
+  margin: 4px 0;
+  font-size: clamp(34px, 4vw, 50px);
+  letter-spacing: -.045em;
+}
+
+.finance-audit-page > header p:last-child {
+  margin: 0;
+  color: #728077;
+}
+
+.finance-audit-kpis {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
+  margin: 26px 0;
+}
+
+.finance-audit-kpis article,
+.audit-plan-card,
+.control-assessment-card,
+.audit-finding-table,
+.remediation-tracker {
+  border: 1px solid #dde5df;
+  border-radius: 18px;
+  background: #fff;
+}
+
+.finance-audit-kpis article {
+  padding: 20px;
+}
+
+.finance-audit-kpis span,
+.audit-plan-card span,
+.control-assessment-card span,
+.audit-finding-table span,
+.remediation-tracker span {
+  color: #728077;
+  font-size: 12px;
+}
+
+.finance-audit-kpis strong {
+  display: block;
+  margin-top: 8px;
+  font-size: 25px;
+}
+
+.finance-audit-grid {
+  display: grid;
+  grid-template-columns: 1fr 1.2fr;
+  gap: 18px;
+}
+
+.audit-plan-grid,
+.assessment-grid {
+  display: grid;
+  gap: 10px;
+}
+
+.audit-plan-card,
+.control-assessment-card,
+.audit-finding-table article,
+.remediation-tracker article {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto auto;
+  gap: 16px;
+  align-items: center;
+  padding: 16px 18px;
+}
+
+.audit-plan-card > div,
+.control-assessment-card > div,
+.audit-finding-table article > div,
+.remediation-tracker article > div {
+  display: grid;
+  gap: 4px;
+}
+
+.audit-finding-table article,
+.remediation-tracker article {
+  border-top: 1px solid #eef2ef;
+}
+
+.audit-finding-table article:first-child,
+.remediation-tracker article:first-child {
+  border-top: 0;
+}
+
+.audit-status,
+.audit-severity {
+  padding: 6px 9px;
+  border-radius: 999px;
+  background: #eef3ef;
+  color: #126a56 !important;
+  font-weight: 800;
+  text-transform: capitalize;
+}
+
+.remediation-actions {
+  display: flex !important;
+}
+
+.remediation-actions button {
+  min-height: 38px;
+  padding: 0 12px;
+  border: 1px solid #126a56;
+  border-radius: 11px;
+  background: #126a56;
+  color: #fff;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.finance-audit-state {
+  padding: 72px 24px;
+  text-align: center;
+}
+
+@media (max-width: 900px) {
+  .finance-audit-kpis {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .finance-audit-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 660px) {
+  .finance-audit-kpis,
+  .audit-plan-card,
+  .control-assessment-card,
+  .audit-finding-table article,
+  .remediation-tracker article {
+    grid-template-columns: 1fr;
+  }
+}

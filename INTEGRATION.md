@@ -1,41 +1,43 @@
-# Mzaya Batch 08.4.4 — Executive Finance Analytics, KPI Governance & Board Reporting
+# Mzaya Batch 08.4.5 — Finance Audit, Controls Testing & Evidence Management
 
-This batch unifies the authoritative finance modules into a controlled
-executive decision layer.
+This batch adds the assurance layer across financial controls, ledger,
+treasury, reconciliation, settlements, revenue, tax, close, reporting,
+and management actions.
 
 ## Database
 
 ```bash
-psql "$DATABASE_URL" -f backend/migrations/executive_finance_reporting.sql
+psql "$DATABASE_URL" -f backend/migrations/finance_audit_assurance.sql
 ```
 
 ## Register and export models
 
-- `FinanceKpiDefinition`
-- `FinanceKpiSnapshot`
-- `FinanceReportingPack`
-- `FinanceReportingSection`
-- `FinanceNarrative`
-- `FinanceReportingSchedule`
-- `FinanceReportingDistribution`
-- `ExecutiveFinanceAlert`
+- `FinanceAuditPlan`
+- `FinanceAuditEngagement`
+- `FinanceAuditProcedure`
+- `FinanceControlAssessment`
+- `FinanceAuditSample`
+- `FinanceAuditEvidence`
+- `FinanceAuditFinding`
+- `FinanceRemediationAction`
+- `FinanceContinuousControlResult`
 
 Required associations:
 
 ```js
-FinanceKpiDefinition.hasMany(FinanceKpiSnapshot, {
-  foreignKey: 'kpi_definition_id',
-  as: 'snapshots',
+FinanceAuditPlan.hasMany(FinanceAuditEngagement, {
+  foreignKey: 'audit_plan_id',
+  as: 'engagements',
 });
 
-FinanceReportingPack.hasMany(FinanceReportingSection, {
-  foreignKey: 'reporting_pack_id',
-  as: 'sections',
+FinanceAuditEngagement.hasMany(FinanceAuditProcedure, {
+  foreignKey: 'engagement_id',
+  as: 'procedures',
 });
 
-FinanceReportingPack.hasMany(FinanceNarrative, {
-  foreignKey: 'reporting_pack_id',
-  as: 'narratives',
+FinanceAuditFinding.hasMany(FinanceRemediationAction, {
+  foreignKey: 'finding_id',
+  as: 'remediationActions',
 });
 ```
 
@@ -43,156 +45,150 @@ FinanceReportingPack.hasMany(FinanceNarrative, {
 
 ```js
 app.use(
-  '/api/executive-finance',
-  require('./routes/executiveFinance.routes')
+  '/api/finance-audit',
+  require('./routes/financeAudit.routes')
 );
 
 app.use(
-  '/api/finance-kpis',
-  require('./routes/financeKpi.routes')
+  '/api/finance-audit-findings',
+  require('./routes/financeAuditFinding.routes')
 );
 
 app.use(
-  '/api/finance-reporting-packs',
-  require('./routes/financeReportingPack.routes')
+  '/api/finance-remediation',
+  require('./routes/financeRemediation.routes')
 );
 ```
 
-All routes are administrator-only.
+All routes are administrator-only. Production should introduce dedicated
+auditor and audit-manager roles with segregation from transaction operators.
 
-## Seed KPI definitions
-
-Recommended KPI keys:
-
-```text
-gross_order_value
-recognized_revenue
-contribution_margin_ratio
-net_margin_ratio
-revenue_per_order
-contribution_per_order
-available_cash
-cash_runway_days
-budget_variance_ratio
-forecast_variance_ratio
-close_completion_ratio
-reconciliation_exception_count
-```
-
-Each KPI definition must document:
-
-- business definition
-- formula version
-- authoritative data sources
-- aggregation method
-- unit
-- owner
-- favorable direction
-- warning threshold
-- critical threshold
-
-## Reporting packs
-
-Supported pack types:
+## Standard control areas
 
 ```text
-weekly
-management
-board
-investor
+financial_controls
+ledger
+treasury
+settlements
+revenue
+tax
+close
+reporting
 ```
 
-Generated sections currently include:
+## Continuous control testing
 
-- executive summary
-- liquidity and treasury
-- profitability
-- budget and forecast
-- close readiness
+The included tests cover:
 
-The export provider should generate PDF and spreadsheet files from approved
-pack snapshots, not from live mutable queries.
+- maker-checker separation
+- posted ledger transaction balancing
+
+Extend the same pattern for:
+
+- expired approval execution
+- bank-reconciliation completeness
+- settlement completeness
+- revenue-recognition reversals
+- tax filing deadlines
+- close-task evidence
+- reporting-pack approval
+- treasury-transfer idempotency
 
 ## Jobs
 
 ```js
 const {
-  startFinanceKpiSnapshotJob,
-} = require('./jobs/financeKpiSnapshot.job');
+  startContinuousControlTestingJob,
+} = require('./jobs/continuousControlTesting.job');
 
 const {
-  startManagementPackJob,
-} = require('./jobs/managementPack.job');
+  startRemediationReminderJob,
+} = require('./jobs/remediationReminder.job');
 
-const financeKpiSnapshotJob =
-  startFinanceKpiSnapshotJob({ logger });
+const continuousControlTestingJob =
+  startContinuousControlTestingJob({ logger });
 
-const managementPackJob =
-  startManagementPackJob({ logger });
-```
-
-Optional configuration:
-
-```env
-FINANCE_KPI_CURRENCIES=USD,ZWL
-FINANCE_REPORTING_CURRENCY=USD
+const remediationReminderJob =
+  startRemediationReminderJob({ logger });
 ```
 
 ## Socket.IO
 
 ```js
 const {
-  initializeExecutiveFinanceEventBridge,
-} = require('./realtime/executiveFinanceEventBridge');
+  initializeFinanceAuditEventBridge,
+} = require('./realtime/financeAuditEventBridge');
 
-const closeExecutiveFinanceBridge =
-  initializeExecutiveFinanceEventBridge(io);
+const closeFinanceAuditBridge =
+  initializeFinanceAuditEventBridge(io);
 ```
 
-Call the returned cleanup function during graceful shutdown.
+Call the cleanup function during graceful shutdown.
 
 ## Frontend routes
 
 ```jsx
 <Route
-  path="/admin/finance/executive"
-  element={<ExecutiveFinanceDashboard />}
+  path="/admin/finance/audit"
+  element={<FinanceAuditDashboard />}
 />
 
 <Route
-  path="/admin/finance/kpis"
-  element={<FinanceKpiLibrary />}
+  path="/admin/finance/audit/findings"
+  element={<FinanceFindingsDashboard />}
 />
 
 <Route
-  path="/admin/finance/reporting"
-  element={<ManagementReporting />}
+  path="/admin/finance/audit/remediation"
+  element={<RemediationDashboard />}
 />
 ```
 
-## Governance controls
+## Evidence controls
 
-- Executive KPIs must read from authoritative finance modules.
-- Do not duplicate business calculations inside presentation code.
-- Preserve source lineage for every KPI snapshot.
-- Formula changes require a new formula version.
-- Approved reporting packs must be immutable.
-- Board packs require maker-checker approval.
-- Narratives must distinguish factual results from management judgment.
-- Exports should render from stored pack sections and approved narratives.
-- Restrict reporting-pack distributions to approved recipients.
-- Do not represent management dashboards as audited financial statements.
+- Store files in private, access-controlled storage.
+- Preserve content hashes.
+- Record source type and source identifier.
+- Apply retention dates.
+- Never overwrite collected evidence.
+- Keep evidence links immutable after engagement completion.
+- Log access to restricted evidence.
+
+## Finding and remediation workflow
+
+```text
+finding raised
+      ↓
+management response
+      ↓
+remediation assigned
+      ↓
+completed with evidence
+      ↓
+independent verification
+      ↓
+finding closed
+```
+
+The remediation completer cannot verify the same action.
+
+## Important limitation
+
+This package is an internal audit and assurance workflow foundation. It does
+not provide an external audit opinion and does not replace professional
+auditors, statutory requirements, or approved internal-audit methodology.
 
 ## Verification
 
 ```bash
 cd backend
-npm test -- financeKpi.test.js
-npm test -- financeTrend.test.js
-npm test -- reportingPack.test.js
-node --check src/services/financeKpi.service.js
-node --check src/services/executiveFinanceAnalytics.service.js
-node --check src/services/financeReportingPack.service.js
+npm test -- controlAssessment.test.js
+npm test -- auditSampling.test.js
+npm test -- remediation.test.js
+node --check src/services/financeControlAssessment.service.js
+node --check src/services/financeEvidence.service.js
+node --check src/services/financeRemediation.service.js
+node --check src/services/continuousControlTesting.service.js
 npm run lint
 ```
 
