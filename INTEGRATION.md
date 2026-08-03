@@ -1,147 +1,167 @@
-# Mzaya Batch 08.4.1 — Budgeting, Forecasting & Variance Analysis
+# Mzaya Batch 08.4.2 — Consolidation, Multi-Entity & Group Reporting
 
-This batch introduces FP&A capabilities above the ledger, close, treasury,
-settlement, and tax layers.
+This batch adds legal entities, ownership structures, intercompany activity,
+eliminations, currency translation, consolidation runs, and group reports.
 
 ## Database
 
 ```bash
-psql "$DATABASE_URL" -f backend/migrations/budgeting_forecasting_variance.sql
+psql "$DATABASE_URL" -f backend/migrations/multi_entity_consolidation.sql
 ```
 
 ## Register and export models
 
-- `Budget`
-- `BudgetVersion`
-- `BudgetLine`
-- `BudgetAllocation`
-- `Forecast`
-- `ForecastVersion`
-- `ForecastLine`
-- `VarianceReport`
-- `VarianceReportLine`
+- `LegalEntity`
+- `ConsolidationGroup`
+- `ConsolidationMember`
+- `EntityAccountMapping`
+- `IntercompanyTransaction`
+- `ConsolidationRun`
+- `EliminationEntry`
+- `CurrencyTranslationAdjustment`
+- `GroupReportSnapshot`
 
 Required associations:
 
 ```js
-Budget.hasMany(BudgetVersion, {
-  foreignKey: 'budget_id',
-  as: 'versions',
+LegalEntity.hasMany(LegalEntity, {
+  foreignKey: 'parent_entity_id',
+  as: 'children',
 });
 
-BudgetVersion.hasMany(BudgetLine, {
-  foreignKey: 'budget_version_id',
-  as: 'lines',
+ConsolidationGroup.hasMany(ConsolidationMember, {
+  foreignKey: 'consolidation_group_id',
+  as: 'members',
 });
 
-Forecast.hasMany(ForecastVersion, {
-  foreignKey: 'forecast_id',
-  as: 'versions',
-});
-
-ForecastVersion.hasMany(ForecastLine, {
-  foreignKey: 'forecast_version_id',
-  as: 'lines',
-});
-
-VarianceReport.hasMany(VarianceReportLine, {
-  foreignKey: 'variance_report_id',
-  as: 'lines',
+ConsolidationMember.belongsTo(LegalEntity, {
+  foreignKey: 'legal_entity_id',
+  as: 'legalEntity',
 });
 ```
 
 ## Route mounts
 
 ```js
-app.use('/api/budgets', require('./routes/budget.routes'));
-app.use('/api/forecasts', require('./routes/forecast.routes'));
 app.use(
-  '/api/variance-reports',
-  require('./routes/variance.routes')
+  '/api/consolidation',
+  require('./routes/consolidation.routes')
+);
+
+app.use(
+  '/api/intercompany',
+  require('./routes/intercompany.routes')
+);
+
+app.use(
+  '/api/group-reports',
+  require('./routes/groupReports.routes')
 );
 ```
 
-## Budget workflow
+All routes are administrator-only.
+
+## Consolidation workflow
 
 ```text
-draft
-  ↓
-approved
-  ↓
-active
-  ↓
-superseded
+entity trial balances
+      ↓
+account mapping
+      ↓
+currency translation
+      ↓
+intercompany matching
+      ↓
+elimination entries
+      ↓
+group aggregation
+      ↓
+consolidated reports
 ```
 
-Budget creators cannot approve their own versions.
+## Consolidation methods
 
-## Forecasting
-
-Forecasts support:
+Supported foundation:
 
 ```text
-base
-upside
-downside
-stress
+full
+proportional
+equity
 ```
 
-The forecast service applies growth and confidence assumptions while preserving
-integer minor units.
+The current service performs the full-consolidation framework. Proportional,
+equity-method, minority-interest, goodwill, and acquisition accounting require
+separate policy-driven extensions.
 
-## Variance analysis
+## Intercompany controls
 
-Supported report types:
+- Record both source and counterparty entities.
+- Preserve both ledger transaction references.
+- Match balances before elimination.
+- Do not eliminate unmatched transactions.
+- Retain every elimination entry by consolidation run.
 
-```text
-actual_vs_budget
-actual_vs_forecast
-```
+## Currency translation
 
-Variance favorability rules:
+Currency translation uses the treasury FX rate service from Batch 08.3.2.
 
-- revenue above comparator is favorable
-- expense below comparator is favorable
+Production accounting policy must define:
 
-## Scheduled variance generation
+- closing rates
+- average income-statement rates
+- historical equity rates
+- translation reserve treatment
+
+## Nightly consolidation
 
 ```js
 const {
-  startBudgetVarianceJob,
-} = require('./jobs/budgetVariance.job');
+  startNightlyConsolidationJob,
+} = require('./jobs/nightlyConsolidation.job');
 
-const budgetVarianceJob =
-  startBudgetVarianceJob({ logger });
+const nightlyConsolidationJob =
+  startNightlyConsolidationJob({ logger });
 ```
+
+Stop it during graceful shutdown.
 
 ## Frontend routes
 
 ```jsx
-<Route path="/admin/finance/budgets" element={<BudgetDashboard />} />
-<Route path="/admin/finance/forecasts" element={<ForecastDashboard />} />
-<Route path="/admin/finance/variance" element={<VarianceDashboard />} />
+<Route
+  path="/admin/finance/consolidation"
+  element={<ConsolidationDashboard />}
+/>
+
+<Route
+  path="/admin/finance/intercompany"
+  element={<IntercompanyDashboard />}
+/>
+
+<Route
+  path="/admin/finance/group-reporting"
+  element={<GroupReportingDashboard />}
+/>
 ```
 
-## Controls
+## Important accounting limitation
 
-- Require maker-checker approval for budget versions.
-- Preserve every approved budget and forecast version.
-- Never overwrite historical assumptions.
-- Map departments and cost centers consistently.
-- Keep actuals sourced from the immutable ledger.
-- Do not treat forecasts as commitments.
-- Variance reports should be regenerated after material close adjustments.
+This package is a technical consolidation foundation. It is not a replacement
+for professionally approved group accounting policies. Ownership changes,
+minority interests, goodwill, acquisition accounting, tax consolidation,
+hyperinflation accounting, and statutory group reporting require qualified
+accounting review before production use.
 
 ## Verification
 
 ```bash
 cd backend
-npm test -- budget.test.js
-npm test -- forecast.test.js
-npm test -- variance.test.js
-node --check src/services/budget.service.js
-node --check src/services/forecast.service.js
-node --check src/services/variance.service.js
+npm test -- currencyTranslation.test.js
+npm test -- groupReporting.test.js
+node --check src/services/consolidation.service.js
+node --check src/services/elimination.service.js
+node --check src/services/intercompany.service.js
+node --check src/services/currencyTranslation.service.js
 npm run lint
 ```
 

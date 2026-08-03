@@ -1,0 +1,122 @@
+.consolidation-page {
+  width: min(1240px, calc(100% - 32px));
+  margin: 0 auto;
+  padding: 42px 0 60px;
+  color: #121714;
+}
+
+.consolidation-page h1 {
+  margin: 4px 0;
+  font-size: clamp(32px, 4vw, 48px);
+  letter-spacing: -.04em;
+}
+
+.consolidation-page > header p:last-child {
+  margin: 0;
+  color: #728077;
+}
+
+.consolidation-grid {
+  display: grid;
+  grid-template-columns: 1fr 1.2fr;
+  gap: 18px;
+  margin-top: 26px;
+}
+
+.consolidation-group-card,
+.consolidation-status,
+.intercompany-table,
+.group-report-card {
+  border: 1px solid #dde5df;
+  border-radius: 18px;
+  background: #fff;
+}
+
+.consolidation-group-card {
+  padding: 18px;
+}
+
+.entity-tree {
+  display: grid;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.entity-tree-node,
+.consolidation-status article,
+.intercompany-table article {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  gap: 16px;
+  align-items: center;
+  padding: 14px 16px;
+  border-top: 1px solid #eef2ef;
+}
+
+.entity-tree-node {
+  padding-left: calc(16px + (var(--entity-depth) * 18px));
+  border: 1px solid #eef2ef;
+  border-radius: 12px;
+}
+
+.entity-tree-node > div,
+.consolidation-status article > div,
+.intercompany-table article > div,
+.group-report-card > div {
+  display: grid;
+  gap: 4px;
+}
+
+.entity-tree-node span,
+.consolidation-status span,
+.intercompany-table span,
+.group-report-card span {
+  color: #728077;
+  font-size: 12px;
+}
+
+.consolidation-run-status {
+  padding: 6px 9px;
+  border-radius: 999px;
+  background: #eef3ef;
+  color: #126a56 !important;
+  font-weight: 800;
+  text-transform: capitalize;
+}
+
+.group-report-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+  margin-top: 26px;
+}
+
+.group-report-card {
+  display: grid;
+  gap: 14px;
+  padding: 18px;
+}
+
+.consolidation-state {
+  padding: 72px 24px;
+  text-align: center;
+}
+
+@media (max-width: 900px) {
+  .consolidation-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .group-report-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (max-width: 640px) {
+  .entity-tree-node,
+  .consolidation-status article,
+  .intercompany-table article,
+  .group-report-grid {
+    grid-template-columns: 1fr;
+  }
+}
