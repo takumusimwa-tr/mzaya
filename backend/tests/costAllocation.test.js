@@ -1,0 +1,1 @@
+const {allocateProRata}=require('../src/services/costAllocation.service');describe('cost allocation',()=>{test('preserves total cost',()=>{const r=allocateProRata({totalCostMinor:100,bases:[{id:'a',basis:1},{id:'b',basis:2}]});expect(r.reduce((s,i)=>s+i.allocatedMinor,0)).toBe(100);});});

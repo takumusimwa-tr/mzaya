@@ -1,170 +1,55 @@
-# Mzaya Batch 08.4.2 — Consolidation, Multi-Entity & Group Reporting
-
-This batch adds legal entities, ownership structures, intercompany activity,
-eliminations, currency translation, consolidation runs, and group reports.
+# Mzaya Batch 08.4.3 — Revenue Recognition, Cost Allocation & Profitability
 
 ## Database
-
 ```bash
-psql "$DATABASE_URL" -f backend/migrations/multi_entity_consolidation.sql
+psql "$DATABASE_URL" -f backend/migrations/revenue_profitability.sql
 ```
 
-## Register and export models
-
-- `LegalEntity`
-- `ConsolidationGroup`
-- `ConsolidationMember`
-- `EntityAccountMapping`
-- `IntercompanyTransaction`
-- `ConsolidationRun`
-- `EliminationEntry`
-- `CurrencyTranslationAdjustment`
-- `GroupReportSnapshot`
-
-Required associations:
-
-```js
-LegalEntity.hasMany(LegalEntity, {
-  foreignKey: 'parent_entity_id',
-  as: 'children',
-});
-
-ConsolidationGroup.hasMany(ConsolidationMember, {
-  foreignKey: 'consolidation_group_id',
-  as: 'members',
-});
-
-ConsolidationMember.belongsTo(LegalEntity, {
-  foreignKey: 'legal_entity_id',
-  as: 'legalEntity',
-});
-```
+## Register models
+`RevenueRecognitionRule`, `RevenueSchedule`, `RecognizedRevenueEvent`, `OrderEconomics`, `CostAllocationRule`, `CostAllocationRun`, and `ProfitabilitySnapshot`.
 
 ## Route mounts
-
 ```js
-app.use(
-  '/api/consolidation',
-  require('./routes/consolidation.routes')
-);
-
-app.use(
-  '/api/intercompany',
-  require('./routes/intercompany.routes')
-);
-
-app.use(
-  '/api/group-reports',
-  require('./routes/groupReports.routes')
-);
+app.use('/api/revenue-recognition', require('./routes/revenueRecognition.routes'));
+app.use('/api/cost-allocations', require('./routes/costAllocation.routes'));
+app.use('/api/profitability', require('./routes/profitability.routes'));
 ```
 
-All routes are administrator-only.
+## Recognition policy
+Create schedules when payment is captured. Recognize platform, delivery, procurement, commission, or subscription revenue only when the corresponding obligation is satisfied. Refunds and qualifying cancellations must call `reverseRevenue()`.
 
-## Consolidation workflow
+## Order economics events
+Recalculate after order completion, payment capture, vendor settlement, Mzaya payout, refund, chargeback, gateway-fee update, and overhead allocation. Gross order value is not Mzaya revenue.
 
-```text
-entity trial balances
-      ↓
-account mapping
-      ↓
-currency translation
-      ↓
-intercompany matching
-      ↓
-elimination entries
-      ↓
-group aggregation
-      ↓
-consolidated reports
-```
-
-## Consolidation methods
-
-Supported foundation:
-
-```text
-full
-proportional
-equity
-```
-
-The current service performs the full-consolidation framework. Proportional,
-equity-method, minority-interest, goodwill, and acquisition accounting require
-separate policy-driven extensions.
-
-## Intercompany controls
-
-- Record both source and counterparty entities.
-- Preserve both ledger transaction references.
-- Match balances before elimination.
-- Do not eliminate unmatched transactions.
-- Retain every elimination entry by consolidation run.
-
-## Currency translation
-
-Currency translation uses the treasury FX rate service from Batch 08.3.2.
-
-Production accounting policy must define:
-
-- closing rates
-- average income-statement rates
-- historical equity rates
-- translation reserve treatment
-
-## Nightly consolidation
-
+## Jobs
 ```js
-const {
-  startNightlyConsolidationJob,
-} = require('./jobs/nightlyConsolidation.job');
-
-const nightlyConsolidationJob =
-  startNightlyConsolidationJob({ logger });
+const { startRevenueRecognitionJob } = require('./jobs/revenueRecognition.job');
+const { startProfitabilitySnapshotJob } = require('./jobs/profitabilitySnapshot.job');
+startRevenueRecognitionJob({ logger });
+startProfitabilitySnapshotJob({ logger });
 ```
 
-Stop it during graceful shutdown.
-
-## Frontend routes
-
+## Frontend
 ```jsx
-<Route
-  path="/admin/finance/consolidation"
-  element={<ConsolidationDashboard />}
-/>
-
-<Route
-  path="/admin/finance/intercompany"
-  element={<IntercompanyDashboard />}
-/>
-
-<Route
-  path="/admin/finance/group-reporting"
-  element={<GroupReportingDashboard />}
-/>
+<Route path="/admin/finance/revenue-recognition" element={<RevenueRecognitionDashboard />} />
+<Route path="/admin/finance/profitability" element={<ProfitabilityDashboard />} />
 ```
 
-## Important accounting limitation
-
-This package is a technical consolidation foundation. It is not a replacement
-for professionally approved group accounting policies. Ownership changes,
-minority interests, goodwill, acquisition accounting, tax consolidation,
-hyperinflation accounting, and statutory group reporting require qualified
-accounting review before production use.
+## Controls
+Keep taxes separate from revenue unless policy requires otherwise. Preserve schedules and events. Recalculate order economics after every material financial event. Validate recognition policy with qualified accounting professionals before production reporting.
 
 ## Verification
-
 ```bash
 cd backend
-npm test -- currencyTranslation.test.js
-npm test -- groupReporting.test.js
-node --check src/services/consolidation.service.js
-node --check src/services/elimination.service.js
-node --check src/services/intercompany.service.js
-node --check src/services/currencyTranslation.service.js
+npm test -- orderEconomics.test.js
+npm test -- costAllocation.test.js
+npm test -- revenueRecognition.test.js
+node --check src/services/orderEconomics.service.js
+node --check src/services/revenueRecognition.service.js
+node --check src/services/costAllocation.service.js
+node --check src/services/profitability.service.js
 npm run lint
 ```
-
 ```bash
 cd frontend
 npm run lint

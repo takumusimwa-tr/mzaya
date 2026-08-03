@@ -1,0 +1,2 @@
+import PropTypes from 'prop-types'
+export default function RevenueScheduleTable({schedules}){return <div className="revenue-schedule-table">{schedules.map(i=><article key={i.id}><div><strong>{i.revenue_type.replaceAll('_',' ')}</strong><span>{i.source_reference||i.order_id}</span></div><strong>{i.currency} {(Number(i.recognized_minor)/100).toFixed(2)}</strong><span>{i.status}</span></article>)}</div>};RevenueScheduleTable.propTypes={schedules:PropTypes.array.isRequired}

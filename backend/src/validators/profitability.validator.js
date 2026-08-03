@@ -1,0 +1,2 @@
+const Joi=require('joi');
+module.exports={scheduleParams:Joi.object({scheduleId:Joi.string().uuid().required()}),recognitionBody:Joi.object({amountMinor:Joi.number().integer().min(1).required(),ledgerTransactionId:Joi.string().uuid().allow(null)}).unknown(false),allocationBody:Joi.object({periodCode:Joi.string().max(20).required(),currency:Joi.string().uppercase().length(3).required(),totalSourceCostMinor:Joi.number().integer().min(0).required()}).unknown(false),dashboardQuery:Joi.object({currency:Joi.string().uppercase().length(3)}).unknown(false)};

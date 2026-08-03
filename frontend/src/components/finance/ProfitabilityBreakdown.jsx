@@ -1,0 +1,2 @@
+import PropTypes from 'prop-types'
+export default function ProfitabilityBreakdown({snapshots}){return <div className="profitability-breakdown">{snapshots.map(i=><article key={i.id}><div><strong>{i.dimension_value}</strong><span>{i.dimension_type}</span></div><strong>{i.currency} {(Number(i.contribution_margin_minor)/100).toFixed(2)}</strong><span>{i.contribution_margin_ratio==null?'—':`${(Number(i.contribution_margin_ratio)*100).toFixed(1)}%`}</span></article>)}</div>};ProfitabilityBreakdown.propTypes={snapshots:PropTypes.array.isRequired}
