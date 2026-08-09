@@ -1,23 +1,37 @@
-# Mzaya Batch 08.5.4 — Mzaya Payouts → Finance Event Integration
+# Mzaya Batch 08.5.5 — Procurement → Finance Event Integration
 
-This batch connects delivery-partner earnings and payouts to the transactional
-outbox and accounting event engine.
+This batch connects procurement activity to the finance event engine and
+transactional outbox.
 
-## Terminology
+## Architecture
 
-The product term is **Mzaya**, not rider.
+Procurement should remain an operational service. Finance consumes its events.
 
-If the existing backend still uses legacy `rider_id` fields internally, keep
-those fields temporarily for compatibility, but expose new payout flows,
-interfaces, and finance events using `Mzaya`.
-
-Do not create another parallel courier/rider payout domain.
+```text
+customer procurement request
+      ↓
+funds authorized
+      ↓
+procurement approved
+      ↓
+procurement.approved
+      ↓
+sourcing / purchasing
+      ↓
+procurement completed
+      ↓
+procurement.completed
+      ↓
+unused funds?
+      ├─ no
+      └─ yes → procurement.refund_due
+```
 
 ## Database
 
 ```bash
 psql "$DATABASE_URL" \
-  -f backend/migrations/mzaya_payout_finance_integration.sql
+  -f backend/migrations/procurement_finance_integration.sql
 ```
 
 ## Models
@@ -25,160 +39,122 @@ psql "$DATABASE_URL" \
 Export:
 
 ```js
-MzayaPayout
-MzayaPayoutItem
-MzayaPayoutFinanceReconciliationResult
+ProcurementRun
+ProcurementItem
+ProcurementFinanceReconciliationResult
 ```
 
 Recommended associations:
 
 ```js
-MzayaPayout.hasMany(MzayaPayoutItem, {
-  foreignKey: 'payout_id',
+ProcurementRun.hasMany(ProcurementItem, {
+  foreignKey: 'procurement_id',
   as: 'items',
 });
 
-MzayaPayoutItem.belongsTo(MzayaPayout, {
-  foreignKey: 'payout_id',
-  as: 'payout',
+ProcurementItem.belongsTo(ProcurementRun, {
+  foreignKey: 'procurement_id',
+  as: 'procurement',
 });
 ```
 
-Connect `mzaya_id` to the authoritative delivery-partner/user model once its
-current live model name is confirmed.
+Link customer, order, and vendor identifiers to existing authoritative models.
 
 ## Route mount
 
 ```js
 app.use(
-  '/api/mzaya-payouts',
-  require('./routes/mzayaPayout.routes')
+  '/api/procurement-finance',
+  require('./routes/procurementFinance.routes')
 );
 ```
 
-## Payout lifecycle
+## Critical accounting principle
+
+Procured merchandise cost is not automatically Mzaya revenue.
+
+Keep these distinct:
 
 ```text
-earnings accrued from completed deliveries
-      ↓
-draft payout
-      ↓
-approved
-      ↓
-mzaya.payout_due
-      ↓
-external payout provider executes transfer
-      ↓
-paid / partially_paid
-      ↓
-mzaya.payout_paid
-      ↓
-finance event engine
-      ↓
-ledger
+customer authorized amount
+merchandise cost
+procurement fee
+delivery fee
+tax
+discount
+reimbursement
+unused/refundable funds
 ```
 
-Approval and the `mzaya.payout_due` outbox event are atomic.
+Only the contractual procurement fee should be recognized as procurement
+revenue.
 
-The final paid event is emitted only when the payout is fully settled.
+## Transactional completion
 
-## Earnings calculation
-
-The payout calculation separates:
+The authoritative completion transaction should contain:
 
 ```text
-delivery earnings
-+ tips
-+ incentives
-+ reimbursements
-- penalties
-- withholding
-+/- adjustments
-= amount due to Mzaya
+procurement status = completed
+        +
+procurement.completed outbox event
+        +
+procurement.refund_due outbox event when applicable
+        =
+one transaction
 ```
 
-This separation is important for:
+Use:
 
-- operational transparency,
-- tax reporting,
-- profitability,
-- disputes,
-- future incentive analysis,
-- rider-to-Mzaya terminology migration.
+```text
+backend/src/services/procurement/procurementFinance.integration.example.js
+```
+
+as the merge-safe integration point.
 
 ## Posting templates
 
 Seed:
 
 ```text
-mzayaPayoutDue.js
-mzayaPayoutPaid.js
+procurementApproved.js
+procurementCompleted.js
+procurementFeeEarned.js
+procurementRefundDue.js
 ```
 
-Illustrative accounting:
+Illustrative flows:
 
 ```text
-payout due:
-  Dr DELIVERY_COST_OR_CLEARING
-  Cr MZAYA_PAYABLE
+procurement merchandise:
+  Dr PROCUREMENT_COST_OR_CLEARING
+  Cr CUSTOMER_FUNDS_CLEARING
 
-payout paid:
-  Dr MZAYA_PAYABLE
-  Cr CASH_AT_BANK
+procurement fee:
+  Dr CUSTOMER_FUNDS_CLEARING
+  Cr PROCUREMENT_REVENUE
+
+unused authorized funds:
+  Dr CUSTOMER_FUNDS_CLEARING
+  Cr CUSTOMER_REFUND_PAYABLE
 ```
 
-Map the temporary account codes to the governed chart of accounts before
-production.
+Temporary account names must be mapped to governed chart-of-accounts codes.
 
-Whether delivery earnings should be recognized as direct delivery cost,
-contractor expense, or clearing depends on the final legal/accounting structure
-and should be confirmed before production.
+## Refund safeguard
 
-## Provider safeguard
+`procurement.refund_due` creates an accounting liability only.
 
-The finance service does **not** initiate EcoCash, bank, mobile-money, Paynow,
-or other external transfers.
+It must not itself trigger external money movement.
 
-Provider payout execution belongs to the operational payout/treasury layer.
-
-Only after provider confirmation should:
-
-```js
-markMzayaPayoutPaid(...)
-```
-
-be called.
-
-This prevents replaying accounting from duplicating real cash movement.
-
-## Order linkage
-
-`MzayaPayoutItem` supports:
-
-```text
-order_id
-order_type
-delivery earning
-tip
-incentive
-reimbursement
-penalty
-withholding
-adjustment
-net due
-```
-
-Populate payout items from the authoritative completed-delivery records.
-
-Do not calculate earnings again independently if an authoritative earnings
-module already exists; adapt this service to consume that module.
+Actual refund execution remains in the payment/treasury domain and should
+ultimately flow through the payment refund integration from Batch 08.5.1.
 
 ## Reconciliation
 
 The control traces:
 
 ```text
-Mzaya payout
+procurement
       ↓
 finance outbox
       ↓
@@ -192,81 +168,66 @@ ledger
 Exceptions include:
 
 ```text
-MZAYA_PAYOUT_WITHOUT_OUTBOX
-MZAYA_PAYOUT_OUTBOX_WITHOUT_FINANCE_EVENT
-MZAYA_PAYOUT_FINANCE_EVENT_WITHOUT_ACCOUNTING_EVENT
-MZAYA_PAYOUT_ACCOUNTING_EVENT_NOT_POSTED
-MZAYA_PAYOUT_AMOUNT_MISMATCH
-MZAYA_PAYOUT_CURRENCY_MISMATCH
+PROCUREMENT_WITHOUT_OUTBOX
+PROCUREMENT_OUTBOX_WITHOUT_FINANCE_EVENT
+PROCUREMENT_FINANCE_EVENT_WITHOUT_ACCOUNTING_EVENT
+PROCUREMENT_ACCOUNTING_EVENT_NOT_POSTED
+PROCUREMENT_AMOUNT_MISMATCH
+PROCUREMENT_CURRENCY_MISMATCH
 ```
 
 ## Background job
 
 ```js
 const {
-  startMzayaPayoutReconciliationJob,
-} = require('./jobs/mzayaPayoutReconciliation.job');
+  startProcurementFinanceReconciliationJob,
+} = require('./jobs/procurementFinanceReconciliation.job');
 
-const mzayaPayoutReconciliationJob =
-  startMzayaPayoutReconciliationJob({ logger });
+const procurementFinanceReconciliationJob =
+  startProcurementFinanceReconciliationJob({ logger });
 ```
 
 ## Frontend routes
 
 ```jsx
 <Route
-  path="/admin/finance/mzaya-payouts"
-  element={<MzayaPayoutDashboard />}
+  path="/admin/finance/procurement"
+  element={<ProcurementFinanceDashboard />}
 />
 
 <Route
-  path="/admin/finance/mzaya-payouts/reconciliation"
-  element={<MzayaPayoutReconciliation />}
+  path="/admin/finance/procurement/reconciliation"
+  element={<ProcurementFinanceReconciliation />}
 />
 ```
 
-## Existing-code integration
-
-Use:
-
-```text
-backend/src/services/mzaya/mzayaPayout.integration.example.js
-```
-
-as the merge point.
-
-If the live project currently has a `rider` folder, migrate carefully rather
-than duplicating it. New UI and domain terminology should say Mzaya, while
-database/legacy aliases can remain until the broader terminology migration is
-completed safely.
-
 ## Controls
 
-- Never pay more than the approved payout amount.
-- Keep partial payouts explicit.
-- Preserve tips separately from delivery earnings.
-- Preserve withholding separately from penalties.
-- Provider references are mandatory for final production payout confirmation.
-- External money movement must remain independently idempotent.
-- Finance replay must never trigger external payout execution.
-- Reconcile Mzaya payouts to treasury/bank movement in Batch 08.5.6.
-- Use `Mzaya` in UI copy and new domain naming.
+- Do not recognize merchandise cost as Mzaya revenue.
+- Keep procurement fee and delivery fee separate.
+- Preserve item-level sourcing detail.
+- Do not allow negative procurement spend.
+- Do not publish completion events outside the operational transaction.
+- Unused authorized funds become a refund liability, not instant cash movement.
+- Keep vendor identity and order linkage where applicable.
+- Procurement accounting replay must never duplicate purchases or refunds.
+- Reconcile procurement-related refunds through the payment/treasury layers.
 
 ## Verification
 
 ```bash
 cd backend
 
-npm test -- mzayaPayoutCalculator.test.js
-npm test -- mzayaPayoutFinanceEvents.test.js
-npm test -- mzayaPayoutAtomicity.test.js
-npm test -- mzayaPayoutOverpayment.test.js
-npm test -- mzayaPayoutReconciliation.test.js
+npm test -- procurementCalculator.test.js
+npm test -- procurementFinanceEvents.test.js
+npm test -- procurementAtomicity.test.js
+npm test -- procurementRefund.test.js
+npm test -- procurementReconciliation.test.js
 
-node --check src/services/mzayaPayoutCalculator.service.js
-node --check src/services/mzayaPayoutFinanceEvents.service.js
-node --check src/services/mzayaPayout.service.js
-node --check src/services/mzayaPayoutReconciliation.service.js
+node --check src/services/procurementCalculator.service.js
+node --check src/services/procurementFinanceEvents.service.js
+node --check src/services/procurement.service.js
+node --check src/services/procurementReconciliation.service.js
 
 npm run lint
 ```
@@ -279,4 +240,4 @@ npm run build
 
 ## Next domain
 
-Proceed to Batch 08.5.5 — Procurement → Finance Event Integration.
+Proceed to Batch 08.5.6 — Treasury & Bank Movement → Finance Event Integration.
