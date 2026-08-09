@@ -1,162 +1,157 @@
-# Mzaya Batch 08.5.2 — Orders & Delivery Completion → Finance Event Integration
+# Mzaya Batch 08.5.3 — Vendor Settlements → Finance Event Integration
 
-This batch connects Mzaya's existing food, grocery, and materials order flows
-to the transactional outbox and finance event engine.
+This batch connects vendor settlement liabilities and payouts to the finance
+event engine introduced in Batch 08.4.7 and the transactional outbox introduced
+in Batch 08.4.8.
 
-## Source-baseline note
+## Existing-code note
 
-The current source ZIP still was not available in the accessible File Library.
-However, the project history confirms the existing operational models include:
+The currently searchable project snapshot shows the existing backend structure
+and order models, but did not return a live vendor settlement implementation.
+Accordingly, this package keeps the new integration under the already-existing
+`vendor` terminology and provides:
 
 ```text
-backend/src/models/orderFoodModel.js
-backend/src/models/orderGroceryModel.js
-backend/src/models/orderMaterialsModel.js
+backend/src/services/vendor/vendorSettlement.integration.example.js
 ```
 
-Therefore this package deliberately does not overwrite those files or existing
-order controllers/services. It provides merge-safe integration services and
-exact completion-flow examples.
+Merge that file into the existing vendor domain rather than creating a
+parallel `merchant` or second vendor hierarchy.
 
 ## Database
 
-Review actual Sequelize table names before running the migration.
-
-The migration currently assumes:
-
-```text
-orderFood
-orderGrocery
-orderMaterials
-```
-
-If the live models define different `tableName` values, adjust the ALTER TABLE
-targets first.
-
 ```bash
 psql "$DATABASE_URL" \
-  -f backend/migrations/order_delivery_finance_integration.sql
+  -f backend/migrations/vendor_settlement_finance_integration.sql
 ```
 
-## Models
+## Models and associations
 
 Export:
 
 ```js
-OrderFinanceReconciliationResult
+VendorSettlement
+VendorSettlementItem
+VendorSettlementFinanceReconciliationResult
 ```
 
-The reconciliation service expects existing aliases:
+Recommended associations:
 
 ```js
-OrderFood
-OrderGrocery
-OrderMaterials
+VendorSettlement.hasMany(VendorSettlementItem, {
+  foreignKey: 'settlement_id',
+  as: 'items',
+});
+
+VendorSettlementItem.belongsTo(VendorSettlement, {
+  foreignKey: 'settlement_id',
+  as: 'settlement',
+});
 ```
 
-If `associations.js` exports the current models under different names, update
-the imports only; do not duplicate models.
+Connect `vendor_id` to the authoritative existing vendor model once its live
+model name is confirmed.
 
 ## Route mount
 
 ```js
 app.use(
-  '/api/order-finance',
-  require('./routes/orderFinance.routes')
+  '/api/vendor-settlements',
+  require('./routes/vendorSettlement.routes')
 );
 ```
 
-## Completion integration
-
-For every order type, the critical transaction is:
+## Settlement lifecycle
 
 ```text
-order status update
-      +
-order.completed outbox event
-      +
-delivery.completed outbox event
-      +
-order economics upsert
-      =
-one DB transaction
+draft
+  ↓
+approved
+  ↓
+vendor.settlement_due
+  ↓
+payment initiated externally
+  ↓
+paid / partially_paid
+  ↓
+vendor.settlement_paid
+  ↓
+finance event engine
+  ↓
+ledger
 ```
 
-Use the integration examples:
+The approval transaction and `vendor.settlement_due` outbox event are atomic.
+
+The final `vendor.settlement_paid` event is emitted only when the settlement is
+fully paid.
+
+## Settlement calculation
+
+The settlement engine keeps these components separate:
 
 ```text
-backend/src/services/orderFoodService.integration.example.js
-backend/src/services/orderGroceryService.integration.example.js
-backend/src/services/orderMaterialsService.integration.example.js
+gross sales
+- refunds
+- discounts
+- commission
+- platform fees
+- withholding tax
++/- adjustments
+= vendor amount due
 ```
 
-Merge them into the existing completion/matching service rather than replacing
-existing operational logic.
+Vendor gross sales are not a Mzaya expense.
 
-## Why two completion events?
-
-`order.completed` means the commercial service obligation is completed.
-
-`delivery.completed` means the delivery obligation is completed.
-
-They may happen together today, but keeping them semantically distinct allows
-future cases such as:
-
-- collection orders,
-- vendor-arranged delivery,
-- partial procurement,
-- multi-stop delivery,
-- split fulfillment,
-- scheduled delivery.
-
-## Order economics
-
-On completion, call:
-
-```js
-await upsertOrderEconomics({
-  order,
-  orderType: 'food',
-  transaction,
-});
-```
-
-This preserves the finance principle:
-
-```text
-gross order value != Mzaya revenue
-```
-
-The order-economics record stores GOV separately from:
-
-- platform revenue,
-- delivery revenue,
-- procurement revenue,
-- discounts,
-- taxes.
+The payable is the amount contractually owed to the vendor after deductions.
 
 ## Posting templates
 
 Seed:
 
 ```text
-orderCompleted.js
-deliveryCompleted.js
-orderCancelled.js
+vendorSettlementDue.js
+vendorSettlementPaid.js
 ```
 
-The example completion posting recognizes only the relevant platform or
-delivery fee. It does not post total order value as revenue.
+Expected accounting flow:
 
-Account codes must be mapped to the governed chart of accounts before
-production.
+```text
+settlement due:
+  Dr CUSTOMER_FUNDS_CLEARING
+  Cr VENDOR_PAYABLE
+
+settlement paid:
+  Dr VENDOR_PAYABLE
+  Cr CASH_AT_BANK
+```
+
+Map these account codes to the governed chart of accounts before production.
+
+## Payment-provider safeguard
+
+Do not use this finance integration service to call bank, Paynow, mobile-money,
+or other payout providers.
+
+The provider payout remains an operational treasury/vendor action.
+
+Only after provider confirmation should:
+
+```js
+markVendorSettlementPaid(...)
+```
+
+be called.
+
+This keeps financial replay safe: accounting events may be replayed, external
+money movements must never be duplicated.
 
 ## Reconciliation
 
-The control traces:
+The settlement control traces:
 
 ```text
-operational order
+vendor settlement
       ↓
 finance outbox
       ↓
@@ -170,67 +165,68 @@ ledger
 Exceptions include:
 
 ```text
-COMPLETED_ORDER_WITHOUT_OUTBOX
-ORDER_OUTBOX_WITHOUT_FINANCE_EVENT
-ORDER_FINANCE_EVENT_WITHOUT_ACCOUNTING_EVENT
-ORDER_ACCOUNTING_EVENT_NOT_POSTED
-ORDER_GOV_MISMATCH
+SETTLEMENT_WITHOUT_OUTBOX
+SETTLEMENT_OUTBOX_WITHOUT_FINANCE_EVENT
+SETTLEMENT_FINANCE_EVENT_WITHOUT_ACCOUNTING_EVENT
+SETTLEMENT_ACCOUNTING_EVENT_NOT_POSTED
+SETTLEMENT_AMOUNT_MISMATCH
+SETTLEMENT_CURRENCY_MISMATCH
 ```
 
 ## Background job
 
 ```js
 const {
-  startOrderFinanceReconciliationJob,
-} = require('./jobs/orderFinanceReconciliation.job');
+  startVendorSettlementReconciliationJob,
+} = require('./jobs/vendorSettlementReconciliation.job');
 
-const orderFinanceReconciliationJob =
-  startOrderFinanceReconciliationJob({ logger });
+const vendorSettlementReconciliationJob =
+  startVendorSettlementReconciliationJob({ logger });
 ```
 
-## Frontend route
+## Frontend routes
 
 ```jsx
 <Route
-  path="/admin/finance/order-reconciliation"
-  element={<OrderFinanceReconciliation />}
+  path="/admin/finance/vendor-settlements"
+  element={<VendorSettlementDashboard />}
+/>
+
+<Route
+  path="/admin/finance/vendor-settlements/reconciliation"
+  element={<VendorSettlementReconciliation />}
 />
 ```
 
-## Existing-code safeguards
+## Controls
 
-Before merging each example:
-
-1. Find the existing status transition that marks the order completed/delivered.
-2. Preserve all existing:
-   - matching logic,
-   - customer notifications,
-   - vendor notifications,
-   - Mzaya assignment,
-   - ETA/tracking updates,
-   - analytics hooks,
-   - inventory changes.
-3. Wrap only the financial state mutation and outbox insert in the same
-   transaction.
-4. Ensure completion is idempotent.
-5. Do not publish events after commit.
-6. Do not directly create ledger entries.
+- Use `vendor`, not a parallel merchant settlement domain.
+- Settlement approval must be separate from external payout execution.
+- Never pay more than `amount_due_minor`.
+- Keep partial payments explicit.
+- Do not emit the final paid event until fully settled.
+- Preserve order-level settlement items.
+- Withholding tax must remain separately identifiable.
+- Provider references must be retained.
+- External payout execution must remain idempotent.
+- Accounting replay must never re-trigger cash movement.
+- Reconcile vendor payouts to treasury and bank activity later in Batch 08.5.6.
 
 ## Verification
 
 ```bash
 cd backend
 
-npm test -- orderFinanceEvents.test.js
-npm test -- deliveryFinanceEvents.test.js
-npm test -- orderFinanceAtomicity.test.js
-npm test -- orderEconomicsIntegration.test.js
-npm test -- orderFinanceReconciliation.test.js
+npm test -- vendorSettlementCalculator.test.js
+npm test -- vendorSettlementFinanceEvents.test.js
+npm test -- vendorSettlementAtomicity.test.js
+npm test -- vendorSettlementOverpayment.test.js
+npm test -- vendorSettlementReconciliation.test.js
 
-node --check src/services/orderFinanceEvents.service.js
-node --check src/services/deliveryFinanceEvents.service.js
-node --check src/services/orderEconomicsIntegration.service.js
-node --check src/services/orderFinanceReconciliation.service.js
+node --check src/services/vendorSettlementCalculator.service.js
+node --check src/services/vendorSettlementFinanceEvents.service.js
+node --check src/services/vendorSettlement.service.js
+node --check src/services/vendorSettlementReconciliation.service.js
 
 npm run lint
 ```
@@ -243,4 +239,4 @@ npm run build
 
 ## Next domain
 
-Batch 08.5.3 should integrate vendor settlements into the same event pipeline.
+Proceed to Batch 08.5.4 — Mzaya payouts → Finance Event Integration.
