@@ -1,0 +1,86 @@
+.mzaya-payout-page {
+  width: min(1260px, calc(100% - 32px));
+  margin: 0 auto;
+  padding: 42px 0 60px;
+  color: #121714;
+}
+
+.mzaya-payout-page h1 {
+  margin: 4px 0;
+  font-size: clamp(34px, 4vw, 50px);
+  letter-spacing: -.045em;
+}
+
+.mzaya-payout-page > header p:last-child {
+  margin: 0;
+  color: #728077;
+}
+
+.mzaya-payout-table,
+.mzaya-payout-reconciliation-table {
+  margin-top: 26px;
+  border: 1px solid #dde5df;
+  border-radius: 18px;
+  background: #fff;
+}
+
+.mzaya-payout-table article,
+.mzaya-payout-reconciliation-table article {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 170px 120px 100px;
+  gap: 16px;
+  align-items: center;
+  padding: 15px 16px;
+  border-top: 1px solid #eef2ef;
+}
+
+.mzaya-payout-table article:first-child,
+.mzaya-payout-reconciliation-table article:first-child {
+  border-top: 0;
+}
+
+.mzaya-payout-table article > div,
+.mzaya-payout-reconciliation-table article > div {
+  display: grid;
+  gap: 4px;
+}
+
+.mzaya-payout-table span,
+.mzaya-payout-reconciliation-table span {
+  color: #728077;
+  font-size: 12px;
+}
+
+.mzaya-payout-status {
+  width: fit-content;
+  padding: 6px 9px;
+  border-radius: 999px;
+  background: #eef3ef;
+  color: #126a56 !important;
+  font-weight: 800;
+  text-transform: capitalize;
+}
+
+.mzaya-payout-table button,
+.mzaya-payout-reconciliation-table button {
+  min-height: 38px;
+  padding: 0 12px;
+  border: 1px solid #126a56;
+  border-radius: 11px;
+  background: #126a56;
+  color: #fff;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.mzaya-payout-state {
+  padding: 72px 24px;
+  text-align: center;
+}
+
+@media (max-width: 760px) {
+  .mzaya-payout-table article,
+  .mzaya-payout-reconciliation-table article {
+    grid-template-columns: 1fr;
+  }
+}

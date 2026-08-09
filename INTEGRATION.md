@@ -1,157 +1,184 @@
-# Mzaya Batch 08.5.3 — Vendor Settlements → Finance Event Integration
+# Mzaya Batch 08.5.4 — Mzaya Payouts → Finance Event Integration
 
-This batch connects vendor settlement liabilities and payouts to the finance
-event engine introduced in Batch 08.4.7 and the transactional outbox introduced
-in Batch 08.4.8.
+This batch connects delivery-partner earnings and payouts to the transactional
+outbox and accounting event engine.
 
-## Existing-code note
+## Terminology
 
-The currently searchable project snapshot shows the existing backend structure
-and order models, but did not return a live vendor settlement implementation.
-Accordingly, this package keeps the new integration under the already-existing
-`vendor` terminology and provides:
+The product term is **Mzaya**, not rider.
 
-```text
-backend/src/services/vendor/vendorSettlement.integration.example.js
-```
+If the existing backend still uses legacy `rider_id` fields internally, keep
+those fields temporarily for compatibility, but expose new payout flows,
+interfaces, and finance events using `Mzaya`.
 
-Merge that file into the existing vendor domain rather than creating a
-parallel `merchant` or second vendor hierarchy.
+Do not create another parallel courier/rider payout domain.
 
 ## Database
 
 ```bash
 psql "$DATABASE_URL" \
-  -f backend/migrations/vendor_settlement_finance_integration.sql
+  -f backend/migrations/mzaya_payout_finance_integration.sql
 ```
 
-## Models and associations
+## Models
 
 Export:
 
 ```js
-VendorSettlement
-VendorSettlementItem
-VendorSettlementFinanceReconciliationResult
+MzayaPayout
+MzayaPayoutItem
+MzayaPayoutFinanceReconciliationResult
 ```
 
 Recommended associations:
 
 ```js
-VendorSettlement.hasMany(VendorSettlementItem, {
-  foreignKey: 'settlement_id',
+MzayaPayout.hasMany(MzayaPayoutItem, {
+  foreignKey: 'payout_id',
   as: 'items',
 });
 
-VendorSettlementItem.belongsTo(VendorSettlement, {
-  foreignKey: 'settlement_id',
-  as: 'settlement',
+MzayaPayoutItem.belongsTo(MzayaPayout, {
+  foreignKey: 'payout_id',
+  as: 'payout',
 });
 ```
 
-Connect `vendor_id` to the authoritative existing vendor model once its live
-model name is confirmed.
+Connect `mzaya_id` to the authoritative delivery-partner/user model once its
+current live model name is confirmed.
 
 ## Route mount
 
 ```js
 app.use(
-  '/api/vendor-settlements',
-  require('./routes/vendorSettlement.routes')
+  '/api/mzaya-payouts',
+  require('./routes/mzayaPayout.routes')
 );
 ```
 
-## Settlement lifecycle
+## Payout lifecycle
 
 ```text
-draft
-  ↓
+earnings accrued from completed deliveries
+      ↓
+draft payout
+      ↓
 approved
-  ↓
-vendor.settlement_due
-  ↓
-payment initiated externally
-  ↓
+      ↓
+mzaya.payout_due
+      ↓
+external payout provider executes transfer
+      ↓
 paid / partially_paid
-  ↓
-vendor.settlement_paid
-  ↓
+      ↓
+mzaya.payout_paid
+      ↓
 finance event engine
-  ↓
+      ↓
 ledger
 ```
 
-The approval transaction and `vendor.settlement_due` outbox event are atomic.
+Approval and the `mzaya.payout_due` outbox event are atomic.
 
-The final `vendor.settlement_paid` event is emitted only when the settlement is
-fully paid.
+The final paid event is emitted only when the payout is fully settled.
 
-## Settlement calculation
+## Earnings calculation
 
-The settlement engine keeps these components separate:
+The payout calculation separates:
 
 ```text
-gross sales
-- refunds
-- discounts
-- commission
-- platform fees
-- withholding tax
+delivery earnings
++ tips
++ incentives
++ reimbursements
+- penalties
+- withholding
 +/- adjustments
-= vendor amount due
+= amount due to Mzaya
 ```
 
-Vendor gross sales are not a Mzaya expense.
+This separation is important for:
 
-The payable is the amount contractually owed to the vendor after deductions.
+- operational transparency,
+- tax reporting,
+- profitability,
+- disputes,
+- future incentive analysis,
+- rider-to-Mzaya terminology migration.
 
 ## Posting templates
 
 Seed:
 
 ```text
-vendorSettlementDue.js
-vendorSettlementPaid.js
+mzayaPayoutDue.js
+mzayaPayoutPaid.js
 ```
 
-Expected accounting flow:
+Illustrative accounting:
 
 ```text
-settlement due:
-  Dr CUSTOMER_FUNDS_CLEARING
-  Cr VENDOR_PAYABLE
+payout due:
+  Dr DELIVERY_COST_OR_CLEARING
+  Cr MZAYA_PAYABLE
 
-settlement paid:
-  Dr VENDOR_PAYABLE
+payout paid:
+  Dr MZAYA_PAYABLE
   Cr CASH_AT_BANK
 ```
 
-Map these account codes to the governed chart of accounts before production.
+Map the temporary account codes to the governed chart of accounts before
+production.
 
-## Payment-provider safeguard
+Whether delivery earnings should be recognized as direct delivery cost,
+contractor expense, or clearing depends on the final legal/accounting structure
+and should be confirmed before production.
 
-Do not use this finance integration service to call bank, Paynow, mobile-money,
-or other payout providers.
+## Provider safeguard
 
-The provider payout remains an operational treasury/vendor action.
+The finance service does **not** initiate EcoCash, bank, mobile-money, Paynow,
+or other external transfers.
+
+Provider payout execution belongs to the operational payout/treasury layer.
 
 Only after provider confirmation should:
 
 ```js
-markVendorSettlementPaid(...)
+markMzayaPayoutPaid(...)
 ```
 
 be called.
 
-This keeps financial replay safe: accounting events may be replayed, external
-money movements must never be duplicated.
+This prevents replaying accounting from duplicating real cash movement.
+
+## Order linkage
+
+`MzayaPayoutItem` supports:
+
+```text
+order_id
+order_type
+delivery earning
+tip
+incentive
+reimbursement
+penalty
+withholding
+adjustment
+net due
+```
+
+Populate payout items from the authoritative completed-delivery records.
+
+Do not calculate earnings again independently if an authoritative earnings
+module already exists; adapt this service to consume that module.
 
 ## Reconciliation
 
-The settlement control traces:
+The control traces:
 
 ```text
-vendor settlement
+Mzaya payout
       ↓
 finance outbox
       ↓
@@ -165,68 +192,81 @@ ledger
 Exceptions include:
 
 ```text
-SETTLEMENT_WITHOUT_OUTBOX
-SETTLEMENT_OUTBOX_WITHOUT_FINANCE_EVENT
-SETTLEMENT_FINANCE_EVENT_WITHOUT_ACCOUNTING_EVENT
-SETTLEMENT_ACCOUNTING_EVENT_NOT_POSTED
-SETTLEMENT_AMOUNT_MISMATCH
-SETTLEMENT_CURRENCY_MISMATCH
+MZAYA_PAYOUT_WITHOUT_OUTBOX
+MZAYA_PAYOUT_OUTBOX_WITHOUT_FINANCE_EVENT
+MZAYA_PAYOUT_FINANCE_EVENT_WITHOUT_ACCOUNTING_EVENT
+MZAYA_PAYOUT_ACCOUNTING_EVENT_NOT_POSTED
+MZAYA_PAYOUT_AMOUNT_MISMATCH
+MZAYA_PAYOUT_CURRENCY_MISMATCH
 ```
 
 ## Background job
 
 ```js
 const {
-  startVendorSettlementReconciliationJob,
-} = require('./jobs/vendorSettlementReconciliation.job');
+  startMzayaPayoutReconciliationJob,
+} = require('./jobs/mzayaPayoutReconciliation.job');
 
-const vendorSettlementReconciliationJob =
-  startVendorSettlementReconciliationJob({ logger });
+const mzayaPayoutReconciliationJob =
+  startMzayaPayoutReconciliationJob({ logger });
 ```
 
 ## Frontend routes
 
 ```jsx
 <Route
-  path="/admin/finance/vendor-settlements"
-  element={<VendorSettlementDashboard />}
+  path="/admin/finance/mzaya-payouts"
+  element={<MzayaPayoutDashboard />}
 />
 
 <Route
-  path="/admin/finance/vendor-settlements/reconciliation"
-  element={<VendorSettlementReconciliation />}
+  path="/admin/finance/mzaya-payouts/reconciliation"
+  element={<MzayaPayoutReconciliation />}
 />
 ```
 
+## Existing-code integration
+
+Use:
+
+```text
+backend/src/services/mzaya/mzayaPayout.integration.example.js
+```
+
+as the merge point.
+
+If the live project currently has a `rider` folder, migrate carefully rather
+than duplicating it. New UI and domain terminology should say Mzaya, while
+database/legacy aliases can remain until the broader terminology migration is
+completed safely.
+
 ## Controls
 
-- Use `vendor`, not a parallel merchant settlement domain.
-- Settlement approval must be separate from external payout execution.
-- Never pay more than `amount_due_minor`.
-- Keep partial payments explicit.
-- Do not emit the final paid event until fully settled.
-- Preserve order-level settlement items.
-- Withholding tax must remain separately identifiable.
-- Provider references must be retained.
-- External payout execution must remain idempotent.
-- Accounting replay must never re-trigger cash movement.
-- Reconcile vendor payouts to treasury and bank activity later in Batch 08.5.6.
+- Never pay more than the approved payout amount.
+- Keep partial payouts explicit.
+- Preserve tips separately from delivery earnings.
+- Preserve withholding separately from penalties.
+- Provider references are mandatory for final production payout confirmation.
+- External money movement must remain independently idempotent.
+- Finance replay must never trigger external payout execution.
+- Reconcile Mzaya payouts to treasury/bank movement in Batch 08.5.6.
+- Use `Mzaya` in UI copy and new domain naming.
 
 ## Verification
 
 ```bash
 cd backend
 
-npm test -- vendorSettlementCalculator.test.js
-npm test -- vendorSettlementFinanceEvents.test.js
-npm test -- vendorSettlementAtomicity.test.js
-npm test -- vendorSettlementOverpayment.test.js
-npm test -- vendorSettlementReconciliation.test.js
+npm test -- mzayaPayoutCalculator.test.js
+npm test -- mzayaPayoutFinanceEvents.test.js
+npm test -- mzayaPayoutAtomicity.test.js
+npm test -- mzayaPayoutOverpayment.test.js
+npm test -- mzayaPayoutReconciliation.test.js
 
-node --check src/services/vendorSettlementCalculator.service.js
-node --check src/services/vendorSettlementFinanceEvents.service.js
-node --check src/services/vendorSettlement.service.js
-node --check src/services/vendorSettlementReconciliation.service.js
+node --check src/services/mzayaPayoutCalculator.service.js
+node --check src/services/mzayaPayoutFinanceEvents.service.js
+node --check src/services/mzayaPayout.service.js
+node --check src/services/mzayaPayoutReconciliation.service.js
 
 npm run lint
 ```
@@ -239,4 +279,4 @@ npm run build
 
 ## Next domain
 
-Proceed to Batch 08.5.4 — Mzaya payouts → Finance Event Integration.
+Proceed to Batch 08.5.5 — Procurement → Finance Event Integration.
