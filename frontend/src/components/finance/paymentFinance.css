@@ -1,0 +1,98 @@
+.payment-finance-page {
+  width: min(1260px, calc(100% - 32px));
+  margin: 0 auto;
+  padding: 42px 0 60px;
+  color: #121714;
+}
+
+.payment-finance-page h1 {
+  margin: 4px 0;
+  font-size: clamp(34px, 4vw, 50px);
+  letter-spacing: -.045em;
+}
+
+.payment-finance-page > header p:last-child {
+  margin: 0;
+  color: #728077;
+}
+
+.payment-finance-kpis {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+  margin: 26px 0;
+}
+
+.payment-finance-kpis article,
+.payment-reconciliation-table {
+  border: 1px solid #dde5df;
+  border-radius: 18px;
+  background: #fff;
+}
+
+.payment-finance-kpis article {
+  padding: 18px;
+}
+
+.payment-finance-kpis span,
+.payment-reconciliation-table span {
+  color: #728077;
+  font-size: 12px;
+}
+
+.payment-finance-kpis strong {
+  display: block;
+  margin-top: 8px;
+  font-size: 24px;
+}
+
+.payment-reconciliation-table article {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 80px 100px 110px 90px;
+  gap: 16px;
+  align-items: center;
+  padding: 15px 16px;
+  border-top: 1px solid #eef2ef;
+}
+
+.payment-reconciliation-table article:first-child {
+  border-top: 0;
+}
+
+.payment-reconciliation-table article > div {
+  display: grid;
+  gap: 4px;
+}
+
+.payment-finance-status {
+  width: fit-content;
+  padding: 6px 9px;
+  border-radius: 999px;
+  background: #eef3ef;
+  color: #126a56 !important;
+  font-weight: 800;
+  text-transform: capitalize;
+}
+
+.payment-reconciliation-table button {
+  min-height: 38px;
+  padding: 0 12px;
+  border: 1px solid #126a56;
+  border-radius: 11px;
+  background: #126a56;
+  color: #fff;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.payment-finance-state {
+  padding: 72px 24px;
+  text-align: center;
+}
+
+@media (max-width: 760px) {
+  .payment-finance-kpis,
+  .payment-reconciliation-table article {
+    grid-template-columns: 1fr;
+  }
+}

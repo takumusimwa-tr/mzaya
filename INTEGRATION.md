@@ -1,306 +1,171 @@
-# Mzaya Batch 08.4.8 — Transactional Outbox, Event Delivery & Finance Reliability
+# Mzaya Batch 08.5.1 — Payments & Refunds → Finance Event Integration
 
-This batch hardens Batch 08.4.7 for distributed production use.
+This batch is the first operational integration into the Batch 08.4.7/08.4.8
+finance event pipeline.
 
-The critical invariant is:
+## Important baseline note
 
-```text
-business state change
-      +
-finance outbox write
-      =
-same database transaction
-```
+The current Mzaya source ZIP was not available to this runtime, so this package
+does **not** blindly overwrite `paymentService.js` or `payment.controller.js`.
 
-If the transaction commits, both exist. If it rolls back, neither exists.
+Instead it provides:
+- production integration services,
+- refund workflow,
+- posting-template seeds,
+- reconciliation controls,
+- route/controller additions,
+- and `paymentService.integration.example.js` showing exactly how to merge the
+  outbox write into the existing payment transaction.
+
+Merge that pattern into the current payment service after inspecting the
+provider-specific Paynow/payment implementation in the working tree.
 
 ## Database
 
 ```bash
-psql "$DATABASE_URL" -f backend/migrations/finance_event_delivery.sql
+psql "$DATABASE_URL" -f backend/migrations/payment_finance_integration.sql
 ```
 
-## Register and export models
+## Models
 
-- `FinanceOutboxEvent`
-- `FinanceDeliveryLease`
-- `FinanceDeliveryAttempt`
-- `FinanceConsumerOffset`
-- `FinanceDeadLetter`
-- `FinanceReliabilitySnapshot`
-
-Recommended associations:
+Export and associate:
 
 ```js
-FinanceOutboxEvent.hasMany(FinanceDeliveryAttempt, {
-  foreignKey: 'outbox_event_id',
-  as: 'deliveryAttempts',
+Payment.hasMany(PaymentRefund, {
+  foreignKey: 'payment_id',
+  as: 'refunds',
 });
 
-FinanceOutboxEvent.hasMany(FinanceDeliveryLease, {
-  foreignKey: 'outbox_event_id',
-  as: 'leases',
-});
-
-FinanceOutboxEvent.hasMany(FinanceDeadLetter, {
-  foreignKey: 'outbox_event_id',
-  as: 'deadLetters',
+PaymentRefund.belongsTo(Payment, {
+  foreignKey: 'payment_id',
+  as: 'payment',
 });
 ```
 
-## Route mounts
+Also export:
+- `PaymentFinanceReconciliationResult`
+
+## Route mount
 
 ```js
 app.use(
-  '/api/finance-delivery',
-  require('./routes/financeDelivery.routes')
-);
-
-app.use(
-  '/api/finance-dead-letters',
-  require('./routes/financeDeadLetter.routes')
-);
-
-app.use(
-  '/api/finance-reliability',
-  require('./routes/financeReliability.routes')
+  '/api/payment-finance',
+  require('./routes/paymentFinance.routes')
 );
 ```
 
-## Operational integration pattern
+## Payment capture integration
 
-Inside the existing operational transaction:
+Inside the **existing** payment capture transaction:
 
 ```js
-const { sequelize } = require('../config/db');
-const {
-  enqueueFinanceOutboxEvent,
-} = require('../services/financeOutbox.service');
+await payment.update({
+  status: 'captured',
+  provider_reference: providerReference,
+}, { transaction });
 
-await sequelize.transaction(async (transaction) => {
-  const payment = await Payment.update(
-    { status: 'captured' },
-    {
-      where: { id: paymentId },
-      transaction,
-      returning: true,
-    }
-  );
-
-  await enqueueFinanceOutboxEvent({
-    transaction,
-    aggregateType: 'payment',
-    aggregateId: paymentId,
-    eventType: 'payment.captured',
-    sourceSystem: 'payments',
-    payload: {
-      paymentId,
-      currency: 'USD',
-      amountMinor: 1250,
-    },
-    idempotencyKey: `payment:${paymentId}:captured:v1`,
-  });
+await emitPaymentCaptured({
+  payment,
+  transaction,
 });
 ```
 
-Never enqueue the outbox event after the transaction has committed.
+The state update and outbox insert must be in the same DB transaction.
 
-## First Mzaya domains to wire
+## Refund integration
 
-Recommended sequence:
+Use `requestRefund()` for a controlled refund record and finance event.
 
-```text
-1. payment.captured
-2. payment.refunded
-3. order.completed
-4. vendor.settlement_paid
-5. mzaya.payout_paid
-6. procurement.completed
-7. treasury.transfer_completed
-8. tax.liability_created
-```
+Only after the provider confirms the refund should `markRefundCompleted()` be
+called.
 
-## Delivery behavior
+Do not emit `payment.refunded` before provider confirmation.
 
-Outbox rows move through:
+## Posting templates
+
+Seed the four templates from:
 
 ```text
-pending
-   ↓
-publishing
-   ↓
-published
+backend/src/config/financePostingTemplates/paymentCaptured.js
+backend/src/config/financePostingTemplates/paymentRefunded.js
+backend/src/config/financePostingTemplates/paymentChargeback.js
+backend/src/config/financePostingTemplates/gatewayFeePosted.js
 ```
 
-On failure:
+Account codes must be mapped to the governed chart of accounts before
+production.
+
+## Reconciliation control
+
+The reconciliation service checks:
 
 ```text
-publishing
-   ↓
-retry
-   ↓
-retry...
-   ↓
-dead_letter
+payment
+  ↓
+finance outbox
+  ↓
+finance business event
+  ↓
+accounting event
+  ↓
+ledger transaction
 ```
 
-Retries use bounded exponential backoff.
+Detected exceptions include:
+- `CAPTURE_WITHOUT_OUTBOX`
+- `OUTBOX_WITHOUT_FINANCE_EVENT`
+- `FINANCE_EVENT_WITHOUT_ACCOUNTING_EVENT`
+- `ACCOUNTING_EVENT_NOT_POSTED`
+- `PAYMENT_LEDGER_AMOUNT_MISMATCH`
+- `PAYMENT_ACCOUNTING_CURRENCY_MISMATCH`
 
-## Delivery leases
-
-Multiple workers may run the publisher concurrently.
-
-A worker must acquire a short-lived lease before delivery.
-
-Expired leases are recovered automatically and the associated event is moved
-back to `retry`.
-
-## Duplicate tolerance
-
-The delivery layer is at-least-once.
-
-Exactly-once effects are achieved by downstream idempotency:
-
-```text
-outbox:
-  UNIQUE idempotency_key
-
-finance business event:
-  UNIQUE idempotency_key
-```
-
-The publisher may safely redeliver an event after uncertainty.
-
-## Dead-letter handling
-
-Events are quarantined after eight failed attempts.
-
-Dead-letter replay must be explicit and should happen only after the underlying
-configuration or data issue has been corrected.
-
-Do not automatically replay external provider side effects.
-
-## Jobs
+## Background job
 
 ```js
 const {
-  startFinanceOutboxPublisherJob,
-} = require('./jobs/financeOutboxPublisher.job');
+  startPaymentFinanceReconciliationJob,
+} = require('./jobs/paymentFinanceReconciliation.job');
 
-const {
-  startFinanceDeliveryRecoveryJob,
-} = require('./jobs/financeDeliveryRecovery.job');
-
-const {
-  startFinanceDeadLetterEscalationJob,
-} = require('./jobs/financeDeadLetterEscalation.job');
-
-const {
-  startFinanceReliabilitySnapshotJob,
-} = require('./jobs/financeReliabilitySnapshot.job');
-
-const outboxPublisher =
-  startFinanceOutboxPublisherJob({ logger });
-
-const deliveryRecovery =
-  startFinanceDeliveryRecoveryJob({ logger });
-
-const deadLetterEscalation =
-  startFinanceDeadLetterEscalationJob({ logger });
-
-const reliabilitySnapshots =
-  startFinanceReliabilitySnapshotJob({ logger });
+const paymentFinanceReconciliationJob =
+  startPaymentFinanceReconciliationJob({ logger });
 ```
 
-## Socket.IO
-
-```js
-const {
-  initializeFinanceDeliveryEventBridge,
-} = require('./realtime/financeDeliveryEventBridge');
-
-const closeFinanceDeliveryBridge =
-  initializeFinanceDeliveryEventBridge(io);
-```
-
-## Frontend routes
+## Frontend route
 
 ```jsx
 <Route
-  path="/admin/finance/delivery"
-  element={<FinanceDeliveryMonitor />}
-/>
-
-<Route
-  path="/admin/finance/dead-letters"
-  element={<FinanceDeadLetterQueue />}
-/>
-
-<Route
-  path="/admin/finance/reliability"
-  element={<FinanceReliabilityDashboard />}
+  path="/admin/finance/payment-reconciliation"
+  element={<PaymentFinanceReconciliation />}
 />
 ```
-
-## Reliability targets
-
-Suggested initial operating objectives:
-
-```text
-delivery success rate        > 99.9%
-p95 delivery latency         < 60 seconds
-oldest pending event age     < 5 minutes
-stale active leases          = 0
-dead-letter queue            = 0 unresolved
-consumer lag                 < 5 minutes
-```
-
-Tune these after real production traffic is available.
-
-## Critical controls
-
-- Never publish finance events outside the operational database transaction.
-- Delivery is at-least-once; consumers must remain idempotent.
-- Do not mark an outbox event published until the finance event engine accepts it.
-- Recover stale leases automatically.
-- Quarantine poison events instead of retrying forever.
-- Preserve every delivery attempt for audit.
-- Do not replay external payment, settlement, or treasury provider actions.
-- Reconcile published outbox events to finance business events.
-- Monitor event age, consumer lag, stale leases, and dead letters.
-- Use database-backed workers or a durable queue before horizontal scale.
 
 ## Verification
 
 ```bash
 cd backend
 
-npm test -- outboxAtomicity.test.js
-npm test -- eventDelivery.test.js
-npm test -- leaseSafety.test.js
-npm test -- deadLetter.test.js
-npm test -- recovery.test.js
+npm test -- paymentCapturedFinance.test.js
+npm test -- refundFinance.test.js
+npm test -- paymentIdempotency.test.js
+npm test -- paymentOutboxAtomicity.test.js
+npm test -- paymentFinanceReconciliation.test.js
 
-node --check src/services/financeOutbox.service.js
-node --check src/services/financeEventDelivery.service.js
-node --check src/services/financeDeliveryLease.service.js
-node --check src/services/financeDeadLetter.service.js
-node --check src/services/financeReliability.service.js
+node --check src/services/paymentFinanceEvents.service.js
+node --check src/services/refundFinanceEvents.service.js
+node --check src/services/paymentRefund.service.js
+node --check src/services/paymentAccountingReconciliation.service.js
 
 npm run lint
 ```
 
 ```bash
 cd frontend
-
 npm run lint
 npm run build
 ```
 
-## Next integration step
+## Next domain
 
-After this batch, stop expanding finance infrastructure horizontally.
-
-Start wiring the existing operational modules into the outbox pattern one
-domain at a time, beginning with payments and refunds because they have the
-highest accounting and reconciliation sensitivity.
+After payment capture/refund integration is merged into the live payment
+service, proceed to Batch 08.5.2: order and delivery completion → finance
+events.
