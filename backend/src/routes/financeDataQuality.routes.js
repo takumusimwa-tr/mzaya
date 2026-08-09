@@ -1,0 +1,11 @@
+const router = require('express').Router();
+const { authenticate, requireRole } = require('../middleware/auth.middleware');
+const { USER_ROLE } = require('../config/constants');
+const { validateRequest } = require('../middleware/validateRequest');
+const controller = require('../controllers/financeDataQuality.controller');
+const { runQualitySchema } = require('../validators/financeMasterData.validator');
+router.use(authenticate);
+router.use(requireRole(USER_ROLE.ADMIN));
+router.get('/dashboard', controller.dashboard);
+router.post('/runs', validateRequest(runQualitySchema), controller.run);
+module.exports = router;

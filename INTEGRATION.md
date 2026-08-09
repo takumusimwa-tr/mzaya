@@ -1,199 +1,81 @@
-# Mzaya Batch 08.4.5 — Finance Audit, Controls Testing & Evidence Management
+# Mzaya Batch 08.4.6 — Finance Master Data Governance & Change Control
 
-This batch adds the assurance layer across financial controls, ledger,
-treasury, reconciliation, settlements, revenue, tax, close, reporting,
-and management actions.
+This batch governs finance configuration used by ledger, treasury, tax,
+settlements, close, FP&A, consolidation, profitability, reporting, and audit.
 
 ## Database
 
 ```bash
-psql "$DATABASE_URL" -f backend/migrations/finance_audit_assurance.sql
+psql "$DATABASE_URL" -f backend/migrations/finance_master_data_governance.sql
 ```
 
-## Register and export models
+## Register models and associations
 
-- `FinanceAuditPlan`
-- `FinanceAuditEngagement`
-- `FinanceAuditProcedure`
-- `FinanceControlAssessment`
-- `FinanceAuditSample`
-- `FinanceAuditEvidence`
-- `FinanceAuditFinding`
-- `FinanceRemediationAction`
-- `FinanceContinuousControlResult`
-
-Required associations:
+Export:
+`FinanceMasterDataDomain`, `FinanceMasterDataRecord`,
+`FinanceMasterDataVersion`, `FinanceChangeRequest`, `FinanceChangeApproval`,
+`FinanceValidationRule`, `FinanceDataQualityResult`, `FinancePeriodLock`.
 
 ```js
-FinanceAuditPlan.hasMany(FinanceAuditEngagement, {
-  foreignKey: 'audit_plan_id',
-  as: 'engagements',
+FinanceMasterDataDomain.hasMany(FinanceMasterDataRecord, {
+  foreignKey: 'domain_id',
+  as: 'records',
 });
 
-FinanceAuditEngagement.hasMany(FinanceAuditProcedure, {
-  foreignKey: 'engagement_id',
-  as: 'procedures',
+FinanceMasterDataRecord.belongsTo(FinanceMasterDataVersion, {
+  foreignKey: 'current_version_id',
+  as: 'currentVersion',
 });
 
-FinanceAuditFinding.hasMany(FinanceRemediationAction, {
-  foreignKey: 'finding_id',
-  as: 'remediationActions',
+FinanceChangeRequest.hasMany(FinanceChangeApproval, {
+  foreignKey: 'change_request_id',
+  as: 'approvals',
 });
 ```
 
 ## Route mounts
 
 ```js
-app.use(
-  '/api/finance-audit',
-  require('./routes/financeAudit.routes')
-);
-
-app.use(
-  '/api/finance-audit-findings',
-  require('./routes/financeAuditFinding.routes')
-);
-
-app.use(
-  '/api/finance-remediation',
-  require('./routes/financeRemediation.routes')
-);
+app.use('/api/finance-master-data', require('./routes/financeMasterData.routes'));
+app.use('/api/finance-change-requests', require('./routes/financeChangeRequest.routes'));
+app.use('/api/finance-data-quality', require('./routes/financeDataQuality.routes'));
 ```
 
-All routes are administrator-only. Production should introduce dedicated
-auditor and audit-manager roles with segregation from transaction operators.
+## Recommended domains
 
-## Standard control areas
+`chart_of_accounts`, `currency`, `fx_pair`, `tax_code`, `department`,
+`cost_center`, `bank_account`, `treasury_account`, `legal_entity`,
+`consolidation_mapping`, `financial_period`, `approval_policy`, `revenue_rule`.
 
-```text
-financial_controls
-ledger
-treasury
-settlements
-revenue
-tax
-close
-reporting
-```
+## Period-lock enforcement
 
-## Continuous control testing
-
-The included tests cover:
-
-- maker-checker separation
-- posted ledger transaction balancing
-
-Extend the same pattern for:
-
-- expired approval execution
-- bank-reconciliation completeness
-- settlement completeness
-- revenue-recognition reversals
-- tax filing deadlines
-- close-task evidence
-- reporting-pack approval
-- treasury-transfer idempotency
+Call `assertPeriodOpen()` before ledger posting, close adjustments, tax journals,
+revenue-recognition journals, treasury journals, reconciliation journals, and
+consolidation adjustments.
 
 ## Jobs
 
 ```js
-const {
-  startContinuousControlTestingJob,
-} = require('./jobs/continuousControlTesting.job');
-
-const {
-  startRemediationReminderJob,
-} = require('./jobs/remediationReminder.job');
-
-const continuousControlTestingJob =
-  startContinuousControlTestingJob({ logger });
-
-const remediationReminderJob =
-  startRemediationReminderJob({ logger });
+const { startFinanceDataQualityJob } = require('./jobs/financeDataQuality.job');
+const financeDataQualityJob = startFinanceDataQualityJob({ logger });
 ```
-
-## Socket.IO
-
-```js
-const {
-  initializeFinanceAuditEventBridge,
-} = require('./realtime/financeAuditEventBridge');
-
-const closeFinanceAuditBridge =
-  initializeFinanceAuditEventBridge(io);
-```
-
-Call the cleanup function during graceful shutdown.
 
 ## Frontend routes
 
 ```jsx
-<Route
-  path="/admin/finance/audit"
-  element={<FinanceAuditDashboard />}
-/>
-
-<Route
-  path="/admin/finance/audit/findings"
-  element={<FinanceFindingsDashboard />}
-/>
-
-<Route
-  path="/admin/finance/audit/remediation"
-  element={<RemediationDashboard />}
-/>
+<Route path="/admin/finance/master-data" element={<FinanceMasterDataDashboard />} />
+<Route path="/admin/finance/master-data/changes" element={<FinanceChangeRequests />} />
+<Route path="/admin/finance/master-data/quality" element={<FinanceDataQualityDashboard />} />
 ```
 
-## Evidence controls
+## Controls
 
-- Store files in private, access-controlled storage.
-- Preserve content hashes.
-- Record source type and source identifier.
-- Apply retention dates.
-- Never overwrite collected evidence.
-- Keep evidence links immutable after engagement completion.
-- Log access to restricted evidence.
-
-## Finding and remediation workflow
-
-```text
-finding raised
-      ↓
-management response
-      ↓
-remediation assigned
-      ↓
-completed with evidence
-      ↓
-independent verification
-      ↓
-finding closed
-```
-
-The remediation completer cannot verify the same action.
-
-## Important limitation
-
-This package is an internal audit and assurance workflow foundation. It does
-not provide an external audit opinion and does not replace professional
-auditors, statutory requirements, or approved internal-audit methodology.
-
-## Verification
-
-```bash
-cd backend
-npm test -- controlAssessment.test.js
-npm test -- auditSampling.test.js
-npm test -- remediation.test.js
-node --check src/services/financeControlAssessment.service.js
-node --check src/services/financeEvidence.service.js
-node --check src/services/financeRemediation.service.js
-node --check src/services/continuousControlTesting.service.js
-npm run lint
-```
-
-```bash
-cd frontend
-npm run lint
-npm run build
-```
+- Never edit active financial configuration in place.
+- Require independent approval for material changes.
+- Preserve every payload version and hash.
+- Use effective dates for time-sensitive configuration.
+- Block accounting mutations behind hard period locks.
+- Require an independent user to unlock a period.
+- Extend data-quality rules for duplicate account codes, unsupported FX pairs,
+  orphaned cost centers, missing consolidation mappings, retired tax codes,
+  and bank accounts without treasury mappings.
