@@ -60,6 +60,7 @@ export default function AdminHome() {
 
 // ─── Overview ─────────────────────────────────────────────────────────────────
 function Overview() {
+  const navigate = useNavigate()
   const { data, isLoading } = useQuery({
     queryKey: ['admin-overview'],
     queryFn:  () => adminAPI.overview().then((r) => r.data.overview),
@@ -78,13 +79,32 @@ function Overview() {
     { label: 'Pending Mzayas', value: o.pending_riders || 0, accent: o.pending_riders ? '#D97706' : undefined },
   ]
   return (
-    <div className="grid grid-cols-2 gap-3">
+    <div>
+      <button
+        type="button"
+        onClick={() => navigate('/admin/finance/reconciliation')}
+        className="w-full mb-4 text-left rounded-2xl border border-emerald-900/10 bg-emerald-950 p-4 text-white"
+      >
+        <p className="text-xs text-emerald-100/70">Finance infrastructure</p>
+        <div className="mt-1 flex items-center justify-between gap-4">
+          <div>
+            <p className="font-bold">Finance control center</p>
+            <p className="mt-1 text-xs text-emerald-100/70">
+              Reconciliation, event delivery, treasury, tax, and cutover.
+            </p>
+          </div>
+          <span aria-hidden="true">→</span>
+        </div>
+      </button>
+
+      <div className="grid grid-cols-2 gap-3">
       {cards.map((c) => (
         <div key={c.label} className="bg-white rounded-2xl p-4 border border-gray-100">
           <p className="text-xs text-gray-400 mb-1">{c.label}</p>
           <p className="text-xl font-black" style={{ color: c.accent || '#111827' }}>{c.value}</p>
         </div>
       ))}
+      </div>
     </div>
   )
 }

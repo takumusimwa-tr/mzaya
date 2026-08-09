@@ -1,4 +1,5 @@
 const crypto = require('crypto');
+const { Op } = require('sequelize');
 const {
   FinanceCutoverReadinessCheck,
   FinanceDomainReconciliationSnapshot,
@@ -59,7 +60,11 @@ async function evaluateCutoverReadiness(control) {
       where: { status: 'active' },
     }),
     FinanceOutboxEvent.count({
-      where: { status: ['pending', 'retry', 'dead_letter'] },
+      where: {
+        status: {
+          [Op.in]: ['pending', 'retry', 'dead_letter'],
+        },
+      },
     }),
   ]);
 

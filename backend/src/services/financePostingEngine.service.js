@@ -68,9 +68,10 @@ function buildJournalFromTemplate({
   };
 }
 
-async function prepareAccountingEvent(businessEvent) {
+async function prepareAccountingEvent(businessEvent, { transaction = null } = {}) {
   const existing = await FinanceAccountingEvent.findOne({
     where: { business_event_id: businessEvent.id },
+    transaction,
   });
 
   if (existing) return existing;
@@ -104,7 +105,7 @@ async function prepareAccountingEvent(businessEvent) {
     balanced: true,
     journal_payload: journal,
     status: 'prepared',
-  });
+  }, { transaction });
 }
 
 module.exports = {

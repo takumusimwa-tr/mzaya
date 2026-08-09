@@ -172,6 +172,21 @@ const Order = sequelize.define('Order', {
     allowNull: true,
   },
 
+  finance_reconciliation_status: {
+    type: DataTypes.STRING(30),
+    allowNull: false,
+    defaultValue: 'pending',
+  },
+  finance_last_reconciled_at: {
+    type: DataTypes.DATE,
+    allowNull: true,
+  },
+  finance_metadata: {
+    type: DataTypes.JSONB,
+    allowNull: false,
+    defaultValue: {},
+  },
+
 }, {
   tableName: 'orders',
   timestamps: true,

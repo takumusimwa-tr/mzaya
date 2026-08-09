@@ -1,8 +1,6 @@
 const crypto = require('crypto');
 const {
-  OrderFood,
-  OrderGrocery,
-  OrderMaterials,
+  Order,
   FinanceOutboxEvent,
   FinanceBusinessEvent,
   FinanceAccountingEvent,
@@ -10,27 +8,14 @@ const {
   OrderFinanceReconciliationResult,
 } = require('../models/associations');
 const {
-  normalizeOrderType,
+  usdToMinor,
 } = require('./orderFinanceEvents.service');
-
-function modelForType(orderType) {
-  const normalized = normalizeOrderType(orderType);
-
-  return {
-    food: OrderFood,
-    grocery: OrderGrocery,
-    materials: OrderMaterials,
-  }[normalized];
-}
 
 async function reconcileOrder({
   orderId,
-  orderType,
+  orderType = null,
 }) {
-  const normalized = normalizeOrderType(orderType);
-  const OrderModel = modelForType(normalized);
-
-  const order = await OrderModel.findByPk(orderId);
+  const order = await Order.findByPk(orderId);
   if (!order) {
     const error = new Error('Order not found');
     error.status = 404;
@@ -39,7 +24,7 @@ async function reconcileOrder({
 
   const outbox = await FinanceOutboxEvent.findOne({
     where: {
-      aggregate_type: `${normalized}_order`,
+      aggregate_type: 'order',
       aggregate_id: order.id,
       event_type: 'order.completed',
     },
@@ -59,10 +44,10 @@ async function reconcileOrder({
     businessEvent = await FinanceBusinessEvent.findOne({
       where: { idempotency_key: outbox.idempotency_key },
     });
-
     if (!businessEvent) {
       exceptionCode = 'ORDER_OUTBOX_WITHOUT_FINANCE_EVENT';
-      exceptionMessage = 'Order outbox event has no finance business event.';
+      exceptionMessage =
+        'Order outbox event has no finance business event.';
     }
   }
 
@@ -70,10 +55,11 @@ async function reconcileOrder({
     accountingEvent = await FinanceAccountingEvent.findOne({
       where: { business_event_id: businessEvent.id },
     });
-
     if (!accountingEvent) {
-      exceptionCode = 'ORDER_FINANCE_EVENT_WITHOUT_ACCOUNTING_EVENT';
-      exceptionMessage = 'Order finance event has no accounting event.';
+      exceptionCode =
+        'ORDER_FINANCE_EVENT_WITHOUT_ACCOUNTING_EVENT';
+      exceptionMessage =
+        'Order finance event has no accounting event.';
     }
   }
 
@@ -83,17 +69,11 @@ async function reconcileOrder({
     );
   } else if (accountingEvent) {
     exceptionCode = 'ORDER_ACCOUNTING_EVENT_NOT_POSTED';
-    exceptionMessage = 'Order accounting event has not reached the ledger.';
+    exceptionMessage =
+      'Order accounting event has not reached the ledger.';
   }
 
-  const expectedGov = Number(
-    order.gross_order_value_minor ??
-    order.total_amount_minor ??
-    order.total_minor ??
-    order.total ??
-    0
-  );
-
+  const expectedGov = usdToMinor(order.total_usd);
   const observedGov = businessEvent
     ? Number(businessEvent.payload?.grossOrderValueMinor || 0)
     : null;
@@ -104,33 +84,13 @@ async function reconcileOrder({
     expectedGov !== observedGov
   ) {
     exceptionCode = 'ORDER_GOV_MISMATCH';
-    exceptionMessage = 'Operational order value differs from finance event value.';
+    exceptionMessage =
+      'Operational order value differs from finance event value.';
   }
-
-  const expectedDeliveryFee = Number(
-    order.delivery_fee_minor ??
-    order.delivery_fee ??
-    0
-  );
-
-  const observedDeliveryFee = businessEvent
-    ? Number(businessEvent.payload?.deliveryFeeMinor || 0)
-    : null;
-
-  const expectedPlatformFee = Number(
-    order.platform_fee_minor ??
-    order.service_fee_minor ??
-    order.service_fee ??
-    0
-  );
-
-  const observedPlatformFee = businessEvent
-    ? Number(businessEvent.payload?.platformFeeMinor || 0)
-    : null;
 
   const result = await OrderFinanceReconciliationResult.create({
     order_id: order.id,
-    order_type: normalized,
+    order_type: orderType || order.category_type,
     result_reference:
       `OFR-${crypto.randomUUID().slice(0, 10).toUpperCase()}`,
     status: exceptionCode ? 'exception' : 'matched',
@@ -142,11 +102,13 @@ async function reconcileOrder({
     ledger_transaction_id: ledger?.id || null,
     expected_gov_minor: expectedGov,
     observed_gov_minor: observedGov,
-    expected_delivery_fee_minor: expectedDeliveryFee,
-    observed_delivery_fee_minor: observedDeliveryFee,
-    expected_platform_fee_minor: expectedPlatformFee,
-    observed_platform_fee_minor: observedPlatformFee,
-    currency: order.currency || null,
+    expected_delivery_fee_minor: usdToMinor(order.delivery_fee_usd),
+    observed_delivery_fee_minor:
+      businessEvent?.payload?.deliveryFeeMinor ?? null,
+    expected_platform_fee_minor: 0,
+    observed_platform_fee_minor:
+      businessEvent?.payload?.platformFeeMinor ?? null,
+    currency: order.currency_paid || 'USD',
   });
 
   await order.update({
@@ -159,6 +121,5 @@ async function reconcileOrder({
 }
 
 module.exports = {
-  modelForType,
   reconcileOrder,
 };

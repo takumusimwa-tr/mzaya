@@ -5,6 +5,15 @@ const {
   OrderTimeline,
 } = require('../models/associations');
 const { orderEvents, ORDER_EVENT } = require('../events/order.events');
+const {
+  emitOrderCompleted,
+} = require('./orderFinanceEvents.service');
+const {
+  emitDeliveryCompleted,
+} = require('./deliveryFinanceEvents.service');
+const {
+  upsertOrderEconomics,
+} = require('./orderEconomicsIntegration.service');
 
 function serviceError(message, status = 400, code = 'DELIVERY_PROOF_ERROR') {
   const error = new Error(message);
@@ -134,6 +143,22 @@ async function submitDeliveryProof({
       status: 'delivered',
       delivered_at: new Date(),
     }, { transaction });
+
+    await emitOrderCompleted({
+      order,
+      transaction,
+    });
+
+    await emitDeliveryCompleted({
+      order,
+      deliveredAt: order.delivered_at,
+      transaction,
+    });
+
+    await upsertOrderEconomics({
+      order,
+      transaction,
+    });
 
     await OrderTimeline.create({
       order_id: order.id,

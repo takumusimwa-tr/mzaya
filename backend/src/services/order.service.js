@@ -8,6 +8,17 @@ const { VEHICLE_META } = require('../config/constants');
 const mlService = require('./ml.service');
 const realtime = require('../realtime/socket');
 const { logger } = require('../utils/logger');
+const { sequelize } = require('../config/db');
+const {
+  emitOrderCompleted,
+  emitOrderCancelled,
+} = require('./orderFinanceEvents.service');
+const {
+  emitDeliveryCompleted,
+} = require('./deliveryFinanceEvents.service');
+const {
+  upsertOrderEconomics,
+} = require('./orderEconomicsIntegration.service');
 
 // ─── Quote an order (no persistence) ──────────────────────────────────────────
 // Shared by POST /api/orders/quote and createOrder so the fee the customer sees
@@ -269,59 +280,144 @@ async function getRiderOrders(riderId) {
   });
 }
 
+
 async function updateOrderStatus(orderId, newStatus, riderId) {
-  const order = await Order.findByPk(orderId);
-  if (!order) throw new Error('Order not found');
-  if (order.rider_id !== riderId) throw new Error('Access denied');
+  const result = await sequelize.transaction(async (transaction) => {
+    const order = await Order.findByPk(orderId, {
+      transaction,
+      lock: transaction.LOCK.UPDATE,
+    });
 
-  const timestamps = {
-    [ORDER_STATUS.PICKED_UP]: { picked_up_at: new Date() },
-    [ORDER_STATUS.EN_ROUTE]:  {},
-    [ORDER_STATUS.DELIVERED]: { delivered_at: new Date() },
-  };
+    if (!order) throw new Error('Order not found');
+    if (order.rider_id !== riderId) throw new Error('Access denied');
 
-  await order.update({ status: newStatus, ...timestamps[newStatus] });
+    if (
+      newStatus === ORDER_STATUS.DELIVERED &&
+      order.status === ORDER_STATUS.DELIVERED
+    ) {
+      return { order, deliveredNow: false };
+    }
 
-  // ── Real-time: broadcast the status change ────────────────────────────────
+    const timestamps = {
+      [ORDER_STATUS.PICKED_UP]: { picked_up_at: new Date() },
+      [ORDER_STATUS.EN_ROUTE]: {},
+      [ORDER_STATUS.DELIVERED]: { delivered_at: new Date() },
+    };
+
+    await order.update({
+      status: newStatus,
+      ...timestamps[newStatus],
+    }, { transaction });
+
+    if (newStatus === ORDER_STATUS.DELIVERED) {
+      await emitOrderCompleted({
+        order,
+        transaction,
+      });
+
+      await emitDeliveryCompleted({
+        order,
+        deliveredAt: order.delivered_at,
+        transaction,
+      });
+
+      await upsertOrderEconomics({
+        order,
+        transaction,
+      });
+    }
+
+    return {
+      order,
+      deliveredNow: newStatus === ORDER_STATUS.DELIVERED,
+    };
+  });
+
+  const { order, deliveredNow } = result;
+
+  // ── Real-time: broadcast the status change after durable commit ───────────
   try {
     const vendorId = await resolveVendorId(order.id);
     realtime.emitOrderUpdated(order, { vendorId });
   } catch (err) {
-    logger.error('realtime_emit_status_failed_error', { error: err.message });
+    logger.error('realtime_emit_status_failed_error', {
+      error: err.message,
+    });
   }
 
-  // On delivery, credit the rider: delivery fee + 100% of the tip, and bump
-  // their delivery count. Only credit once (guard on delivered_at being freshly
-  // set). rider_id references users(id), so find the rider row by user_id.
-  if (newStatus === ORDER_STATUS.DELIVERED) {
+  // Existing earnings behavior is preserved. It runs only when this call
+  // performed the first delivered transition.
+  if (deliveredNow) {
     try {
       const { Rider } = require('../models/associations');
-      const rider = await Rider.findOne({ where: { user_id: order.rider_id } });
+      const rider = await Rider.findOne({
+        where: { user_id: order.rider_id },
+      });
+
       if (rider) {
-        const earned = Number(order.delivery_fee_usd || 0) + Number(order.tip_usd || 0);
+        const earned =
+          Number(order.delivery_fee_usd || 0) +
+          Number(order.tip_usd || 0);
+
         await rider.update({
-          total_earnings_usd: parseFloat((Number(rider.total_earnings_usd || 0) + earned).toFixed(2)),
-          total_deliveries:   Number(rider.total_deliveries || 0) + 1,
+          total_earnings_usd: parseFloat(
+            (
+              Number(rider.total_earnings_usd || 0) +
+              earned
+            ).toFixed(2)
+          ),
+          total_deliveries:
+            Number(rider.total_deliveries || 0) + 1,
         });
       }
-    } catch (e) {
-      logger.error('earnings_credit_failed', { error: e.message });
+    } catch (error) {
+      logger.error('earnings_credit_failed', {
+        error: error.message,
+      });
     }
   }
 
   return order;
 }
 
+
 async function cancelOrder(orderId, customerId, reason) {
-  const order = await Order.findByPk(orderId);
-  if (!order) throw new Error('Order not found');
-  if (order.customer_id !== customerId) throw new Error('Access denied');
+  return sequelize.transaction(async (transaction) => {
+    const order = await Order.findByPk(orderId, {
+      transaction,
+      lock: transaction.LOCK.UPDATE,
+    });
 
-  const cancellable = [ORDER_STATUS.PENDING, ORDER_STATUS.ACCEPTED];
-  if (!cancellable.includes(order.status)) throw new Error('Order cannot be cancelled at this stage');
+    if (!order) throw new Error('Order not found');
+    if (order.customer_id !== customerId) {
+      throw new Error('Access denied');
+    }
 
-  await order.update({ status: ORDER_STATUS.CANCELLED, cancelled_at: new Date(), cancel_reason: reason || null });
-  return order;
+    const cancellable = [
+      ORDER_STATUS.PENDING,
+      ORDER_STATUS.ACCEPTED,
+    ];
+
+    if (!cancellable.includes(order.status)) {
+      throw new Error(
+        'Order cannot be cancelled at this stage'
+      );
+    }
+
+    await order.update({
+      status: ORDER_STATUS.CANCELLED,
+      cancelled_at: new Date(),
+      cancel_reason: reason || null,
+    }, { transaction });
+
+    await emitOrderCancelled({
+      order,
+      transaction,
+      reason: reason || null,
+    });
+
+    return order;
+  });
 }
 
 function calculateSubtotal(categoryType, detail) {

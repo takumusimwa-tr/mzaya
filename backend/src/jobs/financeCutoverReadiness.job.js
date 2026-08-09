@@ -1,4 +1,5 @@
 const cron = require('node-cron');
+const { Op } = require('sequelize');
 const {
   FinanceCutoverControl,
 } = require('../models/associations');
@@ -12,7 +13,9 @@ function startFinanceCutoverReadinessJob({
   return cron.schedule('20 */2 * * *', async () => {
     const controls = await FinanceCutoverControl.findAll({
       where: {
-        status: ['planned', 'validating', 'ready'],
+        status: {
+          [Op.in]: ['planned', 'validating', 'ready'],
+        },
       },
     });
 

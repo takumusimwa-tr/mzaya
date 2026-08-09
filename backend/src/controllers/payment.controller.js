@@ -19,6 +19,10 @@ const { sequelize } = require('../config/db');
 const { Order, PaymentAttempt, PaymentEvent } = require('../models/associations');
 const { PAYMENT_STATUS } = require('../config/constants');
 const { logger } = require('../utils/logger');
+const {
+  emitPaymentCaptured,
+  emitPaymentFailed,
+} = require('../services/paymentFinanceEvents.service');
 
 const MOBILE_METHODS = ['ecocash', 'onemoney', 'innbucks', 'omari'];
 
@@ -331,6 +335,22 @@ async function applyPaymentOutcome({ attempt, next, rawStatus, payload, source }
     }, { transaction: tx });
 
     const orderStatus = await recomputeOrderPayment(locked.order_id, tx);
+
+    // Finance event publication is atomic with the authoritative payment
+    // resolution. This closes the "payment succeeded but accounting never heard"
+    // failure mode.
+    if (next === 'success') {
+      await emitPaymentCaptured({
+        payment: locked,
+        transaction: tx,
+      });
+    } else if (next === 'failed') {
+      await emitPaymentFailed({
+        payment: locked,
+        transaction: tx,
+        reason: rawStatus || 'provider_reported_failure',
+      });
+    }
 
     logger.info('payment_resolved', {
       attemptId: locked.id, orderId: locked.order_id,

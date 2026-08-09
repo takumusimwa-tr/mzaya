@@ -11,7 +11,7 @@ function validateRefundRequest({
   previouslyRefundedMinor = 0,
   requestedAmountMinor,
 }) {
-  if (!['paid', 'captured', 'completed'].includes(paymentStatus)) {
+  if (!['paid', 'captured', 'completed', 'success'].includes(paymentStatus)) {
     throw policyError('Payment is not refundable', 'PAYMENT_NOT_REFUNDABLE');
   }
 

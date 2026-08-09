@@ -1,23 +1,14 @@
--- Batch 08.5.2 — Orders & Delivery Completion → Finance Event Integration
+-- Batch 08.5.2 live merge — finance reconciliation belongs on canonical orders.
 
-ALTER TABLE "orderFood"
-  ADD COLUMN IF NOT EXISTS finance_reconciliation_status VARCHAR(30) NOT NULL DEFAULT 'pending',
-  ADD COLUMN IF NOT EXISTS finance_last_reconciled_at TIMESTAMPTZ,
-  ADD COLUMN IF NOT EXISTS finance_metadata JSONB NOT NULL DEFAULT '{}'::jsonb;
-
-ALTER TABLE "orderGrocery"
-  ADD COLUMN IF NOT EXISTS finance_reconciliation_status VARCHAR(30) NOT NULL DEFAULT 'pending',
-  ADD COLUMN IF NOT EXISTS finance_last_reconciled_at TIMESTAMPTZ,
-  ADD COLUMN IF NOT EXISTS finance_metadata JSONB NOT NULL DEFAULT '{}'::jsonb;
-
-ALTER TABLE "orderMaterials"
-  ADD COLUMN IF NOT EXISTS finance_reconciliation_status VARCHAR(30) NOT NULL DEFAULT 'pending',
+ALTER TABLE orders
+  ADD COLUMN IF NOT EXISTS finance_reconciliation_status VARCHAR(30)
+    NOT NULL DEFAULT 'pending',
   ADD COLUMN IF NOT EXISTS finance_last_reconciled_at TIMESTAMPTZ,
   ADD COLUMN IF NOT EXISTS finance_metadata JSONB NOT NULL DEFAULT '{}'::jsonb;
 
 CREATE TABLE IF NOT EXISTS order_finance_reconciliation_results (
   id UUID PRIMARY KEY,
-  order_id UUID NOT NULL,
+  order_id UUID NOT NULL REFERENCES orders(id) ON DELETE CASCADE,
   order_type VARCHAR(40) NOT NULL,
   result_reference VARCHAR(140) NOT NULL UNIQUE,
   status VARCHAR(30) NOT NULL,

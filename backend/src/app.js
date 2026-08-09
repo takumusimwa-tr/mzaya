@@ -50,6 +50,26 @@ const browseRoutes    = require('./routes/browse.routes');
 const negotiationRoutes = require('./routes/negotiation.routes');
 const chatRoutes      = require('./routes/chat.routes');
 
+// Finance event engine and operational-finance integrations.
+const ledgerRoutes = require('./routes/ledger.routes');
+const financeEventEngineRoutes = require('./routes/financeEventEngine.routes');
+const financePostingRoutes = require('./routes/financePosting.routes');
+const financeReplayRoutes = require('./routes/financeReplay.routes');
+const financeDeliveryRoutes = require('./routes/financeDelivery.routes');
+const financeDeadLetterRoutes = require('./routes/financeDeadLetter.routes');
+const financeReliabilityRoutes = require('./routes/financeReliability.routes');
+const paymentFinanceRoutes = require('./routes/paymentFinance.routes');
+const orderFinanceRoutes = require('./routes/orderFinance.routes');
+const vendorSettlementRoutes = require('./routes/vendorSettlement.routes');
+const mzayaPayoutRoutes = require('./routes/mzayaPayout.routes');
+const procurementFinanceRoutes = require('./routes/procurementFinance.routes');
+const treasuryFinanceRoutes = require('./routes/treasuryFinance.routes');
+const taxFinanceRoutes = require('./routes/taxFinance.routes');
+const financeCutoverRoutes = require('./routes/financeCutover.routes');
+const financeCrossDomainReconciliationRoutes =
+  require('./routes/financeCrossDomainReconciliation.routes');
+
+
 const app = express();
 
 app.use(express.json());
@@ -143,6 +163,28 @@ app.use('/api/promos',    promoRoutes);
 app.use('/api/vendor-stats', vendorStatsRoutes);
 app.use('/api/admin',     adminRoutes);
 app.use('/api/browse',    browseRoutes);
+
+// Finance — admin-only inside each route module.
+app.use('/api/ledger', ledgerRoutes);
+app.use('/api/finance-events', financeEventEngineRoutes);
+app.use('/api/finance-posting', financePostingRoutes);
+app.use('/api/finance-replay', financeReplayRoutes);
+app.use('/api/finance-delivery', financeDeliveryRoutes);
+app.use('/api/finance-dead-letters', financeDeadLetterRoutes);
+app.use('/api/finance-reliability', financeReliabilityRoutes);
+app.use('/api/payment-finance', paymentFinanceRoutes);
+app.use('/api/order-finance', orderFinanceRoutes);
+app.use('/api/vendor-settlements', vendorSettlementRoutes);
+app.use('/api/mzaya-payouts', mzayaPayoutRoutes);
+app.use('/api/procurement-finance', procurementFinanceRoutes);
+app.use('/api/treasury-finance', treasuryFinanceRoutes);
+app.use('/api/tax-finance', taxFinanceRoutes);
+app.use('/api/finance-cutover', financeCutoverRoutes);
+app.use(
+  '/api/finance-cross-domain-reconciliation',
+  financeCrossDomainReconciliationRoutes
+);
+
 
 // ─── Health checks ────────────────────────────────────────────────────────────
 // Hosting platforms poll these to decide whether an instance is alive and

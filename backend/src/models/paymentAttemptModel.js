@@ -71,6 +71,28 @@ const PaymentAttempt = sequelize.define('PaymentAttempt', {
   provider_payload_hash: { type: DataTypes.STRING, allowNull: true },
 
   resolved_at: { type: DataTypes.DATE, allowNull: true },
+
+  // Finance cutover state. The canonical payment entity in the live codebase
+  // is PaymentAttempt; older finance scaffolding referred to it as Payment.
+  finance_reconciliation_status: {
+    type: DataTypes.STRING(30),
+    allowNull: false,
+    defaultValue: 'pending',
+  },
+  finance_last_reconciled_at: {
+    type: DataTypes.DATE,
+    allowNull: true,
+  },
+  finance_metadata: {
+    type: DataTypes.JSONB,
+    allowNull: false,
+    defaultValue: {},
+  },
+  provider_payload: {
+    type: DataTypes.JSONB,
+    allowNull: false,
+    defaultValue: {},
+  },
 }, {
   tableName: 'payment_attempts',
   timestamps: true,

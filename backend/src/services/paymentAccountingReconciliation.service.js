@@ -66,7 +66,7 @@ async function reconcilePayment(paymentId) {
     exceptionMessage = 'Payment accounting event has not reached the ledger.';
   }
 
-  const expected = Number(payment.amount_minor ?? payment.amount ?? 0);
+  const expected = Math.round(Number(payment.amount_usd || 0) * 100);
   const observed = accountingEvent
     ? Number(accountingEvent.debit_total_minor || 0)
     : null;

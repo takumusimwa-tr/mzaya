@@ -2,32 +2,20 @@ const {
   enqueueFinanceOutboxEvent,
 } = require('./financeOutbox.service');
 
+function usdToMinor(value) {
+  return Math.round(Number(value || 0) * 100);
+}
+
 function paymentBasePayload(payment) {
   return {
     paymentId: payment.id,
     orderId: payment.order_id || null,
-    customerId: payment.user_id || payment.customer_id || null,
-    provider: payment.provider || payment.payment_provider || 'unknown',
-    providerReference:
-      payment.provider_reference ||
-      payment.reference ||
-      payment.transaction_reference ||
-      null,
+    provider: payment.provider || 'paynow',
+    providerReference: payment.provider_reference || null,
     currency: String(payment.currency || 'USD').toUpperCase(),
-    amountMinor: Number(payment.amount_minor ?? payment.amount ?? 0),
+    amountMinor: usdToMinor(payment.amount_usd),
+    method: payment.method || null,
   };
-}
-
-async function emitPaymentAuthorized({ payment, transaction }) {
-  return enqueueFinanceOutboxEvent({
-    transaction,
-    aggregateType: 'payment',
-    aggregateId: payment.id,
-    eventType: 'payment.authorized',
-    sourceSystem: 'payments',
-    payload: paymentBasePayload(payment),
-    idempotencyKey: `payment:${payment.id}:authorized:v1`,
-  });
 }
 
 async function emitPaymentCaptured({ payment, transaction }) {
@@ -42,7 +30,11 @@ async function emitPaymentCaptured({ payment, transaction }) {
   });
 }
 
-async function emitPaymentFailed({ payment, transaction, reason = null }) {
+async function emitPaymentFailed({
+  payment,
+  transaction,
+  reason = null,
+}) {
   return enqueueFinanceOutboxEvent({
     transaction,
     aggregateType: 'payment',
@@ -72,13 +64,14 @@ async function emitGatewayFeePosted({
       ...paymentBasePayload(payment),
       gatewayFeeMinor: Number(feeMinor),
     },
-    idempotencyKey: `payment:${payment.id}:gateway_fee:${feeMinor}:v1`,
+    idempotencyKey:
+      `payment:${payment.id}:gateway_fee:${Number(feeMinor)}:v1`,
   });
 }
 
 module.exports = {
+  usdToMinor,
   paymentBasePayload,
-  emitPaymentAuthorized,
   emitPaymentCaptured,
   emitPaymentFailed,
   emitGatewayFeePosted,

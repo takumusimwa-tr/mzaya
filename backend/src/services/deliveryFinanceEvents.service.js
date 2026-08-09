@@ -3,33 +3,29 @@ const {
 } = require('./financeOutbox.service');
 const {
   orderBasePayload,
-  normalizeOrderType,
 } = require('./orderFinanceEvents.service');
 
 async function emitDeliveryCompleted({
   order,
-  orderType,
   deliveredAt,
   distanceKm = null,
   durationMinutes = null,
   transaction,
 }) {
-  const normalizedType = normalizeOrderType(orderType);
-
   return enqueueFinanceOutboxEvent({
     transaction,
-    aggregateType: `${normalizedType}_order`,
+    aggregateType: 'order',
     aggregateId: order.id,
     eventType: 'delivery.completed',
     sourceSystem: 'delivery',
     payload: {
-      ...orderBasePayload(order, normalizedType),
+      ...orderBasePayload(order, order.category_type),
       deliveredAt,
       distanceKm,
       durationMinutes,
     },
     idempotencyKey:
-      `delivery:${normalizedType}:${order.id}:completed:v1`,
+      `delivery:${order.id}:completed:v1`,
   });
 }
 

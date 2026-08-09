@@ -27,6 +27,7 @@ const { initSocket } = require('./realtime/socket');
 const { logger } = require('./utils/logger');
 const { startCurrencySyncJob } = require('./jobs/currencySync.job');
 const { startScheduledReleaseJob } = require('./jobs/scheduledRelease.job');
+const { startFinanceRuntime } = require('./runtime/financeRuntime');
 
 async function boot() {
   await connectDB();
@@ -66,6 +67,7 @@ async function boot() {
   const PORT = process.env.PORT || 5000;
   const server = http.createServer(app);
   const io = initSocket(server);
+  const financeRuntime = await startFinanceRuntime({ io, logger });
 
   server.listen(PORT, () => {
     logger.info('server_started', {
@@ -75,7 +77,7 @@ async function boot() {
     });
   });
 
-  return { server, io };
+  return { server, io, financeRuntime };
 }
 
 // ─── Lifecycle ────────────────────────────────────────────────────────────────
@@ -103,6 +105,7 @@ async function shutdown(signal) {
   }, 15000);
 
   try {
+    handles?.financeRuntime?.stop?.();
     if (handles?.io)     await new Promise((r) => handles.io.close(r));
     if (handles?.server) await new Promise((r) => handles.server.close(r));
     await sequelize.close();

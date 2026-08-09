@@ -88,7 +88,7 @@ async function processBusinessEvent({
     }, { transaction });
 
     try {
-      const accountingEvent = await prepareAccountingEvent(event);
+      const accountingEvent = await prepareAccountingEvent(event, { transaction });
 
       await event.update({
         status: 'prepared',

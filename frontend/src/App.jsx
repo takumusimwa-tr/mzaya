@@ -47,6 +47,27 @@ const VendorAddBranch  = lazy(() => import('./pages/vendor/VendorAddBranch'))
 // Admin
 const AdminHome = lazy(() => import('./pages/admin/AdminHome'))
 
+const FinanceEventEngine = lazy(() => import('./pages/admin/FinanceEventEngine'))
+const FinancePostingCenter = lazy(() => import('./pages/admin/FinancePostingCenter'))
+const FinanceDeliveryMonitor = lazy(() => import('./pages/admin/FinanceDeliveryMonitor'))
+const FinanceDeadLetterQueue = lazy(() => import('./pages/admin/FinanceDeadLetterQueue'))
+const FinanceReliabilityDashboard = lazy(() => import('./pages/admin/FinanceReliabilityDashboard'))
+const PaymentFinanceReconciliation = lazy(() => import('./pages/admin/PaymentFinanceReconciliation'))
+const OrderFinanceReconciliation = lazy(() => import('./pages/admin/OrderFinanceReconciliation'))
+const VendorSettlementDashboard = lazy(() => import('./pages/admin/VendorSettlementDashboard'))
+const VendorSettlementReconciliation = lazy(() => import('./pages/admin/VendorSettlementReconciliation'))
+const MzayaPayoutDashboard = lazy(() => import('./pages/admin/MzayaPayoutDashboard'))
+const MzayaPayoutReconciliation = lazy(() => import('./pages/admin/MzayaPayoutReconciliation'))
+const ProcurementFinanceDashboard = lazy(() => import('./pages/admin/ProcurementFinanceDashboard'))
+const ProcurementFinanceReconciliation = lazy(() => import('./pages/admin/ProcurementFinanceReconciliation'))
+const TreasuryFinanceDashboard = lazy(() => import('./pages/admin/TreasuryFinanceDashboard'))
+const TreasuryFinanceReconciliation = lazy(() => import('./pages/admin/TreasuryFinanceReconciliation'))
+const TaxFinanceDashboard = lazy(() => import('./pages/admin/TaxFinanceDashboard'))
+const TaxFinanceReconciliation = lazy(() => import('./pages/admin/TaxFinanceReconciliation'))
+const FinanceCutoverDashboard = lazy(() => import('./pages/admin/FinanceCutoverDashboard'))
+const CrossDomainReconciliationDashboard = lazy(() => import('./pages/admin/CrossDomainReconciliationDashboard'))
+
+
 // Layout — always needed, so not lazy.
 import BottomNav       from './components/layout/BottomNav'
 import RiderBottomNav  from './components/layout/RiderBottomNav'
@@ -124,6 +145,43 @@ function AppShell() {
     )
   }
 
+
+  const isAdminArea =
+    role === 'admin' &&
+    location.pathname.startsWith('/admin')
+
+  if (token && isAdminArea) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <Suspense fallback={<LoadingScreen message="Loading..." />}>
+          <Routes>
+            <Route path="/admin" element={<RoleRoute allow={['admin']}><AdminHome /></RoleRoute>} />
+            <Route path="/admin/finance/events" element={<RoleRoute allow={['admin']}><FinanceEventEngine /></RoleRoute>} />
+            <Route path="/admin/finance/posting" element={<RoleRoute allow={['admin']}><FinancePostingCenter /></RoleRoute>} />
+            <Route path="/admin/finance/delivery" element={<RoleRoute allow={['admin']}><FinanceDeliveryMonitor /></RoleRoute>} />
+            <Route path="/admin/finance/dead-letters" element={<RoleRoute allow={['admin']}><FinanceDeadLetterQueue /></RoleRoute>} />
+            <Route path="/admin/finance/reliability" element={<RoleRoute allow={['admin']}><FinanceReliabilityDashboard /></RoleRoute>} />
+            <Route path="/admin/finance/payment-reconciliation" element={<RoleRoute allow={['admin']}><PaymentFinanceReconciliation /></RoleRoute>} />
+            <Route path="/admin/finance/order-reconciliation" element={<RoleRoute allow={['admin']}><OrderFinanceReconciliation /></RoleRoute>} />
+            <Route path="/admin/finance/vendor-settlements" element={<RoleRoute allow={['admin']}><VendorSettlementDashboard /></RoleRoute>} />
+            <Route path="/admin/finance/vendor-settlements/reconciliation" element={<RoleRoute allow={['admin']}><VendorSettlementReconciliation /></RoleRoute>} />
+            <Route path="/admin/finance/mzaya-payouts" element={<RoleRoute allow={['admin']}><MzayaPayoutDashboard /></RoleRoute>} />
+            <Route path="/admin/finance/mzaya-payouts/reconciliation" element={<RoleRoute allow={['admin']}><MzayaPayoutReconciliation /></RoleRoute>} />
+            <Route path="/admin/finance/procurement" element={<RoleRoute allow={['admin']}><ProcurementFinanceDashboard /></RoleRoute>} />
+            <Route path="/admin/finance/procurement/reconciliation" element={<RoleRoute allow={['admin']}><ProcurementFinanceReconciliation /></RoleRoute>} />
+            <Route path="/admin/finance/treasury" element={<RoleRoute allow={['admin']}><TreasuryFinanceDashboard /></RoleRoute>} />
+            <Route path="/admin/finance/treasury/reconciliation" element={<RoleRoute allow={['admin']}><TreasuryFinanceReconciliation /></RoleRoute>} />
+            <Route path="/admin/finance/tax" element={<RoleRoute allow={['admin']}><TaxFinanceDashboard /></RoleRoute>} />
+            <Route path="/admin/finance/tax/reconciliation" element={<RoleRoute allow={['admin']}><TaxFinanceReconciliation /></RoleRoute>} />
+            <Route path="/admin/finance/cutover" element={<RoleRoute allow={['admin']}><FinanceCutoverDashboard /></RoleRoute>} />
+            <Route path="/admin/finance/reconciliation" element={<RoleRoute allow={['admin']}><CrossDomainReconciliationDashboard /></RoleRoute>} />
+            <Route path="*" element={<Navigate to="/admin" replace />} />
+          </Routes>
+        </Suspense>
+      </div>
+    )
+  }
+
   // Phone-width shell for customer / rider / auth / admin.
   return (
     <div className="min-h-screen bg-gray-50 max-w-md mx-auto">
@@ -161,9 +219,6 @@ function AppShell() {
           <Route path="/rider/delivery/:id" element={<RoleRoute allow={['rider']}><RiderDelivery /></RoleRoute>} />
           <Route path="/rider/negotiate"    element={<RoleRoute allow={['rider']}><RiderNegotiate /></RoleRoute>} />
           <Route path="/rider/earnings"     element={<RoleRoute allow={['rider']}><RiderEarnings /></RoleRoute>} />
-
-          {/* Admin */}
-          <Route path="/admin" element={<RoleRoute allow={['admin']}><AdminHome /></RoleRoute>} />
 
           <Route path="*" element={<Navigate to={token ? '/' : '/welcome'} replace />} />
         </Routes>

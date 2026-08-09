@@ -7,7 +7,7 @@ const {
 } = require('../models/associations');
 const { validateRefundRequest } = require('./refundPolicy.service');
 const { recordRefundAudit } = require('./refundAudit.service');
-const { postRefundLedger } = require('./refundLedger.service');
+const { emitRefundCompleted } = require('./refundFinanceEvents.service');
 const { disputeEvents, DISPUTE_EVENT } = require('../events/dispute.events');
 
 function serviceError(message, status = 400, code = 'REFUND_ERROR') {
@@ -129,6 +129,7 @@ async function approveRefund({
   });
 }
 
+
 async function completeRefund({
   refundId,
   provider,
@@ -137,41 +138,72 @@ async function completeRefund({
   allocations,
   actorId,
 }) {
-  const refund = await Refund.findByPk(refundId);
-  if (!refund) throw serviceError('Refund not found', 404, 'REFUND_NOT_FOUND');
-  if (!['approved', 'processing'].includes(refund.status)) {
-    throw serviceError('Refund cannot be completed', 409, 'INVALID_REFUND_STATUS');
-  }
+  return sequelize.transaction(async (transaction) => {
+    const refund = await Refund.findByPk(refundId, {
+      transaction,
+      lock: transaction.LOCK.UPDATE,
+    });
 
-  const order = await Order.findByPk(refund.order_id);
-  await postRefundLedger({
-    refund,
-    order,
-    allocations,
-    createdBy: actorId,
+    if (!refund) {
+      throw serviceError('Refund not found', 404, 'REFUND_NOT_FOUND');
+    }
+
+    if (refund.status === 'processed') return refund;
+
+    if (!['approved', 'processing'].includes(refund.status)) {
+      throw serviceError(
+        'Refund cannot be completed',
+        409,
+        'INVALID_REFUND_STATUS'
+      );
+    }
+
+    const payment = await Payment.findByPk(refund.payment_id, {
+      transaction,
+      lock: transaction.LOCK.UPDATE,
+    });
+
+    if (!payment) {
+      throw serviceError('Payment not found', 404, 'PAYMENT_NOT_FOUND');
+    }
+
+    await refund.update({
+      status: 'processed',
+      provider,
+      provider_refund_reference: providerReference,
+      provider_payload: providerPayload || {},
+      processed_at: new Date(),
+    }, { transaction });
+
+    // The refund record and its finance outbox event commit together.
+    // External provider execution has already occurred; replaying accounting
+    // cannot trigger the provider again.
+    await emitRefundCompleted({
+      payment,
+      refund,
+      transaction,
+    });
+
+    await recordRefundAudit({
+      refundId,
+      actorId,
+      action: 'refund_processed',
+      newValue: {
+        providerReference,
+        allocations: allocations || null,
+      },
+      transaction,
+    });
+
+    transaction.afterCommit(() => {
+      disputeEvents.emit(DISPUTE_EVENT.REFUND_PROCESSED, {
+        refundId,
+        customerId: refund.customer_id,
+      });
+    });
+
+    return refund;
   });
-
-  await refund.update({
-    status: 'processed',
-    provider,
-    provider_refund_reference: providerReference,
-    provider_payload: providerPayload || {},
-    processed_at: new Date(),
-  });
-
-  await recordRefundAudit({
-    refundId,
-    actorId,
-    action: 'refund_processed',
-    newValue: { providerReference },
-  });
-
-  disputeEvents.emit(DISPUTE_EVENT.REFUND_PROCESSED, {
-    refundId,
-    customerId: refund.customer_id,
-  });
-
-  return refund;
 }
 
 module.exports = {
