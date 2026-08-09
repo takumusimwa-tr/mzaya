@@ -1,0 +1,118 @@
+.order-finance-page {
+  width: min(1260px, calc(100% - 32px));
+  margin: 0 auto;
+  padding: 42px 0 60px;
+  color: #121714;
+}
+
+.order-finance-page > header {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 20px;
+}
+
+.order-finance-page h1 {
+  margin: 4px 0;
+  font-size: clamp(34px, 4vw, 50px);
+  letter-spacing: -.045em;
+}
+
+.order-finance-page > header p:last-child {
+  margin: 0;
+  color: #728077;
+}
+
+.order-finance-page select {
+  min-height: 44px;
+  padding: 0 12px;
+  border: 1px solid #d8e1dc;
+  border-radius: 12px;
+  background: #fff;
+}
+
+.order-finance-kpis {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+  margin: 26px 0;
+}
+
+.order-finance-kpis article,
+.order-reconciliation-table {
+  border: 1px solid #dde5df;
+  border-radius: 18px;
+  background: #fff;
+}
+
+.order-finance-kpis article {
+  padding: 18px;
+}
+
+.order-finance-kpis span,
+.order-reconciliation-table span {
+  color: #728077;
+  font-size: 12px;
+}
+
+.order-finance-kpis strong {
+  display: block;
+  margin-top: 8px;
+  font-size: 24px;
+}
+
+.order-reconciliation-table article {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 80px 100px 110px 90px;
+  gap: 16px;
+  align-items: center;
+  padding: 15px 16px;
+  border-top: 1px solid #eef2ef;
+}
+
+.order-reconciliation-table article:first-child {
+  border-top: 0;
+}
+
+.order-reconciliation-table article > div {
+  display: grid;
+  gap: 4px;
+}
+
+.order-finance-status {
+  width: fit-content;
+  padding: 6px 9px;
+  border-radius: 999px;
+  background: #eef3ef;
+  color: #126a56 !important;
+  font-weight: 800;
+  text-transform: capitalize;
+}
+
+.order-reconciliation-table button {
+  min-height: 38px;
+  padding: 0 12px;
+  border: 1px solid #126a56;
+  border-radius: 11px;
+  background: #126a56;
+  color: #fff;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.order-finance-state {
+  padding: 72px 24px;
+  text-align: center;
+}
+
+@media (max-width: 760px) {
+  .order-finance-page > header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .order-finance-kpis,
+  .order-reconciliation-table article {
+    grid-template-columns: 1fr;
+  }
+}

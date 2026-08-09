@@ -1,159 +1,236 @@
-# Mzaya Batch 08.5.1 — Payments & Refunds → Finance Event Integration
+# Mzaya Batch 08.5.2 — Orders & Delivery Completion → Finance Event Integration
 
-This batch is the first operational integration into the Batch 08.4.7/08.4.8
-finance event pipeline.
+This batch connects Mzaya's existing food, grocery, and materials order flows
+to the transactional outbox and finance event engine.
 
-## Important baseline note
+## Source-baseline note
 
-The current Mzaya source ZIP was not available to this runtime, so this package
-does **not** blindly overwrite `paymentService.js` or `payment.controller.js`.
+The current source ZIP still was not available in the accessible File Library.
+However, the project history confirms the existing operational models include:
 
-Instead it provides:
-- production integration services,
-- refund workflow,
-- posting-template seeds,
-- reconciliation controls,
-- route/controller additions,
-- and `paymentService.integration.example.js` showing exactly how to merge the
-  outbox write into the existing payment transaction.
+```text
+backend/src/models/orderFoodModel.js
+backend/src/models/orderGroceryModel.js
+backend/src/models/orderMaterialsModel.js
+```
 
-Merge that pattern into the current payment service after inspecting the
-provider-specific Paynow/payment implementation in the working tree.
+Therefore this package deliberately does not overwrite those files or existing
+order controllers/services. It provides merge-safe integration services and
+exact completion-flow examples.
 
 ## Database
 
+Review actual Sequelize table names before running the migration.
+
+The migration currently assumes:
+
+```text
+orderFood
+orderGrocery
+orderMaterials
+```
+
+If the live models define different `tableName` values, adjust the ALTER TABLE
+targets first.
+
 ```bash
-psql "$DATABASE_URL" -f backend/migrations/payment_finance_integration.sql
+psql "$DATABASE_URL" \
+  -f backend/migrations/order_delivery_finance_integration.sql
 ```
 
 ## Models
 
-Export and associate:
+Export:
 
 ```js
-Payment.hasMany(PaymentRefund, {
-  foreignKey: 'payment_id',
-  as: 'refunds',
-});
-
-PaymentRefund.belongsTo(Payment, {
-  foreignKey: 'payment_id',
-  as: 'payment',
-});
+OrderFinanceReconciliationResult
 ```
 
-Also export:
-- `PaymentFinanceReconciliationResult`
+The reconciliation service expects existing aliases:
+
+```js
+OrderFood
+OrderGrocery
+OrderMaterials
+```
+
+If `associations.js` exports the current models under different names, update
+the imports only; do not duplicate models.
 
 ## Route mount
 
 ```js
 app.use(
-  '/api/payment-finance',
-  require('./routes/paymentFinance.routes')
+  '/api/order-finance',
+  require('./routes/orderFinance.routes')
 );
 ```
 
-## Payment capture integration
+## Completion integration
 
-Inside the **existing** payment capture transaction:
+For every order type, the critical transaction is:
+
+```text
+order status update
+      +
+order.completed outbox event
+      +
+delivery.completed outbox event
+      +
+order economics upsert
+      =
+one DB transaction
+```
+
+Use the integration examples:
+
+```text
+backend/src/services/orderFoodService.integration.example.js
+backend/src/services/orderGroceryService.integration.example.js
+backend/src/services/orderMaterialsService.integration.example.js
+```
+
+Merge them into the existing completion/matching service rather than replacing
+existing operational logic.
+
+## Why two completion events?
+
+`order.completed` means the commercial service obligation is completed.
+
+`delivery.completed` means the delivery obligation is completed.
+
+They may happen together today, but keeping them semantically distinct allows
+future cases such as:
+
+- collection orders,
+- vendor-arranged delivery,
+- partial procurement,
+- multi-stop delivery,
+- split fulfillment,
+- scheduled delivery.
+
+## Order economics
+
+On completion, call:
 
 ```js
-await payment.update({
-  status: 'captured',
-  provider_reference: providerReference,
-}, { transaction });
-
-await emitPaymentCaptured({
-  payment,
+await upsertOrderEconomics({
+  order,
+  orderType: 'food',
   transaction,
 });
 ```
 
-The state update and outbox insert must be in the same DB transaction.
+This preserves the finance principle:
 
-## Refund integration
+```text
+gross order value != Mzaya revenue
+```
 
-Use `requestRefund()` for a controlled refund record and finance event.
+The order-economics record stores GOV separately from:
 
-Only after the provider confirms the refund should `markRefundCompleted()` be
-called.
-
-Do not emit `payment.refunded` before provider confirmation.
+- platform revenue,
+- delivery revenue,
+- procurement revenue,
+- discounts,
+- taxes.
 
 ## Posting templates
 
-Seed the four templates from:
+Seed:
 
 ```text
-backend/src/config/financePostingTemplates/paymentCaptured.js
-backend/src/config/financePostingTemplates/paymentRefunded.js
-backend/src/config/financePostingTemplates/paymentChargeback.js
-backend/src/config/financePostingTemplates/gatewayFeePosted.js
+orderCompleted.js
+deliveryCompleted.js
+orderCancelled.js
 ```
+
+The example completion posting recognizes only the relevant platform or
+delivery fee. It does not post total order value as revenue.
 
 Account codes must be mapped to the governed chart of accounts before
 production.
 
-## Reconciliation control
+## Reconciliation
 
-The reconciliation service checks:
+The control traces:
 
 ```text
-payment
-  ↓
+operational order
+      ↓
 finance outbox
-  ↓
+      ↓
 finance business event
-  ↓
+      ↓
 accounting event
-  ↓
-ledger transaction
+      ↓
+ledger
 ```
 
-Detected exceptions include:
-- `CAPTURE_WITHOUT_OUTBOX`
-- `OUTBOX_WITHOUT_FINANCE_EVENT`
-- `FINANCE_EVENT_WITHOUT_ACCOUNTING_EVENT`
-- `ACCOUNTING_EVENT_NOT_POSTED`
-- `PAYMENT_LEDGER_AMOUNT_MISMATCH`
-- `PAYMENT_ACCOUNTING_CURRENCY_MISMATCH`
+Exceptions include:
+
+```text
+COMPLETED_ORDER_WITHOUT_OUTBOX
+ORDER_OUTBOX_WITHOUT_FINANCE_EVENT
+ORDER_FINANCE_EVENT_WITHOUT_ACCOUNTING_EVENT
+ORDER_ACCOUNTING_EVENT_NOT_POSTED
+ORDER_GOV_MISMATCH
+```
 
 ## Background job
 
 ```js
 const {
-  startPaymentFinanceReconciliationJob,
-} = require('./jobs/paymentFinanceReconciliation.job');
+  startOrderFinanceReconciliationJob,
+} = require('./jobs/orderFinanceReconciliation.job');
 
-const paymentFinanceReconciliationJob =
-  startPaymentFinanceReconciliationJob({ logger });
+const orderFinanceReconciliationJob =
+  startOrderFinanceReconciliationJob({ logger });
 ```
 
 ## Frontend route
 
 ```jsx
 <Route
-  path="/admin/finance/payment-reconciliation"
-  element={<PaymentFinanceReconciliation />}
+  path="/admin/finance/order-reconciliation"
+  element={<OrderFinanceReconciliation />}
 />
 ```
+
+## Existing-code safeguards
+
+Before merging each example:
+
+1. Find the existing status transition that marks the order completed/delivered.
+2. Preserve all existing:
+   - matching logic,
+   - customer notifications,
+   - vendor notifications,
+   - Mzaya assignment,
+   - ETA/tracking updates,
+   - analytics hooks,
+   - inventory changes.
+3. Wrap only the financial state mutation and outbox insert in the same
+   transaction.
+4. Ensure completion is idempotent.
+5. Do not publish events after commit.
+6. Do not directly create ledger entries.
 
 ## Verification
 
 ```bash
 cd backend
 
-npm test -- paymentCapturedFinance.test.js
-npm test -- refundFinance.test.js
-npm test -- paymentIdempotency.test.js
-npm test -- paymentOutboxAtomicity.test.js
-npm test -- paymentFinanceReconciliation.test.js
+npm test -- orderFinanceEvents.test.js
+npm test -- deliveryFinanceEvents.test.js
+npm test -- orderFinanceAtomicity.test.js
+npm test -- orderEconomicsIntegration.test.js
+npm test -- orderFinanceReconciliation.test.js
 
-node --check src/services/paymentFinanceEvents.service.js
-node --check src/services/refundFinanceEvents.service.js
-node --check src/services/paymentRefund.service.js
-node --check src/services/paymentAccountingReconciliation.service.js
+node --check src/services/orderFinanceEvents.service.js
+node --check src/services/deliveryFinanceEvents.service.js
+node --check src/services/orderEconomicsIntegration.service.js
+node --check src/services/orderFinanceReconciliation.service.js
 
 npm run lint
 ```
@@ -166,6 +243,4 @@ npm run build
 
 ## Next domain
 
-After payment capture/refund integration is merged into the live payment
-service, proceed to Batch 08.5.2: order and delivery completion → finance
-events.
+Batch 08.5.3 should integrate vendor settlements into the same event pipeline.
