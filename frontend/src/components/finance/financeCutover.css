@@ -1,0 +1,179 @@
+.finance-cutover-page {
+  width: min(1260px, calc(100% - 32px));
+  margin: 0 auto;
+  padding: 42px 0 60px;
+  color: #121714;
+}
+
+.finance-cutover-page > header {
+  display: flex;
+  justify-content: space-between;
+  gap: 20px;
+  align-items: end;
+}
+
+.finance-cutover-page h1 {
+  margin: 4px 0;
+  font-size: clamp(34px, 4vw, 50px);
+  letter-spacing: -.045em;
+}
+
+.finance-cutover-page > header p:last-child {
+  margin: 0;
+  color: #728077;
+}
+
+.cutover-control-grid,
+.cross-domain-health-grid,
+.cross-domain-run-summary {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+  margin: 26px 0;
+}
+
+.cutover-control-card,
+.cross-domain-health-grid article,
+.cross-domain-run-summary article,
+.cutover-readiness-table,
+.cross-domain-exception-table,
+.legacy-posting-attempt-table {
+  border: 1px solid #dde5df;
+  border-radius: 18px;
+  background: #fff;
+}
+
+.cutover-control-card {
+  padding: 18px;
+}
+
+.cutover-control-card header,
+.cutover-control-card footer {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: center;
+}
+
+.cutover-control-card header > div,
+.cutover-control-card dl > div,
+.cutover-readiness-table article > div,
+.cross-domain-exception-table article > div,
+.legacy-posting-attempt-table article > div {
+  display: grid;
+  gap: 4px;
+}
+
+.cutover-control-card dl {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin: 18px 0;
+}
+
+.cutover-control-card dt,
+.cutover-control-card span,
+.cross-domain-health-grid span,
+.cross-domain-health-grid small,
+.cross-domain-run-summary span,
+.cutover-readiness-table span,
+.cross-domain-exception-table span,
+.legacy-posting-attempt-table span {
+  color: #728077;
+  font-size: 12px;
+}
+
+.cutover-control-card dd {
+  margin: 3px 0 0;
+  font-weight: 800;
+}
+
+.cross-domain-health-grid article,
+.cross-domain-run-summary article {
+  padding: 18px;
+}
+
+.cross-domain-health-grid strong,
+.cross-domain-run-summary strong {
+  display: block;
+  margin-top: 8px;
+  font-size: 24px;
+}
+
+.finance-cutover-status {
+  width: fit-content;
+  padding: 6px 9px;
+  border-radius: 999px;
+  background: #eef3ef;
+  color: #126a56 !important;
+  font-weight: 800;
+  text-transform: capitalize;
+}
+
+.cutover-readiness-table article,
+.cross-domain-exception-table article,
+.legacy-posting-attempt-table article {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 120px 120px;
+  gap: 16px;
+  align-items: center;
+  padding: 15px 16px;
+  border-top: 1px solid #eef2ef;
+}
+
+.cross-domain-exception-table article {
+  grid-template-columns: minmax(0, 1fr) 100px 100px minmax(200px, 1fr);
+}
+
+.cutover-readiness-table article:first-child,
+.cross-domain-exception-table article:first-child,
+.legacy-posting-attempt-table article:first-child {
+  border-top: 0;
+}
+
+.cross-domain-exception-table p {
+  margin: 0;
+  color: #58625c;
+  font-size: 13px;
+}
+
+.cutover-control-card button,
+.finance-cutover-primary {
+  min-height: 40px;
+  padding: 0 14px;
+  border: 1px solid #126a56;
+  border-radius: 11px;
+  background: #126a56;
+  color: #fff;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.finance-cutover-state {
+  padding: 72px 24px;
+  text-align: center;
+}
+
+@media (max-width: 900px) {
+  .cutover-control-grid,
+  .cross-domain-health-grid,
+  .cross-domain-run-summary {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 680px) {
+  .finance-cutover-page > header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .cutover-control-grid,
+  .cross-domain-health-grid,
+  .cross-domain-run-summary,
+  .cutover-readiness-table article,
+  .cross-domain-exception-table article,
+  .legacy-posting-attempt-table article {
+    grid-template-columns: 1fr;
+  }
+}
