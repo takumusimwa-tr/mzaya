@@ -1,88 +1,52 @@
-const { Op } = require('sequelize');
-const { TaxRate } = require('../models/associations');
-
-function calculateTaxMinor({
-  taxableMinor,
-  rateBasisPoints,
+function calculateTax({
+  taxableBaseMinor,
+  taxRateBps,
+  taxInclusive = false,
 }) {
-  const amount = Number(taxableMinor);
-  const rate = Number(rateBasisPoints);
+  const base = Number(taxableBaseMinor);
+  const rate = Number(taxRateBps);
 
-  if (!Number.isSafeInteger(amount) || amount < 0) {
-    const error = new Error('Taxable amount must be a non-negative integer');
-    error.code = 'INVALID_TAXABLE_AMOUNT';
+  if (!Number.isFinite(base) || base < 0) {
+    const error = new Error('Taxable base must be a non-negative number');
+    error.status = 422;
+    error.code = 'INVALID_TAXABLE_BASE';
     throw error;
   }
 
-  if (!Number.isInteger(rate) || rate < 0) {
-    const error = new Error('Tax rate must be a non-negative integer');
+  if (!Number.isFinite(rate) || rate < 0) {
+    const error = new Error('Tax rate must be a non-negative basis-point value');
+    error.status = 422;
     error.code = 'INVALID_TAX_RATE';
     throw error;
   }
 
-  return Math.round((amount * rate) / 10000);
-}
+  if (taxInclusive) {
+    const taxAmountMinor = Math.round(
+      base - (base / (1 + rate / 10000))
+    );
 
-async function resolveTaxRate({
-  jurisdictionId,
-  taxType,
-  appliesTo,
-  effectiveDate = new Date(),
-}) {
-  const date = effectiveDate.toISOString().slice(0, 10);
-
-  const rate = await TaxRate.findOne({
-    where: {
-      jurisdiction_id: jurisdictionId,
-      tax_type: taxType,
-      applies_to: appliesTo,
-      status: 'active',
-      effective_from: { [Op.lte]: date },
-      [Op.or]: [
-        { effective_to: null },
-        { effective_to: { [Op.gte]: date } },
-      ],
-    },
-    order: [['effective_from', 'DESC']],
-  });
-
-  return rate;
-}
-
-async function calculateTax({
-  jurisdictionId,
-  taxType = 'vat',
-  appliesTo = 'platform_fee',
-  taxableMinor,
-  effectiveDate = new Date(),
-}) {
-  const rate = await resolveTaxRate({
-    jurisdictionId,
-    taxType,
-    appliesTo,
-    effectiveDate,
-  });
-
-  if (!rate) {
     return {
-      taxMinor: 0,
-      rateBasisPoints: 0,
-      taxRateId: null,
+      taxableBaseMinor: base,
+      taxRateBps: rate,
+      taxInclusive: true,
+      taxAmountMinor,
+      netOfTaxMinor: base - taxAmountMinor,
     };
   }
 
+  const taxAmountMinor = Math.round(
+    base * rate / 10000
+  );
+
   return {
-    taxMinor: calculateTaxMinor({
-      taxableMinor,
-      rateBasisPoints: rate.rate_basis_points,
-    }),
-    rateBasisPoints: rate.rate_basis_points,
-    taxRateId: rate.id,
+    taxableBaseMinor: base,
+    taxRateBps: rate,
+    taxInclusive: false,
+    taxAmountMinor,
+    netOfTaxMinor: base,
   };
 }
 
 module.exports = {
-  calculateTaxMinor,
-  resolveTaxRate,
   calculateTax,
 };

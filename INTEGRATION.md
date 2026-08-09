@@ -1,21 +1,26 @@
-# Mzaya Batch 08.5.6 — Treasury & Bank Movement → Finance Event Integration
+# Mzaya Batch 08.5.7 — Tax Event Integration
 
-This batch connects real cash movement to the finance event pipeline.
+This batch connects tax facts and liabilities to the finance event engine.
 
-## Core rule
+## Important tax-design rule
 
-Finance replay may replay accounting interpretation.
+This batch intentionally does **not** hard-code Zimbabwe tax rates, thresholds,
+registration rules, filing frequencies, or statutory tax treatments.
 
-It must never initiate a bank, Paynow, EcoCash, mobile-money, or other external
-cash movement.
+Tax rules change and depend on entity facts.
 
-External transfer execution stays in the treasury/provider integration layer.
+Production tax rates and treatments must come from:
+- governed tax master data,
+- an approved tax engine,
+- and qualified tax/accounting review.
+
+The code provides the accounting/event infrastructure only.
 
 ## Database
 
 ```bash
 psql "$DATABASE_URL" \
-  -f backend/migrations/treasury_bank_finance_integration.sql
+  -f backend/migrations/tax_finance_integration.sql
 ```
 
 ## Models
@@ -23,109 +28,140 @@ psql "$DATABASE_URL" \
 Export:
 
 ```js
-TreasuryTransfer
-BankMovement
-TreasuryFinanceReconciliationResult
+TaxTransaction
+TaxLiability
+TaxRemittance
+TaxFinanceReconciliationResult
+```
+
+Recommended associations:
+
+```js
+TaxLiability.hasMany(TaxRemittance, {
+  foreignKey: 'liability_id',
+  as: 'remittances',
+});
+
+TaxRemittance.belongsTo(TaxLiability, {
+  foreignKey: 'liability_id',
+  as: 'liability',
+});
 ```
 
 ## Route mount
 
 ```js
 app.use(
-  '/api/treasury-finance',
-  require('./routes/treasuryFinance.routes')
+  '/api/tax-finance',
+  require('./routes/taxFinance.routes')
 );
 ```
 
-## Transfer lifecycle
+## Event lifecycle
 
 ```text
-draft
-  ↓
-independent approval
-  ↓
-treasury.transfer_approved
-  ↓
-external provider executes cash movement
-  ↓
-provider confirmation
-  ↓
-completed
-  ↓
-treasury.transfer_completed
-  ↓
-accounting event
-  ↓
+operational taxable event
+      ↓
+approved tax rule / rate
+      ↓
+tax transaction
+      ↓
+tax.liability_created
+      ↓
+finance event engine
+      ↓
 ledger
-  ↓
-bank movement match
+      ↓
+period liability aggregation
+      ↓
+treasury tax remittance
+      ↓
+bank confirmation
 ```
 
-The transfer initiator cannot approve the same transfer.
+## Tax transaction design
 
-## Provider confirmation
-
-`confirmTreasuryTransferCompleted()` must be called only after the external
-provider confirms success.
-
-The `provider_reference` should be the provider/bank identifier used later for
-bank reconciliation.
-
-## Bank movements
-
-Populate `bank_movements` from:
-
-- bank statement import,
-- provider settlement reports,
-- Open Banking/API feeds if available,
-- manual admin entry as a fallback.
-
-Matching priority should be:
+A tax fact keeps:
 
 ```text
-1. explicit treasury_transfer_id
-2. provider/bank reference
-3. amount + currency + date window
-4. manual review
+source record
+jurisdiction
+tax code
+tax type
+currency
+taxable base
+rate
+tax amount
+inclusive/exclusive flag
+payable/receivable direction
 ```
 
-Do not auto-match ambiguous movements.
+Do not store only a final tax amount; retain the basis for auditability.
 
-## Vendor and Mzaya payout bridges
-
-Merge-safe examples are included:
+## Integration examples
 
 ```text
-backend/src/services/treasury/vendorSettlementTreasury.integration.example.js
-backend/src/services/treasury/mzayaPayoutTreasury.integration.example.js
+backend/src/services/tax/orderTax.integration.example.js
+backend/src/services/tax/procurementTax.integration.example.js
 ```
 
-These create treasury transfer instructions from approved payables.
+These deliberately require the caller to provide governed:
 
-They do not execute money movement.
+```text
+taxCode
+taxType
+jurisdictionCode
+taxRateBps
+```
+
+No statutory assumptions are embedded.
 
 ## Posting templates
 
 Seed:
 
 ```text
-treasuryTransferApproved.js
-treasuryTransferCompleted.js
+taxLiabilityCreated.js
+taxLiabilityReversed.js
 ```
 
-Approved events are trace-only.
+Temporary account names:
 
-Completed events drive the actual accounting cash movement.
+```text
+TAX_EXPENSE_OR_CLEARING
+TAX_PAYABLE
+```
 
-Temporary account codes must be mapped to governed bank/treasury account master
-data before production.
+Map them to the governed chart of accounts before production.
+
+Some taxes may be collected from customers rather than expensed by Mzaya.
+Therefore the debit side must be tailored to the actual tax treatment and
+source transaction.
+
+## Liability aggregation
+
+`refreshTaxLiability()` aggregates recognized tax transactions into a period
+liability.
+
+Before production, add period boundaries to the query using the authoritative
+tax calendar from finance master data.
+
+Do not aggregate all historical transactions into every period.
+
+## Remittances
+
+Tax remittances create treasury transfer instructions using Batch 08.5.6.
+
+The tax module does not execute money movement.
+
+Provider/bank completion still occurs through treasury.
 
 ## Reconciliation
 
-The control traces:
+The tax control traces:
 
 ```text
-treasury transfer
+tax transaction
       ↓
 finance outbox
       ↓
@@ -134,91 +170,86 @@ finance business event
 accounting event
       ↓
 ledger
-      ↓
-bank movement
 ```
 
 Exceptions include:
 
 ```text
-TREASURY_TRANSFER_WITHOUT_OUTBOX
-TREASURY_OUTBOX_WITHOUT_FINANCE_EVENT
-TREASURY_FINANCE_EVENT_WITHOUT_ACCOUNTING_EVENT
-TREASURY_ACCOUNTING_EVENT_NOT_POSTED
-TREASURY_TRANSFER_WITHOUT_BANK_MOVEMENT
-TREASURY_BANK_AMOUNT_MISMATCH
-TREASURY_BANK_CURRENCY_MISMATCH
+TAX_TRANSACTION_WITHOUT_OUTBOX
+TAX_OUTBOX_WITHOUT_FINANCE_EVENT
+TAX_FINANCE_EVENT_WITHOUT_ACCOUNTING_EVENT
+TAX_ACCOUNTING_EVENT_NOT_POSTED
+TAX_AMOUNT_MISMATCH
+TAX_CURRENCY_MISMATCH
 ```
 
-## Jobs
+## Background job
 
 ```js
 const {
-  startTreasuryFinanceReconciliationJob,
-} = require('./jobs/treasuryFinanceReconciliation.job');
+  startTaxFinanceReconciliationJob,
+} = require('./jobs/taxFinanceReconciliation.job');
 
-const {
-  startBankMovementMatchingJob,
-} = require('./jobs/bankMovementMatching.job');
-
-const treasuryReconciliation =
-  startTreasuryFinanceReconciliationJob({ logger });
-
-const bankMovementMatching =
-  startBankMovementMatchingJob({ logger });
+const taxFinanceReconciliationJob =
+  startTaxFinanceReconciliationJob({ logger });
 ```
 
 ## Frontend routes
 
 ```jsx
 <Route
-  path="/admin/finance/treasury"
-  element={<TreasuryFinanceDashboard />}
+  path="/admin/finance/tax"
+  element={<TaxFinanceDashboard />}
 />
 
 <Route
-  path="/admin/finance/treasury/reconciliation"
-  element={<TreasuryFinanceReconciliation />}
+  path="/admin/finance/tax/reconciliation"
+  element={<TaxFinanceReconciliation />}
 />
 ```
 
 ## Controls
 
-- Transfer initiator cannot approve their own transfer.
-- Only provider-confirmed transfers become `completed`.
-- Provider references must be retained.
-- Finance replay cannot call external payment providers.
-- Ambiguous bank movements stay unmatched.
-- Bank account IDs must use governed treasury master data from Batch 08.4.6.
-- Final ledger posting should enforce period locks.
-- Vendor and Mzaya payouts should flow through treasury for cash execution.
-- Refunds should flow through treasury/payment integration, not direct ledger posting.
+- Do not hard-code statutory tax rates in service code.
+- Tax codes/rates must be governed master data.
+- Preserve taxable base and tax amount separately.
+- Record tax-inclusive vs tax-exclusive treatment.
+- Reversals must preserve the original tax fact.
+- Tax remittances must not exceed outstanding liabilities.
+- Tax payments execute through treasury, not accounting replay.
+- Period locks must apply before tax journals post.
+- Tax configuration changes must use Batch 08.4.6 change control.
+- Validate production tax logic with qualified Zimbabwe tax/accounting
+  professionals before go-live.
 
 ## Verification
 
 ```bash
 cd backend
 
-npm test -- treasuryMakerChecker.test.js
-npm test -- treasuryFinanceEvents.test.js
-npm test -- bankMovementMatching.test.js
-npm test -- treasuryAtomicity.test.js
-npm test -- treasuryReconciliation.test.js
+npm test -- taxCalculation.test.js
+npm test -- taxFinanceEvents.test.js
+npm test -- taxAtomicity.test.js
+npm test -- taxRemittance.test.js
+npm test -- taxReconciliation.test.js
 
-node --check src/services/treasuryFinanceEvents.service.js
-node --check src/services/treasuryTransfer.service.js
-node --check src/services/bankMovementMatching.service.js
-node --check src/services/treasuryReconciliation.service.js
+node --check src/services/taxCalculation.service.js
+node --check src/services/taxFinanceEvents.service.js
+node --check src/services/taxTransaction.service.js
+node --check src/services/taxLiability.service.js
+node --check src/services/taxRemittance.service.js
+node --check src/services/taxReconciliation.service.js
 
 npm run lint
 ```
 
 ```bash
 cd frontend
+
 npm run lint
 npm run build
 ```
 
 ## Next domain
 
-Proceed to Batch 08.5.7 — Tax Event Integration.
+Proceed to Batch 08.5.8 — Cross-domain Reconciliation & Finance Cutover.
