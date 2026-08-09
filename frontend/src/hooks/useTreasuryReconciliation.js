@@ -2,25 +2,22 @@ import { useCallback, useEffect, useState } from 'react'
 import api from '../api/api'
 
 export default function useTreasuryReconciliation() {
-  const [transactions, setTransactions] = useState([])
+  const [results, setResults] = useState([])
   const [loading, setLoading] = useState(true)
 
   const refresh = useCallback(async () => {
-    const { data } = await api.get('/treasury-reconciliation/queue')
-    setTransactions(data.transactions || [])
+    const { data } = await api.get('/treasury-finance/reconciliation')
+    setResults(data.results || [])
   }, [])
 
   useEffect(() => {
     refresh().finally(() => setLoading(false))
   }, [refresh])
 
-  const reconcile = async (bankTransactionId, ledgerTransactionId, notes = '') => {
-    await api.post(
-      `/treasury-reconciliation/${bankTransactionId}/match`,
-      { ledgerTransactionId, notes }
-    )
+  const reconcile = async (transferId) => {
+    await api.post(`/treasury-finance/transfers/${transferId}/reconcile`)
     await refresh()
   }
 
-  return { transactions, loading, refresh, reconcile }
+  return { results, loading, refresh, reconcile }
 }

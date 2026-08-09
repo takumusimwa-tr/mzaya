@@ -1,37 +1,21 @@
-# Mzaya Batch 08.5.5 — Procurement → Finance Event Integration
+# Mzaya Batch 08.5.6 — Treasury & Bank Movement → Finance Event Integration
 
-This batch connects procurement activity to the finance event engine and
-transactional outbox.
+This batch connects real cash movement to the finance event pipeline.
 
-## Architecture
+## Core rule
 
-Procurement should remain an operational service. Finance consumes its events.
+Finance replay may replay accounting interpretation.
 
-```text
-customer procurement request
-      ↓
-funds authorized
-      ↓
-procurement approved
-      ↓
-procurement.approved
-      ↓
-sourcing / purchasing
-      ↓
-procurement completed
-      ↓
-procurement.completed
-      ↓
-unused funds?
-      ├─ no
-      └─ yes → procurement.refund_due
-```
+It must never initiate a bank, Paynow, EcoCash, mobile-money, or other external
+cash movement.
+
+External transfer execution stays in the treasury/provider integration layer.
 
 ## Database
 
 ```bash
 psql "$DATABASE_URL" \
-  -f backend/migrations/procurement_finance_integration.sql
+  -f backend/migrations/treasury_bank_finance_integration.sql
 ```
 
 ## Models
@@ -39,122 +23,109 @@ psql "$DATABASE_URL" \
 Export:
 
 ```js
-ProcurementRun
-ProcurementItem
-ProcurementFinanceReconciliationResult
+TreasuryTransfer
+BankMovement
+TreasuryFinanceReconciliationResult
 ```
-
-Recommended associations:
-
-```js
-ProcurementRun.hasMany(ProcurementItem, {
-  foreignKey: 'procurement_id',
-  as: 'items',
-});
-
-ProcurementItem.belongsTo(ProcurementRun, {
-  foreignKey: 'procurement_id',
-  as: 'procurement',
-});
-```
-
-Link customer, order, and vendor identifiers to existing authoritative models.
 
 ## Route mount
 
 ```js
 app.use(
-  '/api/procurement-finance',
-  require('./routes/procurementFinance.routes')
+  '/api/treasury-finance',
+  require('./routes/treasuryFinance.routes')
 );
 ```
 
-## Critical accounting principle
-
-Procured merchandise cost is not automatically Mzaya revenue.
-
-Keep these distinct:
+## Transfer lifecycle
 
 ```text
-customer authorized amount
-merchandise cost
-procurement fee
-delivery fee
-tax
-discount
-reimbursement
-unused/refundable funds
+draft
+  ↓
+independent approval
+  ↓
+treasury.transfer_approved
+  ↓
+external provider executes cash movement
+  ↓
+provider confirmation
+  ↓
+completed
+  ↓
+treasury.transfer_completed
+  ↓
+accounting event
+  ↓
+ledger
+  ↓
+bank movement match
 ```
 
-Only the contractual procurement fee should be recognized as procurement
-revenue.
+The transfer initiator cannot approve the same transfer.
 
-## Transactional completion
+## Provider confirmation
 
-The authoritative completion transaction should contain:
+`confirmTreasuryTransferCompleted()` must be called only after the external
+provider confirms success.
+
+The `provider_reference` should be the provider/bank identifier used later for
+bank reconciliation.
+
+## Bank movements
+
+Populate `bank_movements` from:
+
+- bank statement import,
+- provider settlement reports,
+- Open Banking/API feeds if available,
+- manual admin entry as a fallback.
+
+Matching priority should be:
 
 ```text
-procurement status = completed
-        +
-procurement.completed outbox event
-        +
-procurement.refund_due outbox event when applicable
-        =
-one transaction
+1. explicit treasury_transfer_id
+2. provider/bank reference
+3. amount + currency + date window
+4. manual review
 ```
 
-Use:
+Do not auto-match ambiguous movements.
+
+## Vendor and Mzaya payout bridges
+
+Merge-safe examples are included:
 
 ```text
-backend/src/services/procurement/procurementFinance.integration.example.js
+backend/src/services/treasury/vendorSettlementTreasury.integration.example.js
+backend/src/services/treasury/mzayaPayoutTreasury.integration.example.js
 ```
 
-as the merge-safe integration point.
+These create treasury transfer instructions from approved payables.
+
+They do not execute money movement.
 
 ## Posting templates
 
 Seed:
 
 ```text
-procurementApproved.js
-procurementCompleted.js
-procurementFeeEarned.js
-procurementRefundDue.js
+treasuryTransferApproved.js
+treasuryTransferCompleted.js
 ```
 
-Illustrative flows:
+Approved events are trace-only.
 
-```text
-procurement merchandise:
-  Dr PROCUREMENT_COST_OR_CLEARING
-  Cr CUSTOMER_FUNDS_CLEARING
+Completed events drive the actual accounting cash movement.
 
-procurement fee:
-  Dr CUSTOMER_FUNDS_CLEARING
-  Cr PROCUREMENT_REVENUE
-
-unused authorized funds:
-  Dr CUSTOMER_FUNDS_CLEARING
-  Cr CUSTOMER_REFUND_PAYABLE
-```
-
-Temporary account names must be mapped to governed chart-of-accounts codes.
-
-## Refund safeguard
-
-`procurement.refund_due` creates an accounting liability only.
-
-It must not itself trigger external money movement.
-
-Actual refund execution remains in the payment/treasury domain and should
-ultimately flow through the payment refund integration from Batch 08.5.1.
+Temporary account codes must be mapped to governed bank/treasury account master
+data before production.
 
 ## Reconciliation
 
 The control traces:
 
 ```text
-procurement
+treasury transfer
       ↓
 finance outbox
       ↓
@@ -163,71 +134,81 @@ finance business event
 accounting event
       ↓
 ledger
+      ↓
+bank movement
 ```
 
 Exceptions include:
 
 ```text
-PROCUREMENT_WITHOUT_OUTBOX
-PROCUREMENT_OUTBOX_WITHOUT_FINANCE_EVENT
-PROCUREMENT_FINANCE_EVENT_WITHOUT_ACCOUNTING_EVENT
-PROCUREMENT_ACCOUNTING_EVENT_NOT_POSTED
-PROCUREMENT_AMOUNT_MISMATCH
-PROCUREMENT_CURRENCY_MISMATCH
+TREASURY_TRANSFER_WITHOUT_OUTBOX
+TREASURY_OUTBOX_WITHOUT_FINANCE_EVENT
+TREASURY_FINANCE_EVENT_WITHOUT_ACCOUNTING_EVENT
+TREASURY_ACCOUNTING_EVENT_NOT_POSTED
+TREASURY_TRANSFER_WITHOUT_BANK_MOVEMENT
+TREASURY_BANK_AMOUNT_MISMATCH
+TREASURY_BANK_CURRENCY_MISMATCH
 ```
 
-## Background job
+## Jobs
 
 ```js
 const {
-  startProcurementFinanceReconciliationJob,
-} = require('./jobs/procurementFinanceReconciliation.job');
+  startTreasuryFinanceReconciliationJob,
+} = require('./jobs/treasuryFinanceReconciliation.job');
 
-const procurementFinanceReconciliationJob =
-  startProcurementFinanceReconciliationJob({ logger });
+const {
+  startBankMovementMatchingJob,
+} = require('./jobs/bankMovementMatching.job');
+
+const treasuryReconciliation =
+  startTreasuryFinanceReconciliationJob({ logger });
+
+const bankMovementMatching =
+  startBankMovementMatchingJob({ logger });
 ```
 
 ## Frontend routes
 
 ```jsx
 <Route
-  path="/admin/finance/procurement"
-  element={<ProcurementFinanceDashboard />}
+  path="/admin/finance/treasury"
+  element={<TreasuryFinanceDashboard />}
 />
 
 <Route
-  path="/admin/finance/procurement/reconciliation"
-  element={<ProcurementFinanceReconciliation />}
+  path="/admin/finance/treasury/reconciliation"
+  element={<TreasuryFinanceReconciliation />}
 />
 ```
 
 ## Controls
 
-- Do not recognize merchandise cost as Mzaya revenue.
-- Keep procurement fee and delivery fee separate.
-- Preserve item-level sourcing detail.
-- Do not allow negative procurement spend.
-- Do not publish completion events outside the operational transaction.
-- Unused authorized funds become a refund liability, not instant cash movement.
-- Keep vendor identity and order linkage where applicable.
-- Procurement accounting replay must never duplicate purchases or refunds.
-- Reconcile procurement-related refunds through the payment/treasury layers.
+- Transfer initiator cannot approve their own transfer.
+- Only provider-confirmed transfers become `completed`.
+- Provider references must be retained.
+- Finance replay cannot call external payment providers.
+- Ambiguous bank movements stay unmatched.
+- Bank account IDs must use governed treasury master data from Batch 08.4.6.
+- Final ledger posting should enforce period locks.
+- Vendor and Mzaya payouts should flow through treasury for cash execution.
+- Refunds should flow through treasury/payment integration, not direct ledger posting.
 
 ## Verification
 
 ```bash
 cd backend
 
-npm test -- procurementCalculator.test.js
-npm test -- procurementFinanceEvents.test.js
-npm test -- procurementAtomicity.test.js
-npm test -- procurementRefund.test.js
-npm test -- procurementReconciliation.test.js
+npm test -- treasuryMakerChecker.test.js
+npm test -- treasuryFinanceEvents.test.js
+npm test -- bankMovementMatching.test.js
+npm test -- treasuryAtomicity.test.js
+npm test -- treasuryReconciliation.test.js
 
-node --check src/services/procurementCalculator.service.js
-node --check src/services/procurementFinanceEvents.service.js
-node --check src/services/procurement.service.js
-node --check src/services/procurementReconciliation.service.js
+node --check src/services/treasuryFinanceEvents.service.js
+node --check src/services/treasuryTransfer.service.js
+node --check src/services/bankMovementMatching.service.js
+node --check src/services/treasuryReconciliation.service.js
 
 npm run lint
 ```
@@ -240,4 +221,4 @@ npm run build
 
 ## Next domain
 
-Proceed to Batch 08.5.6 — Treasury & Bank Movement → Finance Event Integration.
+Proceed to Batch 08.5.7 — Tax Event Integration.

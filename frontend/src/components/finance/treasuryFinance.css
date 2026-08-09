@@ -1,0 +1,92 @@
+.treasury-page {
+  width: min(1260px, calc(100% - 32px));
+  margin: 0 auto;
+  padding: 42px 0 60px;
+  color: #121714;
+}
+
+.treasury-page h1 {
+  margin: 4px 0;
+  font-size: clamp(34px, 4vw, 50px);
+  letter-spacing: -.045em;
+}
+
+.treasury-page > header p:last-child {
+  margin: 0;
+  color: #728077;
+}
+
+.treasury-transfer-table,
+.bank-movement-table,
+.treasury-reconciliation-table {
+  margin: 18px 0 28px;
+  border: 1px solid #dde5df;
+  border-radius: 18px;
+  background: #fff;
+}
+
+.treasury-transfer-table article,
+.bank-movement-table article,
+.treasury-reconciliation-table article {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 170px 130px 120px 90px;
+  gap: 16px;
+  align-items: center;
+  padding: 15px 16px;
+  border-top: 1px solid #eef2ef;
+}
+
+.treasury-transfer-table article:first-child,
+.bank-movement-table article:first-child,
+.treasury-reconciliation-table article:first-child {
+  border-top: 0;
+}
+
+.treasury-transfer-table article > div,
+.bank-movement-table article > div,
+.treasury-reconciliation-table article > div {
+  display: grid;
+  gap: 4px;
+}
+
+.treasury-transfer-table span,
+.bank-movement-table span,
+.treasury-reconciliation-table span {
+  color: #728077;
+  font-size: 12px;
+}
+
+.treasury-status {
+  width: fit-content;
+  padding: 6px 9px;
+  border-radius: 999px;
+  background: #eef3ef;
+  color: #126a56 !important;
+  font-weight: 800;
+  text-transform: capitalize;
+}
+
+.treasury-transfer-table button,
+.treasury-reconciliation-table button {
+  min-height: 38px;
+  padding: 0 12px;
+  border: 1px solid #126a56;
+  border-radius: 11px;
+  background: #126a56;
+  color: #fff;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.treasury-state {
+  padding: 72px 24px;
+  text-align: center;
+}
+
+@media (max-width: 760px) {
+  .treasury-transfer-table article,
+  .bank-movement-table article,
+  .treasury-reconciliation-table article {
+    grid-template-columns: 1fr;
+  }
+}

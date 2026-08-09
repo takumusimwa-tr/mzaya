@@ -1,40 +1,32 @@
 import PropTypes from 'prop-types'
 
+function money(minor, currency) {
+  return new Intl.NumberFormat(undefined, {
+    style: 'currency',
+    currency,
+  }).format(Number(minor || 0) / 100)
+}
+
 export default function TreasuryTransferTable({
   transfers,
   onApprove,
-  onExecute,
 }) {
   return (
     <div className="treasury-transfer-table">
-      {transfers.map((transfer) => (
-        <article key={transfer.id}>
+      {transfers.map((item) => (
+        <article key={item.id}>
           <div>
-            <strong>{transfer.transfer_reference}</strong>
-            <span>
-              {transfer.source_currency} → {transfer.destination_currency}
-            </span>
+            <strong>{item.transfer_reference}</strong>
+            <span>{item.transfer_type}</span>
           </div>
-
-          <strong>
-            {transfer.source_currency}{' '}
-            {(Number(transfer.source_amount_minor) / 100).toFixed(2)}
-          </strong>
-
-          <span>{transfer.status}</span>
-
-          <div className="treasury-transfer-table__actions">
-            {transfer.status === 'draft' && (
-              <button type="button" onClick={() => onApprove(transfer.id)}>
-                Approve
-              </button>
-            )}
-            {transfer.status === 'approved' && (
-              <button type="button" onClick={() => onExecute(transfer.id)}>
-                Execute
-              </button>
-            )}
-          </div>
+          <strong>{money(item.amount_minor, item.currency)}</strong>
+          <span>{item.provider || 'Internal'}</span>
+          <span className="treasury-status">{item.status}</span>
+          {item.status === 'draft' ? (
+            <button type="button" onClick={() => onApprove(item.id)}>
+              Approve
+            </button>
+          ) : <span />}
         </article>
       ))}
     </div>
@@ -44,5 +36,4 @@ export default function TreasuryTransferTable({
 TreasuryTransferTable.propTypes = {
   transfers: PropTypes.array.isRequired,
   onApprove: PropTypes.func.isRequired,
-  onExecute: PropTypes.func.isRequired,
 }
