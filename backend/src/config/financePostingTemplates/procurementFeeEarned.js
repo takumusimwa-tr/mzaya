@@ -1,22 +1,21 @@
 module.exports = {
-  templateKey: 'procurement_fee_earned',
-  name: 'Procurement fee earned',
-  eventType: 'procurement.completed',
-  conditions: {
-    'payload.procurementFeeMinor': 'positive',
-  },
+  templateKey: 'procurement_fee_earned_legacy_reference',
+  name: 'Procurement fee earned — legacy reference only',
+  eventType: 'procurement.fee_reference_only',
+  description:
+    'Deprecated standalone fee template retained for audit compatibility. New procurement.completed events use the composite procurement_completed_spend template.',
   lines: [
     {
-      accountCode: 'CUSTOMER_FUNDS_CLEARING',
+      accountCode: 'PROCUREMENT_AUTHORIZATION_CLEARING',
       direction: 'debit',
-      amountSource: 'event.payload.procurementFeeMinor',
-      memo: 'Release procurement fee from customer funds',
+      amountMinor: 0,
+      memo: 'Legacy reference only',
     },
     {
-      accountCode: 'PROCUREMENT_REVENUE',
+      accountCode: 'PROCUREMENT_AUTHORIZATION_CLEARING',
       direction: 'credit',
-      amountSource: 'event.payload.procurementFeeMinor',
-      memo: 'Procurement fee earned',
+      amountMinor: 0,
+      memo: 'Legacy reference only',
     },
   ],
 };

@@ -7,6 +7,9 @@ const {
   LedgerTransaction,
   PaymentFinanceReconciliationResult,
 } = require('../models/associations');
+const {
+  accountingEventIsSatisfied,
+} = require('./financeReconciliationHelpers.service');
 
 async function reconcilePayment(paymentId) {
   const payment = await Payment.findByPk(paymentId);
@@ -61,7 +64,7 @@ async function reconcilePayment(paymentId) {
     ledger = await LedgerTransaction.findByPk(
       accountingEvent.ledger_transaction_id
     );
-  } else if (accountingEvent) {
+  } else if (accountingEvent && !accountingEventIsSatisfied(accountingEvent)) {
     exceptionCode = 'ACCOUNTING_EVENT_NOT_POSTED';
     exceptionMessage = 'Payment accounting event has not reached the ledger.';
   }

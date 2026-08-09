@@ -7,6 +7,9 @@ const {
   LedgerTransaction,
   ProcurementFinanceReconciliationResult,
 } = require('../models/associations');
+const {
+  accountingEventIsSatisfied,
+} = require('./financeReconciliationHelpers.service');
 
 async function reconcileProcurement(procurementId) {
   const procurement = await ProcurementRun.findByPk(procurementId);
@@ -66,7 +69,7 @@ async function reconcileProcurement(procurementId) {
     ledger = await LedgerTransaction.findByPk(
       accountingEvent.ledger_transaction_id
     );
-  } else if (accountingEvent) {
+  } else if (accountingEvent && !accountingEventIsSatisfied(accountingEvent)) {
     exceptionCode = 'PROCUREMENT_ACCOUNTING_EVENT_NOT_POSTED';
     exceptionMessage = 'Procurement accounting event has not posted to the ledger.';
   }

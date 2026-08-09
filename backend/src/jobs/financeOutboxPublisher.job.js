@@ -36,7 +36,8 @@ function startFinanceOutboxPublisherJob({
           error: error.message,
         });
 
-        if (Number(event.attempt_count || 0) + 1 >= 8) {
+        const fresh = await FinanceOutboxEvent.findByPk(event.id);
+        if (Number(fresh?.attempt_count || 0) >= 8) {
           await quarantineOutboxEvent({
             outboxEventId: event.id,
             reasonCode: error.code || 'DELIVERY_RETRY_EXHAUSTED',

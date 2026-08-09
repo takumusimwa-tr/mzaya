@@ -7,6 +7,9 @@ const {
   LedgerTransaction,
   VendorSettlementFinanceReconciliationResult,
 } = require('../models/associations');
+const {
+  accountingEventIsSatisfied,
+} = require('./financeReconciliationHelpers.service');
 
 async function reconcileVendorSettlement(settlementId) {
   const settlement = await VendorSettlement.findByPk(settlementId);
@@ -66,7 +69,7 @@ async function reconcileVendorSettlement(settlementId) {
     ledger = await LedgerTransaction.findByPk(
       accountingEvent.ledger_transaction_id
     );
-  } else if (accountingEvent) {
+  } else if (accountingEvent && !accountingEventIsSatisfied(accountingEvent)) {
     exceptionCode = 'SETTLEMENT_ACCOUNTING_EVENT_NOT_POSTED';
     exceptionMessage = 'Vendor settlement accounting event has not posted to the ledger.';
   }

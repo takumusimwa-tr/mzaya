@@ -7,6 +7,9 @@ const {
   LedgerTransaction,
   MzayaPayoutFinanceReconciliationResult,
 } = require('../models/associations');
+const {
+  accountingEventIsSatisfied,
+} = require('./financeReconciliationHelpers.service');
 
 async function reconcileMzayaPayout(payoutId) {
   const payout = await MzayaPayout.findByPk(payoutId);
@@ -66,7 +69,7 @@ async function reconcileMzayaPayout(payoutId) {
     ledger = await LedgerTransaction.findByPk(
       accountingEvent.ledger_transaction_id
     );
-  } else if (accountingEvent) {
+  } else if (accountingEvent && !accountingEventIsSatisfied(accountingEvent)) {
     exceptionCode = 'MZAYA_PAYOUT_ACCOUNTING_EVENT_NOT_POSTED';
     exceptionMessage = 'Mzaya payout accounting event has not posted to the ledger.';
   }

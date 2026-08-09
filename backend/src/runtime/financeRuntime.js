@@ -58,12 +58,24 @@ const {
 const {
   ensureFinanceCutoverControls,
 } = require('../services/financeCutoverSeed.service');
+const {
+  ensureFinancePostingConfiguration,
+} = require('../services/financePostingSeed.service');
+const {
+  startFinanceBusinessEventProcessorJob,
+} = require('../jobs/financeBusinessEventProcessor.job');
+const {
+  startFinanceAccountingPosterJob,
+} = require('../jobs/financeAccountingPoster.job');
 
 async function startFinanceRuntime({ io, logger = console }) {
   await ensureFinanceCutoverControls();
+  await ensureFinancePostingConfiguration();
 
   const jobs = [
     startFinanceOutboxPublisherJob({ logger }),
+    startFinanceBusinessEventProcessorJob({ logger }),
+    startFinanceAccountingPosterJob({ logger }),
     startFinanceDeliveryRecoveryJob({ logger }),
     startFinanceDeadLetterEscalationJob({ logger }),
     startFinanceReliabilitySnapshotJob({ logger }),

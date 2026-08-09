@@ -10,5 +10,6 @@ router.use(requireRole(USER_ROLE.ADMIN));
 
 router.get('/dashboard', controller.dashboard);
 router.post('/batches', validateRequest(batchBody), controller.createBatch);
+router.post('/drain', controller.drain);
 
 module.exports = router;

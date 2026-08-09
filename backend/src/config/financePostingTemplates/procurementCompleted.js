@@ -1,6 +1,6 @@
 module.exports = {
   templateKey: 'procurement_completed_spend',
-  name: 'Procurement completed — spend recognition',
+  name: 'Procurement completed — spend and fee recognition',
   eventType: 'procurement.completed',
   lines: [
     {
@@ -13,7 +13,19 @@ module.exports = {
       accountCode: 'CUSTOMER_FUNDS_CLEARING',
       direction: 'credit',
       amountSource: 'event.payload.merchandiseCostMinor',
-      memo: 'Customer funds applied to procurement',
+      memo: 'Customer funds applied to procurement merchandise',
+    },
+    {
+      accountCode: 'CUSTOMER_FUNDS_CLEARING',
+      direction: 'debit',
+      amountSource: 'event.payload.procurementFeeMinor',
+      memo: 'Release procurement fee from customer funds',
+    },
+    {
+      accountCode: 'PROCUREMENT_REVENUE',
+      direction: 'credit',
+      amountSource: 'event.payload.procurementFeeMinor',
+      memo: 'Procurement fee earned',
     },
   ],
 };

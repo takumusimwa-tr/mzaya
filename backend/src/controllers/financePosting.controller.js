@@ -8,6 +8,9 @@ const {
 const {
   createJournalBatch,
 } = require('../services/financeJournalBatch.service');
+const {
+  drainFinancePipeline,
+} = require('../services/financePipeline.service');
 
 async function dashboard(req, res, next) {
   try {
@@ -60,7 +63,20 @@ async function createBatch(req, res, next) {
   }
 }
 
+async function drain(req, res, next) {
+  try {
+    const summary = await drainFinancePipeline({
+      maxPasses: Math.min(Number(req.body.maxPasses) || 10, 50),
+    });
+
+    return res.status(200).json({ summary });
+  } catch (error) {
+    return next(error);
+  }
+}
+
 module.exports = {
   dashboard,
   createBatch,
+  drain,
 };

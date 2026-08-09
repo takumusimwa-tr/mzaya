@@ -9,6 +9,9 @@ const {
   TreasuryFinanceReconciliationResult,
 } = require('../models/associations');
 const {
+  accountingEventIsSatisfied,
+} = require('./financeReconciliationHelpers.service');
+const {
   matchBankMovement,
 } = require('./bankMovementMatching.service');
 
@@ -68,7 +71,7 @@ async function reconcileTreasuryTransfer(transferId) {
     ledger = await LedgerTransaction.findByPk(
       accountingEvent.ledger_transaction_id
     );
-  } else if (accountingEvent) {
+  } else if (accountingEvent && !accountingEventIsSatisfied(accountingEvent)) {
     exceptionCode = 'TREASURY_ACCOUNTING_EVENT_NOT_POSTED';
     exceptionMessage = 'Treasury accounting event has not posted to the ledger.';
   }

@@ -7,6 +7,9 @@ const {
   LedgerTransaction,
   TaxFinanceReconciliationResult,
 } = require('../models/associations');
+const {
+  accountingEventIsSatisfied,
+} = require('./financeReconciliationHelpers.service');
 
 async function reconcileTaxTransaction(taxTransactionId) {
   const taxTransaction = await TaxTransaction.findByPk(taxTransactionId);
@@ -66,7 +69,7 @@ async function reconcileTaxTransaction(taxTransactionId) {
     ledger = await LedgerTransaction.findByPk(
       accountingEvent.ledger_transaction_id
     );
-  } else if (accountingEvent) {
+  } else if (accountingEvent && !accountingEventIsSatisfied(accountingEvent)) {
     exceptionCode = 'TAX_ACCOUNTING_EVENT_NOT_POSTED';
     exceptionMessage = 'Tax accounting event has not posted to the ledger.';
   }

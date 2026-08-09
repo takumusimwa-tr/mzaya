@@ -8,6 +8,9 @@ const {
   OrderFinanceReconciliationResult,
 } = require('../models/associations');
 const {
+  accountingEventIsSatisfied,
+} = require('./financeReconciliationHelpers.service');
+const {
   usdToMinor,
 } = require('./orderFinanceEvents.service');
 
@@ -67,7 +70,7 @@ async function reconcileOrder({
     ledger = await LedgerTransaction.findByPk(
       accountingEvent.ledger_transaction_id
     );
-  } else if (accountingEvent) {
+  } else if (accountingEvent && !accountingEventIsSatisfied(accountingEvent)) {
     exceptionCode = 'ORDER_ACCOUNTING_EVENT_NOT_POSTED';
     exceptionMessage =
       'Order accounting event has not reached the ledger.';
