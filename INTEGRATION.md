@@ -1,47 +1,50 @@
-# Mzaya Batch 08.4.7 — Finance Integration Hub & Accounting Event Engine
+# Mzaya Batch 08.4.8 — Transactional Outbox, Event Delivery & Finance Reliability
 
-This batch provides the accounting-event layer between Mzaya operational
-services and the immutable finance ledger.
+This batch hardens Batch 08.4.7 for distributed production use.
 
-Operational services should publish business events. They should not construct
-ledger journals directly.
+The critical invariant is:
+
+```text
+business state change
+      +
+finance outbox write
+      =
+same database transaction
+```
+
+If the transaction commits, both exist. If it rolls back, neither exists.
 
 ## Database
 
 ```bash
-psql "$DATABASE_URL" -f backend/migrations/finance_event_engine.sql
+psql "$DATABASE_URL" -f backend/migrations/finance_event_delivery.sql
 ```
 
 ## Register and export models
 
-- `FinanceBusinessEvent`
-- `FinanceAccountingEvent`
-- `FinancePostingRule`
-- `FinancePostingTemplate`
-- `FinanceJournalBatch`
-- `FinanceJournalBatchEvent`
-- `FinancePostingFailure`
-- `FinanceReplayQueue`
-- `FinanceIntegrationLog`
+- `FinanceOutboxEvent`
+- `FinanceDeliveryLease`
+- `FinanceDeliveryAttempt`
+- `FinanceConsumerOffset`
+- `FinanceDeadLetter`
+- `FinanceReliabilitySnapshot`
 
 Recommended associations:
 
 ```js
-FinanceBusinessEvent.hasOne(FinanceAccountingEvent, {
-  foreignKey: 'business_event_id',
-  as: 'accountingEvent',
+FinanceOutboxEvent.hasMany(FinanceDeliveryAttempt, {
+  foreignKey: 'outbox_event_id',
+  as: 'deliveryAttempts',
 });
 
-FinanceAccountingEvent.belongsTo(FinanceBusinessEvent, {
-  foreignKey: 'business_event_id',
-  as: 'businessEvent',
+FinanceOutboxEvent.hasMany(FinanceDeliveryLease, {
+  foreignKey: 'outbox_event_id',
+  as: 'leases',
 });
 
-FinanceJournalBatch.belongsToMany(FinanceAccountingEvent, {
-  through: FinanceJournalBatchEvent,
-  foreignKey: 'journal_batch_id',
-  otherKey: 'accounting_event_id',
-  as: 'accountingEvents',
+FinanceOutboxEvent.hasMany(FinanceDeadLetter, {
+  foreignKey: 'outbox_event_id',
+  as: 'deadLetters',
 });
 ```
 
@@ -49,263 +52,240 @@ FinanceJournalBatch.belongsToMany(FinanceAccountingEvent, {
 
 ```js
 app.use(
-  '/api/finance-events',
-  require('./routes/financeEventEngine.routes')
+  '/api/finance-delivery',
+  require('./routes/financeDelivery.routes')
 );
 
 app.use(
-  '/api/finance-posting',
-  require('./routes/financePosting.routes')
+  '/api/finance-dead-letters',
+  require('./routes/financeDeadLetter.routes')
 );
 
 app.use(
-  '/api/finance-replay',
-  require('./routes/financeReplay.routes')
+  '/api/finance-reliability',
+  require('./routes/financeReliability.routes')
 );
 ```
 
-## Event contract
+## Operational integration pattern
 
-Every event must provide:
+Inside the existing operational transaction:
 
-```json
-{
-  "eventType": "payment.captured",
-  "sourceSystem": "payments",
-  "sourceEntityType": "payment",
-  "sourceEntityId": "uuid",
-  "sourceReference": "PAY-12345",
-  "occurredAt": "2026-08-09T10:00:00Z",
-  "currency": "USD",
-  "amountMinor": 1250,
-  "payload": {},
-  "idempotencyKey": "payments:PAY-12345:captured:v1"
-}
-```
+```js
+const { sequelize } = require('../config/db');
+const {
+  enqueueFinanceOutboxEvent,
+} = require('../services/financeOutbox.service');
 
-The idempotency key must uniquely identify one business fact.
-
-## Initial event taxonomy
-
-Recommended operational events:
-
-```text
-order.created
-order.completed
-order.cancelled
-
-payment.authorized
-payment.captured
-payment.failed
-payment.refunded
-payment.chargeback
-
-vendor.settlement_due
-vendor.settlement_paid
-
-mzaya.payout_due
-mzaya.payout_paid
-
-procurement.completed
-delivery.completed
-
-promotion.applied
-subscription.invoiced
-subscription.paid
-
-treasury.transfer_completed
-tax.liability_created
-```
-
-## Posting templates
-
-Posting templates contain declarative journal lines.
-
-Example:
-
-```json
-{
-  "templateKey": "payment_capture_customer_funds",
-  "lines": [
+await sequelize.transaction(async (transaction) => {
+  const payment = await Payment.update(
+    { status: 'captured' },
     {
-      "accountCode": "CASH_AT_BANK",
-      "direction": "debit",
-      "amountSource": "event.amount_minor"
-    },
-    {
-      "accountCode": "CUSTOMER_FUNDS_PAYABLE",
-      "direction": "credit",
-      "amountSource": "event.amount_minor"
+      where: { id: paymentId },
+      transaction,
+      returning: true,
     }
-  ]
-}
+  );
+
+  await enqueueFinanceOutboxEvent({
+    transaction,
+    aggregateType: 'payment',
+    aggregateId: paymentId,
+    eventType: 'payment.captured',
+    sourceSystem: 'payments',
+    payload: {
+      paymentId,
+      currency: 'USD',
+      amountMinor: 1250,
+    },
+    idempotencyKey: `payment:${paymentId}:captured:v1`,
+  });
+});
 ```
 
-The posting engine rejects any generated journal where total debits do not
-equal total credits.
+Never enqueue the outbox event after the transaction has committed.
 
-## Ledger adapter
+## First Mzaya domains to wire
 
-Batch 08.4.7 deliberately prepares accounting events before final ledger
-posting. Connect the prepared journal payload to the existing immutable ledger
-service rather than duplicating ledger logic here.
-
-Production sequence:
+Recommended sequence:
 
 ```text
-business event
-   ↓
-posting rule resolution
-   ↓
-posting template
-   ↓
-balanced accounting event
-   ↓
-period lock validation
-   ↓
-immutable ledger posting
-   ↓
-ledger transaction reference stored
+1. payment.captured
+2. payment.refunded
+3. order.completed
+4. vendor.settlement_paid
+5. mzaya.payout_paid
+6. procurement.completed
+7. treasury.transfer_completed
+8. tax.liability_created
 ```
 
-Use the `assertPeriodOpen()` service introduced in Batch 08.4.6 before final
-ledger posting.
+## Delivery behavior
 
-## Idempotency
-
-Both layers are protected:
+Outbox rows move through:
 
 ```text
-business event:
-  UNIQUE idempotency_key
-
-accounting event:
-  UNIQUE business_event_id
+pending
+   ↓
+publishing
+   ↓
+published
 ```
 
-A duplicate event with the same key and payload returns the existing event.
-
-A duplicate event with the same key but a different payload must fail with:
+On failure:
 
 ```text
-FINANCE_EVENT_IDEMPOTENCY_CONFLICT
-```
-
-## Replay and dead-letter handling
-
-Failed events enter a controlled replay queue.
-
-Retries use exponential backoff and stop at eight attempts, after which the
-queue item becomes:
-
-```text
+publishing
+   ↓
+retry
+   ↓
+retry...
+   ↓
 dead_letter
 ```
 
-Do not retry payment, treasury, or external-provider side effects from this
-engine. Replay accounting interpretation only.
+Retries use bounded exponential backoff.
+
+## Delivery leases
+
+Multiple workers may run the publisher concurrently.
+
+A worker must acquire a short-lived lease before delivery.
+
+Expired leases are recovered automatically and the associated event is moved
+back to `retry`.
+
+## Duplicate tolerance
+
+The delivery layer is at-least-once.
+
+Exactly-once effects are achieved by downstream idempotency:
+
+```text
+outbox:
+  UNIQUE idempotency_key
+
+finance business event:
+  UNIQUE idempotency_key
+```
+
+The publisher may safely redeliver an event after uncertainty.
+
+## Dead-letter handling
+
+Events are quarantined after eight failed attempts.
+
+Dead-letter replay must be explicit and should happen only after the underlying
+configuration or data issue has been corrected.
+
+Do not automatically replay external provider side effects.
 
 ## Jobs
 
 ```js
 const {
-  startFinanceReplayJob,
-} = require('./jobs/financeReplay.job');
+  startFinanceOutboxPublisherJob,
+} = require('./jobs/financeOutboxPublisher.job');
 
 const {
-  startPostingFailureJob,
-} = require('./jobs/postingFailure.job');
+  startFinanceDeliveryRecoveryJob,
+} = require('./jobs/financeDeliveryRecovery.job');
 
 const {
-  startOrphanEventJob,
-} = require('./jobs/orphanEvent.job');
+  startFinanceDeadLetterEscalationJob,
+} = require('./jobs/financeDeadLetterEscalation.job');
 
-const financeReplayJob =
-  startFinanceReplayJob({ logger });
+const {
+  startFinanceReliabilitySnapshotJob,
+} = require('./jobs/financeReliabilitySnapshot.job');
 
-const postingFailureJob =
-  startPostingFailureJob({ logger });
+const outboxPublisher =
+  startFinanceOutboxPublisherJob({ logger });
 
-const orphanEventJob =
-  startOrphanEventJob({ logger });
+const deliveryRecovery =
+  startFinanceDeliveryRecoveryJob({ logger });
+
+const deadLetterEscalation =
+  startFinanceDeadLetterEscalationJob({ logger });
+
+const reliabilitySnapshots =
+  startFinanceReliabilitySnapshotJob({ logger });
 ```
 
 ## Socket.IO
 
 ```js
 const {
-  initializeFinanceEventBridge,
-} = require('./realtime/financeEventBridge');
+  initializeFinanceDeliveryEventBridge,
+} = require('./realtime/financeDeliveryEventBridge');
 
-const closeFinanceEventBridge =
-  initializeFinanceEventBridge(io);
+const closeFinanceDeliveryBridge =
+  initializeFinanceDeliveryEventBridge(io);
 ```
-
-Call the cleanup function during graceful shutdown.
 
 ## Frontend routes
 
 ```jsx
 <Route
-  path="/admin/finance/events"
-  element={<FinanceEventEngine />}
+  path="/admin/finance/delivery"
+  element={<FinanceDeliveryMonitor />}
 />
 
 <Route
-  path="/admin/finance/posting"
-  element={<FinancePostingCenter />}
+  path="/admin/finance/dead-letters"
+  element={<FinanceDeadLetterQueue />}
 />
 
 <Route
-  path="/admin/finance/replay"
-  element={<FinanceReplayQueue />}
+  path="/admin/finance/reliability"
+  element={<FinanceReliabilityDashboard />}
 />
 ```
 
-## Integration rule for operational modules
+## Reliability targets
 
-Do not replace existing operational state changes.
-
-Instead:
+Suggested initial operating objectives:
 
 ```text
-operational transaction commits
-      ↓
-publish finance business event
-      ↓
-finance event engine processes independently
+delivery success rate        > 99.9%
+p95 delivery latency         < 60 seconds
+oldest pending event age     < 5 minutes
+stale active leases          = 0
+dead-letter queue            = 0 unresolved
+consumer lag                 < 5 minutes
 ```
 
-For production reliability, migrate event publication to a transactional
-outbox pattern so an operational commit and its finance event cannot diverge.
+Tune these after real production traffic is available.
 
-## Important controls
+## Critical controls
 
-- Operational services never create ledger entries directly.
-- Posting templates must use account codes governed by finance master data.
-- Every event must carry a stable idempotency key.
-- Generated journals must balance before posting.
-- Posting to locked periods must fail.
-- Failed interpretation may be replayed; external provider actions must not be.
-- Preserve business events, accounting events, failures, and integration logs.
-- Posting rule changes must use master-data change control from Batch 08.4.6.
-- The ledger remains the accounting system of record; this engine is the
-  controlled integration layer feeding it.
+- Never publish finance events outside the operational database transaction.
+- Delivery is at-least-once; consumers must remain idempotent.
+- Do not mark an outbox event published until the finance event engine accepts it.
+- Recover stale leases automatically.
+- Quarantine poison events instead of retrying forever.
+- Preserve every delivery attempt for audit.
+- Do not replay external payment, settlement, or treasury provider actions.
+- Reconcile published outbox events to finance business events.
+- Monitor event age, consumer lag, stale leases, and dead letters.
+- Use database-backed workers or a durable queue before horizontal scale.
 
 ## Verification
 
 ```bash
 cd backend
 
-npm test -- postingRules.test.js
-npm test -- idempotency.test.js
-npm test -- balancing.test.js
-npm test -- replay.test.js
+npm test -- outboxAtomicity.test.js
+npm test -- eventDelivery.test.js
+npm test -- leaseSafety.test.js
+npm test -- deadLetter.test.js
+npm test -- recovery.test.js
 
-node --check src/services/financeEventEngine.service.js
-node --check src/services/financePostingEngine.service.js
-node --check src/services/financePostingRule.service.js
-node --check src/services/financeReplay.service.js
+node --check src/services/financeOutbox.service.js
+node --check src/services/financeEventDelivery.service.js
+node --check src/services/financeDeliveryLease.service.js
+node --check src/services/financeDeadLetter.service.js
+node --check src/services/financeReliability.service.js
 
 npm run lint
 ```
@@ -316,3 +296,11 @@ cd frontend
 npm run lint
 npm run build
 ```
+
+## Next integration step
+
+After this batch, stop expanding finance infrastructure horizontally.
+
+Start wiring the existing operational modules into the outbox pattern one
+domain at a time, beginning with payments and refunds because they have the
+highest accounting and reconciliation sensitivity.

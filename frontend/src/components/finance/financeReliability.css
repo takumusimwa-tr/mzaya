@@ -1,0 +1,140 @@
+.finance-reliability-page {
+  width: min(1260px, calc(100% - 32px));
+  margin: 0 auto;
+  padding: 42px 0 60px;
+  color: #121714;
+}
+
+.finance-reliability-page h1 {
+  margin: 4px 0;
+  font-size: clamp(34px, 4vw, 50px);
+  letter-spacing: -.045em;
+}
+
+.finance-reliability-page > header p:last-child {
+  margin: 0;
+  color: #728077;
+}
+
+.finance-reliability-kpis {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 12px;
+  margin: 26px 0;
+}
+
+.finance-reliability-kpis article,
+.finance-outbox-table,
+.finance-dead-letter-table,
+.consumer-lag-card {
+  border: 1px solid #dde5df;
+  border-radius: 18px;
+  background: #fff;
+}
+
+.finance-reliability-kpis article {
+  padding: 18px;
+}
+
+.finance-reliability-kpis span,
+.finance-outbox-table span,
+.finance-dead-letter-table span,
+.consumer-lag-card span {
+  color: #728077;
+  font-size: 12px;
+}
+
+.finance-reliability-kpis strong {
+  display: block;
+  margin-top: 8px;
+  font-size: 22px;
+}
+
+.finance-outbox-table article,
+.finance-dead-letter-table article {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 120px 190px 120px;
+  gap: 16px;
+  align-items: center;
+  padding: 15px 16px;
+  border-top: 1px solid #eef2ef;
+}
+
+.finance-outbox-table article:first-child,
+.finance-dead-letter-table article:first-child {
+  border-top: 0;
+}
+
+.finance-outbox-table article > div,
+.finance-dead-letter-table article > div,
+.consumer-lag-card > div {
+  display: grid;
+  gap: 4px;
+}
+
+.finance-reliability-status {
+  width: fit-content;
+  padding: 6px 9px;
+  border-radius: 999px;
+  background: #eef3ef;
+  color: #126a56 !important;
+  font-weight: 800;
+  text-transform: capitalize;
+}
+
+.finance-dead-letter-table button {
+  min-height: 38px;
+  padding: 0 12px;
+  border: 1px solid #126a56;
+  border-radius: 11px;
+  background: #126a56;
+  color: #fff;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.finance-dead-letter-table button:disabled {
+  cursor: not-allowed;
+  opacity: .45;
+}
+
+.consumer-lag-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.consumer-lag-card {
+  display: grid;
+  gap: 12px;
+  padding: 18px;
+}
+
+.finance-reliability-state {
+  padding: 72px 24px;
+  text-align: center;
+}
+
+@media (max-width: 1080px) {
+  .finance-reliability-kpis {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 760px) {
+  .consumer-lag-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .finance-outbox-table article,
+  .finance-dead-letter-table article {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 620px) {
+  .finance-reliability-kpis,
+  .consumer-lag-grid {
+    grid-template-columns: 1fr;
+  }
+}
