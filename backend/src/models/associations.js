@@ -14,6 +14,7 @@ const OrderOffer = require('./orderOfferModel');
 const OrderMessage = require('./orderMessageModel');
 const PaymentAttempt = require('./paymentAttemptModel');
 const PaymentEvent = require('./paymentEventModel');
+const ProviderCallbackReceipt = require('./providerCallbackReceiptModel');
 const Favorite = require('./favoriteModel');
 const Address = require('./addressModel');
 
@@ -286,11 +287,26 @@ FinanceCutoverControl.hasMany(FinanceCutoverDecision, {
   foreignKey: 'control_id',
   as: 'decisions',
 });
+FinanceCutoverReadinessCheck.belongsTo(FinanceCutoverControl, {
+  foreignKey: 'control_id',
+  as: 'control',
+});
+FinanceCutoverDecision.belongsTo(FinanceCutoverControl, {
+  foreignKey: 'control_id',
+  as: 'control',
+});
 FinanceCrossDomainReconciliationRun.hasMany(
   FinanceCrossDomainReconciliationException,
   {
     foreignKey: 'run_id',
     as: 'exceptions',
+  }
+);
+FinanceCrossDomainReconciliationException.belongsTo(
+  FinanceCrossDomainReconciliationRun,
+  {
+    foreignKey: 'run_id',
+    as: 'run',
   }
 );
 
@@ -314,6 +330,7 @@ module.exports = {
   Payment,
   PaymentAttempt,
   PaymentEvent,
+  ProviderCallbackReceipt,
   PaymentAccount,
   PaymentIdempotencyKey,
   PaymentReconciliationRecord,

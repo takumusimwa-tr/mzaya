@@ -1,4 +1,8 @@
 const {
+  startProviderPaymentRecoveryJob,
+} = require('../jobs/providerPaymentRecovery.job');
+
+const {
   startFinanceOutboxPublisherJob,
 } = require('../jobs/financeOutboxPublisher.job');
 const {
@@ -76,6 +80,7 @@ async function startFinanceRuntime({ io, logger = console }) {
     startFinanceOutboxPublisherJob({ logger }),
     startFinanceBusinessEventProcessorJob({ logger }),
     startFinanceAccountingPosterJob({ logger }),
+    startProviderPaymentRecoveryJob(),
     startFinanceDeliveryRecoveryJob({ logger }),
     startFinanceDeadLetterEscalationJob({ logger }),
     startFinanceReliabilitySnapshotJob({ logger }),

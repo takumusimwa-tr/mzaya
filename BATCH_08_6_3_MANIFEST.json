@@ -1,0 +1,46 @@
+{
+  "batch": "08.6.3",
+  "title": "Provider Boundary Hardening, Concurrency & Failure Injection",
+  "source": "08.6.2 hardened working tree",
+  "changed_files": [
+    "BATCH_08_6_3_INTEGRATION.md",
+    "backend/FINANCE_FAILURE_INJECTION_08_6_3.md",
+    "backend/migrations/provider_boundary_hardening_08_6_3.sql",
+    "backend/package.json",
+    "backend/src/jobs/providerPaymentRecovery.job.js",
+    "backend/src/models/associations.js",
+    "backend/src/models/financeOutboxEventModel.js",
+    "backend/src/models/providerCallbackReceiptModel.js",
+    "backend/src/runtime/financeRuntime.js",
+    "backend/src/services/financeAccountingPosting.service.js",
+    "backend/src/services/financeEventDelivery.service.js",
+    "backend/src/services/financeFailureInjection.service.js",
+    "backend/src/services/financeOutboxClaim.service.js",
+    "backend/src/services/providerOutcome.service.js",
+    "backend/tests/financeFailureInjection.e2e.test.js",
+    "backend/tests/financeOutboxConcurrency.e2e.test.js",
+    "backend/tests/providerOutcomeConcurrency.e2e.test.js"
+  ],
+  "backend_modified_js_syntax_checked": [
+    "backend/src/jobs/providerPaymentRecovery.job.js",
+    "backend/src/models/associations.js",
+    "backend/src/models/financeOutboxEventModel.js",
+    "backend/src/models/providerCallbackReceiptModel.js",
+    "backend/src/runtime/financeRuntime.js",
+    "backend/src/services/financeAccountingPosting.service.js",
+    "backend/src/services/financeEventDelivery.service.js",
+    "backend/src/services/financeFailureInjection.service.js",
+    "backend/src/services/financeOutboxClaim.service.js",
+    "backend/src/services/providerOutcome.service.js",
+    "backend/tests/financeFailureInjection.e2e.test.js",
+    "backend/tests/financeOutboxConcurrency.e2e.test.js",
+    "backend/tests/providerOutcomeConcurrency.e2e.test.js"
+  ],
+  "notes": [
+    "Adds durable provider callback de-duplication.",
+    "Adds PostgreSQL SKIP LOCKED outbox claiming.",
+    "Adds controlled finance failure injection.",
+    "Adds stale payment recovery surfacing.",
+    "Adds provider race, worker concurrency, and crash-retry E2E stress suites."
+  ]
+}

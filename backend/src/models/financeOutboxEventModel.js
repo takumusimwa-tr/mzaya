@@ -18,6 +18,10 @@ module.exports = sequelize.define('FinanceOutboxEvent', {
   published_at: { type: DataTypes.DATE, allowNull: true },
   attempt_count: { type: DataTypes.INTEGER, allowNull: false, defaultValue: 0 },
   last_error: { type: DataTypes.STRING(1500), allowNull: true },
+  worker_id: {
+    type: DataTypes.STRING(120),
+    allowNull: true,
+  },
   metadata: { type: DataTypes.JSONB, allowNull: false, defaultValue: {} },
 
 }, {

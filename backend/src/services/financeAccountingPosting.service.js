@@ -1,5 +1,8 @@
 const { sequelize } = require('../config/db');
 const {
+  failIfRequested,
+} = require('./financeFailureInjection.service');
+const {
   FinanceAccountingEvent,
   FinanceBusinessEvent,
 } = require('../models/associations');
@@ -70,7 +73,9 @@ async function postAccountingEvent({
     // Keep them in the accounting event audit trail without creating zero-value
     // ledger entries (the ledger correctly rejects zero-value postings).
     if (lines.length === 0) {
-      await accountingEvent.update({
+      failIfRequested('after_ledger_post_before_accounting_status');
+
+    await accountingEvent.update({
         status: 'posted',
         posted_at: new Date(),
         metadata: {
@@ -135,6 +140,8 @@ async function postAccountingEvent({
       createdBy,
       externalTransaction: transaction,
     });
+
+    failIfRequested('after_ledger_post_before_accounting_status');
 
     await accountingEvent.update({
       status: 'posted',

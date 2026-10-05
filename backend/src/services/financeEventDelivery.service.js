@@ -1,4 +1,8 @@
 const {
+  failIfRequested,
+} = require('./financeFailureInjection.service');
+
+const {
   FinanceOutboxEvent,
   FinanceDeliveryAttempt,
 } = require('../models/associations');
@@ -50,7 +54,7 @@ async function deliverOutboxEvent({
       sourceEntityType: outbox.aggregate_type,
       sourceEntityId: outbox.aggregate_id,
       sourceReference: outbox.event_key,
-      occurredAt: outbox.created_at,
+      occurredAt: outbox.createdAt || outbox.created_at || new Date(),
       currency: outbox.payload?.currency || null,
       amountMinor: outbox.payload?.amountMinor ?? null,
       payload: outbox.payload,
@@ -60,6 +64,11 @@ async function deliverOutboxEvent({
         outboxEventId: outbox.id,
       },
     });
+
+    // Batch 08.6.3: simulate a process crash after durable event ingestion but
+    // before the delivery attempt/outbox are marked successful. Retrying must
+    // converge on the same idempotent FinanceBusinessEvent.
+    failIfRequested('after_outbox_ingest_before_publish');
 
     await attempt.update({
       status: 'delivered',

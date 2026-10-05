@@ -18,7 +18,8 @@
     "test:coverage": "jest --coverage --runInBand",
     "lint": "eslint src tests scripts",
     "check": "npm run lint && npm test",
-    "test:finance:e2e": "jest --runInBand tests/financePipeline.e2e.test.js tests/paymentRefundFinance.e2e.test.js tests/orderDeliveryFinance.e2e.test.js tests/financeReliability.e2e.test.js tests/financeCutover.e2e.test.js"
+    "test:finance:e2e": "jest --runInBand tests/financePipeline.e2e.test.js tests/paymentRefundFinance.e2e.test.js tests/orderDeliveryFinance.e2e.test.js tests/financeReliability.e2e.test.js tests/financeCutover.e2e.test.js",
+    "test:finance:stress": "jest --runInBand tests/providerOutcomeConcurrency.e2e.test.js tests/financeOutboxConcurrency.e2e.test.js tests/financeFailureInjection.e2e.test.js"
   },
   "keywords": [],
   "author": "",

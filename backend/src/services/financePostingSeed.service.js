@@ -69,7 +69,6 @@ async function ensureFinancePostingConfiguration() {
       },
       defaults: {
         rule_key: ruleKey,
-        name: config.name,
         event_type: config.eventType,
         source_system: null,
         condition_expression: config.conditions || {},
@@ -84,7 +83,6 @@ async function ensureFinancePostingConfiguration() {
     });
 
     await rule.update({
-      name: config.name,
       event_type: config.eventType,
       condition_expression: config.conditions || {},
       posting_template_key: config.templateKey,
