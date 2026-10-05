@@ -9,6 +9,7 @@ const { registerOrderSocket } = require('./order.socket');
 const { setOrderPublisherIO } = require('./orderPublisher');
 const { startOrderEventBridge, stopOrderEventBridge } = require('./orderEventBridge');
 const { logger } = require('../utils/logger');
+const { isDeployed } = require('../config/runtimeEnv');
 
 let io = null;
 
@@ -19,7 +20,7 @@ function socketOrigins() {
     .filter(Boolean);
 
   if (configured.length) return configured;
-  if (process.env.NODE_ENV === 'production') return [];
+  if (isDeployed) return [];
   return ['http://localhost:5173'];
 }
 

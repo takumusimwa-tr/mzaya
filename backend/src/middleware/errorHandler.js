@@ -1,3 +1,4 @@
+const { isDeployed } = require('../config/runtimeEnv');
 /**
  * ============================================================================
  * MZAYA
@@ -37,7 +38,7 @@ function errorHandler(err, req, res, _next) {
   }
 
   const status = Number.isInteger(err.status) ? err.status : 500;
-  const isProduction = process.env.NODE_ENV === 'production';
+  const isProduction = isDeployed;
 
   return res.status(status).json({
     error:

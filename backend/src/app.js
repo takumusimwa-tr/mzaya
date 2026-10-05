@@ -25,6 +25,7 @@ const cors    = require('cors');
 const helmet  = require('helmet');
 const { logger, requestLogger, attachLogger } = require('./utils/logger');
 const { requestId } = require('./middleware/requestId.middleware');
+const { isDeployed } = require('./config/runtimeEnv');
 const { authLimiter, writeLimiter, apiLimiter } = require('./middleware/rateLimit.middleware');
 
 const { sequelize }                  = require('./config/db');
@@ -92,10 +93,10 @@ const allowedOrigins = (process.env.CLIENT_ORIGINS || '')
 //
 // validateEnv already refuses to boot production without CLIENT_ORIGINS, so this
 // is the second line of defence — which is exactly where you want one.
-if (process.env.NODE_ENV === 'production') {
+if (isDeployed) {
   if (!allowedOrigins.length) {
     logger.error('cors_no_allowlist', { fatal: true });
-    console.error('FATAL: CLIENT_ORIGINS is empty in production. Refusing to run with open CORS.');
+    console.error('FATAL: CLIENT_ORIGINS is empty in a deployed environment. Refusing to run with open CORS.');
     process.exit(1);
   }
   app.use(cors({
@@ -118,7 +119,7 @@ app.use(helmet({ crossOriginResourcePolicy: false }));
 // Trust the proxy in production (Render/Railway/Cloudflare sit in front of us).
 // Without this, express-rate-limit sees every request as coming from the proxy's
 // IP and would throttle all users as if they were one person.
-if (process.env.NODE_ENV === 'production') app.set('trust proxy', 1);
+if (isDeployed) app.set('trust proxy', 1);
 
 // Trace every request end-to-end: an id on the way in, echoed on the way out,
 // and stamped on every log line it produces.
@@ -238,7 +239,7 @@ app.use((err, req, res, _next) => {
     return res.status(403).json({ error: 'Origin not allowed' });
   }
 
-  const isProd = process.env.NODE_ENV === 'production';
+  const isProd = isDeployed;
   res.status(500).json({
     error: isProd ? 'Internal server error' : (err.message || 'Internal server error'),
     // Give the customer something to quote at support. Without it, "it broke

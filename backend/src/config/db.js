@@ -1,4 +1,5 @@
 const { Sequelize } = require('sequelize');
+const { isDeployed } = require('./runtimeEnv');
 
 // dotenv is loaded by index.js before this module is required
 if (!process.env.DB_URL) {
@@ -10,7 +11,7 @@ if (!process.env.DB_URL) {
 // SSL, and most present a certificate that isn't in Node's default trust store —
 // hence rejectUnauthorized: false. Local Postgres doesn't use SSL, so we only
 // enable it in production (or when DB_SSL=true is set explicitly).
-const useSSL = process.env.DB_SSL === 'true' || process.env.NODE_ENV === 'production';
+const useSSL = process.env.DB_SSL === 'true' || isDeployed;
 
 const sequelize = new Sequelize(process.env.DB_URL, {
   dialect: 'postgres',

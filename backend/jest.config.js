@@ -18,10 +18,10 @@ module.exports = {
   maxWorkers: 1,
   testTimeout: 20000,
 
-  // A test that leaves a handle open (a socket, a pool) hangs CI. Fail loudly
-  // rather than waiting forever.
-  forceExit: true,
-  detectOpenHandles: false,
+  // Do not hide lifecycle leaks with forceExit. detectOpenHandles makes Jest
+  // identify the resource if a suite fails to terminate naturally.
+  forceExit: false,
+  detectOpenHandles: true,
 
   collectCoverageFrom: [
     'src/controllers/**/*.js',

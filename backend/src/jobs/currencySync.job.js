@@ -4,7 +4,7 @@ const { fetchZigRate } = require('../services/currency.service');
 // ─── Runs every day at 08:00 AM Zimbabwe time (CAT = UTC+2) ──────────────────
 // RBZ typically announces daily rates in the morning
 function startCurrencySyncJob() {
-  cron.schedule('0 6 * * *', async () => {
+  const task = cron.schedule('0 6 * * *', async () => {
     console.log('[CurrencySync] Refreshing ZiG rate...');
     try {
       const rate = await fetchZigRate();
@@ -17,6 +17,7 @@ function startCurrencySyncJob() {
   });
 
   console.log('[CurrencySync] Daily rate sync job scheduled (08:00 CAT)');
+  return task;
 }
 
 module.exports = { startCurrencySyncJob };

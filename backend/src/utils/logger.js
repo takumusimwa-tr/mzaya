@@ -12,10 +12,10 @@
 // Deliberately dependency-free. pino/winston are excellent, but this is ~40
 // lines and does the job; swapping it later means changing this file only.
 
-const isProd = process.env.NODE_ENV === 'production';
+const { isDeployed } = require('../config/runtimeEnv');
 
 const LEVELS = { error: 0, warn: 1, info: 2, debug: 3 };
-const THRESHOLD = LEVELS[process.env.LOG_LEVEL] ?? (isProd ? LEVELS.info : LEVELS.debug);
+const THRESHOLD = LEVELS[process.env.LOG_LEVEL] ?? (isDeployed ? LEVELS.info : LEVELS.debug);
 
 // Never log these, whatever the caller passes.
 const REDACT = ['password', 'token', 'jwt', 'authorization', 'api_key', 'apiKey',
@@ -41,7 +41,7 @@ function emit(level, msg, meta = {}) {
 
   const clean = scrub(meta);
 
-  if (isProd) {
+  if (isDeployed) {
     // One JSON object per line — what log aggregators expect.
     process.stdout.write(JSON.stringify({
       ts: new Date().toISOString(),

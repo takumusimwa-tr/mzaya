@@ -23,11 +23,13 @@ validateEnv();
 const http = require('http');
 const app = require('./app');   // dotenv is already loaded by the time this runs
 const { sequelize, connectDB } = require('./config/db');
-const { initSocket } = require('./realtime/socket');
+const { initSocket, closeSocket } = require('./realtime/socket');
 const { logger } = require('./utils/logger');
 const { startCurrencySyncJob } = require('./jobs/currencySync.job');
 const { startScheduledReleaseJob } = require('./jobs/scheduledRelease.job');
 const { startFinanceRuntime } = require('./runtime/financeRuntime');
+const { isProduction, name: runtimeEnvironment } = require('./config/runtimeEnv');
+const { verifyRateLimitStore, closeRateLimitStore } = require('./middleware/rateLimit.middleware');
 
 async function boot() {
   await connectDB();
@@ -41,7 +43,7 @@ async function boot() {
   //
   // So: alter in dev, never in production. Production schema changes go through
   // explicit, reviewed migrations.
-  const isProd = process.env.NODE_ENV === 'production';
+  const isProd = isProduction;
 
   // Schema.
   //
@@ -61,8 +63,10 @@ async function boot() {
     logger.info('models_synced', { alter: true });
   }
 
-  startCurrencySyncJob();
-  startScheduledReleaseJob();
+  await verifyRateLimitStore();
+
+  const currencySyncJob = startCurrencySyncJob();
+  const scheduledReleaseJob = startScheduledReleaseJob();
 
   const PORT = process.env.PORT || 5000;
   const server = http.createServer(app);
@@ -72,12 +76,12 @@ async function boot() {
   server.listen(PORT, () => {
     logger.info('server_started', {
       port: PORT,
-      env:  process.env.NODE_ENV || 'development',
+      env: runtimeEnvironment,
       ml:   process.env.ML_SERVICE_URL || 'http://localhost:8000',
     });
   });
 
-  return { server, io, financeRuntime };
+  return { server, io, financeRuntime, currencySyncJob, scheduledReleaseJob };
 }
 
 // ─── Lifecycle ────────────────────────────────────────────────────────────────
@@ -106,8 +110,11 @@ async function shutdown(signal) {
 
   try {
     handles?.financeRuntime?.stop?.();
-    if (handles?.io)     await new Promise((r) => handles.io.close(r));
+    handles?.currencySyncJob?.stop?.();
+    handles?.scheduledReleaseJob?.stop?.();
+    if (handles?.io)     await closeSocket();
     if (handles?.server) await new Promise((r) => handles.server.close(r));
+    await closeRateLimitStore();
     await sequelize.close();
     clearTimeout(deadline);
     logger.info('shutdown_complete', {});

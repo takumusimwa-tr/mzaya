@@ -13,7 +13,7 @@ const LEAD_MINUTES = 45;
 // into the normal dispatch flow. Fees/vehicle were already locked at booking;
 // here we only assign a rider (or leave pending for the claim board).
 function startScheduledReleaseJob() {
-  cron.schedule('* * * * *', async () => {
+  const task = cron.schedule('* * * * *', async () => {
     try {
       const cutoff = new Date(Date.now() + LEAD_MINUTES * 60 * 1000);
 
@@ -53,6 +53,7 @@ function startScheduledReleaseJob() {
   });
 
   console.log('[ScheduledRelease] Scheduled-order release job started (every minute)');
+  return task;
 }
 
 module.exports = { startScheduledReleaseJob };

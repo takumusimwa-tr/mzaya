@@ -1,0 +1,41 @@
+{
+  "batch": "08.6.5",
+  "title": "Finance Production Readiness, Security & Operational Controls",
+  "files": [
+    "backend/src/config/runtimeEnv.js",
+    "backend/src/config/validateEnv.js",
+    "backend/src/config/db.js",
+    "backend/src/utils/logger.js",
+    "backend/src/app.js",
+    "backend/src/index.js",
+    "backend/src/middleware/rateLimit.middleware.js",
+    "backend/src/jobs/currencySync.job.js",
+    "backend/src/jobs/scheduledRelease.job.js",
+    "backend/src/realtime/socket.js",
+    "backend/src/middleware/errorHandler.js",
+    "backend/tests/runtimeEnv.unit.test.js",
+    "backend/tests/validateEnv.unit.test.js",
+    "backend/jest.config.js",
+    "backend/package.json",
+    "backend/FINANCE_PRODUCTION_READINESS_08_6_5.md",
+    "BATCH_08_6_5_INTEGRATION.md"
+  ],
+  "validation": {
+    "modified_js_node_check": "14/14 passed",
+    "jest": "not run in packaging environment because node_modules/new Redis dependencies are unavailable",
+    "required_local_commands": [
+      "npm install",
+      "npm run test:finance:readiness",
+      "npm run test:finance:observability",
+      "npm run test:finance:stress"
+    ]
+  },
+  "deployment_notes": [
+    "staging is now treated as deployed for CORS, proxy, SSL, structured logging and rate limiting",
+    "REDIS_URL is required in staging/production",
+    "staging may still use explicitly enabled mock payments",
+    "production still rejects mock payments",
+    "package-lock.json must be refreshed by npm install before commit",
+    "staging remains on model sync until its recreated database is deliberately baselined for migrations"
+  ]
+}

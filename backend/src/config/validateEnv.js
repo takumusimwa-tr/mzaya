@@ -1,87 +1,60 @@
-// backend/src/config/validateEnv.js
-//
-// Fail fast, at boot, if the app is misconfigured.
-//
-// The alternative — which is what we had — is an app that starts happily and
-// then throws on the first request that happens to need the missing value. In
-// production that means a "successful" deploy followed by a silent outage, and
-// a confusing stack trace instead of a clear message. JWT_SECRET was exactly
-// this: absent, the server booted fine and then 500'd on every login.
-//
-// Required vs optional is deliberate. Payments and image hosting degrade
-// gracefully by design (mock payments, local uploads), so they're WARNINGS in
-// production, not fatal — the app is still usable without them.
+// Fail fast when a deployed API is missing configuration that protects money,
+// credentials, uploads or network boundaries.
+const { name, isProduction, isDeployed } = require('./runtimeEnv');
 
 const REQUIRED = [
-  { key: 'DB_URL',     why: 'PostgreSQL connection string' },
-  { key: 'JWT_SECRET', why: 'signs auth tokens — no fallback exists, and there must not be one' },
+  { key: 'DB_URL', why: 'PostgreSQL connection string' },
+  { key: 'JWT_SECRET', why: 'signs auth tokens — no fallback exists' },
 ];
 
-// Only meaningful in production.
-const REQUIRED_IN_PROD = [
-  { key: 'CLIENT_ORIGINS', why: 'CORS + socket allowlist; without it the API is open to any origin' },
-  { key: 'APP_URL',        why: 'public backend URL — Paynow webhooks resolve against it' },
-  { key: 'CLIENT_URL',     why: 'public frontend URL — Paynow redirects back to it' },
+const REQUIRED_WHEN_DEPLOYED = [
+  { key: 'CLIENT_ORIGINS', why: 'CORS + socket allowlist for an internet-facing API' },
+  { key: 'APP_URL', why: 'public backend URL used by provider callbacks' },
+  { key: 'CLIENT_URL', why: 'public frontend URL used by provider redirects' },
+  { key: 'REDIS_URL', why: 'shared rate-limit state; per-process limits are unsafe when deployed' },
 ];
 
-// These were previously "warnings" in production. That was a serious mistake.
-//
-// Without Paynow credentials the payment service silently enters MOCK mode: the
-// site accepts orders, tells customers "✅ Payment received", and no money moves.
-// Without Cloudinary, uploads are written to the container filesystem — which is
-// WIPED on every redeploy, taking vendor logos and delivery-proof photos with it.
-//
-// Neither of those is a warning. Both are refusals.
-const REQUIRED_IN_PROD_HARD = [
-  { key: 'PAYNOW_INTEGRATION_ID',  why: 'without it payments run SIMULATED — the site would take orders and move no money' },
-  { key: 'PAYNOW_INTEGRATION_KEY', why: 'without it payments run SIMULATED' },
-  { key: 'CLOUDINARY_CLOUD_NAME',  why: 'without it uploads land on an ephemeral disk and vanish on redeploy' },
-  { key: 'CLOUDINARY_API_KEY',     why: 'without it uploads land on an ephemeral disk' },
-  { key: 'CLOUDINARY_API_SECRET',  why: 'without it uploads land on an ephemeral disk' },
+const REQUIRED_IN_PRODUCTION = [
+  { key: 'PAYNOW_INTEGRATION_ID', why: 'without it payments would be simulated' },
+  { key: 'PAYNOW_INTEGRATION_KEY', why: 'without it payments would be simulated' },
+  { key: 'CLOUDINARY_CLOUD_NAME', why: 'without it uploads can land on ephemeral disk' },
+  { key: 'CLOUDINARY_API_KEY', why: 'without it uploads can land on ephemeral disk' },
+  { key: 'CLOUDINARY_API_SECRET', why: 'without it uploads can land on ephemeral disk' },
 ];
 
 function validateEnv() {
-  const isProd = process.env.NODE_ENV === 'production';
   const missing = [];
-  const warnings = [];
 
   for (const { key, why } of REQUIRED) {
     if (!process.env[key]) missing.push(`${key} — ${why}`);
   }
 
-  if (isProd) {
-    for (const { key, why } of REQUIRED_IN_PROD) {
+  if (isDeployed) {
+    for (const { key, why } of REQUIRED_WHEN_DEPLOYED) {
       if (!process.env[key]) missing.push(`${key} — ${why}`);
     }
-    for (const { key, why } of REQUIRED_IN_PROD_HARD) {
-      if (!process.env[key]) missing.push(`${key} — ${why}`);
-    }
-
-    // Simulated payments in production would be catastrophic. Refuse outright.
-    if (process.env.ALLOW_MOCK_PAYMENTS === 'true') {
-      missing.push('ALLOW_MOCK_PAYMENTS — must never be true in production; it simulates payments');
-    }
-
-    // A short secret is barely better than no secret.
     if (process.env.JWT_SECRET && process.env.JWT_SECRET.length < 32) {
       missing.push('JWT_SECRET — too short; use at least 32 random characters');
     }
   }
 
-  if (warnings.length) {
-    console.warn('\n⚠️  Running without:');
-    warnings.forEach((w) => console.warn(`   • ${w}`));
-    console.warn('');
+  if (isProduction) {
+    for (const { key, why } of REQUIRED_IN_PRODUCTION) {
+      if (!process.env[key]) missing.push(`${key} — ${why}`);
+    }
+    if (process.env.ALLOW_MOCK_PAYMENTS === 'true') {
+      missing.push('ALLOW_MOCK_PAYMENTS — must never be true in production');
+    }
   }
 
   if (missing.length) {
-    console.error('\n❌ FATAL: missing required configuration\n');
-    missing.forEach((m) => console.error(`   • ${m}`));
-    console.error('\nSet these in the environment (or backend/.env) and restart.\n');
+    console.error(`\n❌ FATAL: invalid ${name} configuration\n`);
+    missing.forEach((item) => console.error(`   • ${item}`));
+    console.error('\nSet these environment variables and restart.\n');
     process.exit(1);
   }
 
-  console.log(`✅ Environment validated (${isProd ? 'production' : 'development'})`);
+  console.log(`✅ Environment validated (${name})`);
 }
 
 module.exports = { validateEnv };

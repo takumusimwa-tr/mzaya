@@ -20,7 +20,8 @@
     "check": "npm run lint && npm test",
     "test:finance:e2e": "jest --runInBand tests/financePipeline.e2e.test.js tests/paymentRefundFinance.e2e.test.js tests/orderDeliveryFinance.e2e.test.js tests/financeReliability.e2e.test.js tests/financeCutover.e2e.test.js",
     "test:finance:stress": "jest --runInBand tests/providerOutcomeConcurrency.e2e.test.js tests/financeOutboxConcurrency.e2e.test.js tests/financeFailureInjection.e2e.test.js",
-    "test:finance:observability": "jest --runInBand tests/financeObservability.unit.test.js tests/financeObservability.e2e.test.js"
+    "test:finance:observability": "jest --runInBand tests/financeObservability.unit.test.js tests/financeObservability.e2e.test.js",
+    "test:finance:readiness": "jest --runInBand tests/runtimeEnv.unit.test.js tests/validateEnv.unit.test.js"
   },
   "keywords": [],
   "author": "",
@@ -42,7 +43,9 @@
     "pg": "^8.20.0",
     "pg-hstore": "^2.3.4",
     "sequelize": "^6.37.8",
-    "socket.io": "^4.8.3"
+    "socket.io": "^4.8.3",
+    "rate-limit-redis": "^4.2.1",
+    "redis": "^5.8.3"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.0",
