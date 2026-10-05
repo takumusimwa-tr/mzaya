@@ -11,6 +11,33 @@ const {
 const {
   drainFinancePipeline,
 } = require('../services/financePipeline.service');
+const {
+  getFinanceRuntimeHealth,
+} = require('../services/financeObservability.service');
+const {
+  getFinanceIncidentDiagnostics,
+} = require('../services/financeIncidentDiagnostics.service');
+
+
+async function health(req, res, next) {
+  try {
+    const result = await getFinanceRuntimeHealth();
+    return res.status(result.status === 'critical' ? 503 : 200).json(result);
+  } catch (error) {
+    return next(error);
+  }
+}
+
+async function diagnostics(req, res, next) {
+  try {
+    const result = await getFinanceIncidentDiagnostics({
+      limit: req.query.limit,
+    });
+    return res.status(200).json(result);
+  } catch (error) {
+    return next(error);
+  }
+}
 
 async function dashboard(req, res, next) {
   try {
@@ -76,6 +103,8 @@ async function drain(req, res, next) {
 }
 
 module.exports = {
+  health,
+  diagnostics,
   dashboard,
   createBatch,
   drain,

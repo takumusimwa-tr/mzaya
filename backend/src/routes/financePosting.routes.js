@@ -8,6 +8,8 @@ const { batchBody } = require('../validators/financeEvent.validator');
 router.use(authenticate);
 router.use(requireRole(USER_ROLE.ADMIN));
 
+router.get('/health', controller.health);
+router.get('/diagnostics', controller.diagnostics);
 router.get('/dashboard', controller.dashboard);
 router.post('/batches', validateRequest(batchBody), controller.createBatch);
 router.post('/drain', controller.drain);

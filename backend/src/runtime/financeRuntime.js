@@ -1,4 +1,7 @@
 const {
+  startFinanceObservabilityJob,
+} = require('../jobs/financeObservability.job');
+const {
   startProviderPaymentRecoveryJob,
 } = require('../jobs/providerPaymentRecovery.job');
 
@@ -97,7 +100,8 @@ async function startFinanceRuntime({ io, logger = console }) {
     startTaxFinanceReconciliationJob({ logger }),
     startFinanceCrossDomainReconciliationJob({ logger }),
     startFinanceCutoverReadinessJob({ logger }),
-  ];
+      startFinanceObservabilityJob(),
+];
 
   const cleanupBridges = [
     initializeFinanceEventBridge(io),

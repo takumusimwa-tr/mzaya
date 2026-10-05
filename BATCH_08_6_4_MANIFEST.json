@@ -1,0 +1,33 @@
+{
+  "batch": "08.6.4",
+  "title": "Finance Observability, SLOs & Incident Operations",
+  "files": [
+    "backend/src/config/financeObservability.js",
+    "backend/src/services/financeObservability.service.js",
+    "backend/src/services/financeIncidentDiagnostics.service.js",
+    "backend/src/jobs/financeObservability.job.js",
+    "backend/src/controllers/financePosting.controller.js",
+    "backend/src/routes/financePosting.routes.js",
+    "backend/src/runtime/financeRuntime.js",
+    "backend/tests/financeObservability.unit.test.js",
+    "backend/tests/financeObservability.e2e.test.js",
+    "backend/package.json",
+    "backend/FINANCE_INCIDENT_RUNBOOK_08_6_4.md",
+    "BATCH_08_6_4_INTEGRATION.md"
+  ],
+  "validation": {
+    "node_check_modified_js": "passed",
+    "modified_js_count": 9,
+    "runtime_tests": "not_run_in_packaging_environment",
+    "required_user_commands": [
+      "npm run test:finance:observability",
+      "npm run test:finance:stress"
+    ]
+  },
+  "safeguards": [
+    "observability is read-only",
+    "finance replay never invokes external providers",
+    "critical health returns HTTP 503",
+    "thresholds are configurable operational targets, not accounting/statutory policy"
+  ]
+}
