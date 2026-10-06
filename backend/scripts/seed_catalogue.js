@@ -1,7 +1,8 @@
 // backend/scripts/seed_catalogue.js
 //
-// Seeds grocery + materials vendors so the product carousels have something real
-// to show. Food already has Chicken Inn.
+// Seeds food, grocery and materials vendors so every browse tab has something
+// real to show on a fresh database. (Food used to be skipped on the assumption a
+// local DB already had Chicken Inn — a fresh staging DB has nothing.)
 //
 // Deliberately Zimbabwean: brands people actually shop at, products they actually
 // buy, prices in the range they actually pay (USD, mid-2026). A demo catalogue of
@@ -17,6 +18,41 @@ const { Brand, Vendor, MenuItem, City, User } = require('../src/models/associati
 
 // ─── The catalogue ────────────────────────────────────────────────────────────
 const CATALOGUE = [
+  // ══ FOOD ══
+  {
+    brand: { name: 'Chicken Inn', category: 'food', description: 'Fried chicken, chips and burgers — a Zimbabwean favourite.' },
+    branch: { branch_name: 'Chicken Inn Samora Machel', address: 'Samora Machel Ave, Harare CBD', phone: '0242700100', location: { lat: -17.8277, lng: 31.0480 } },
+    items: [
+      { name: '2 Piece Chicken & Chips', description: 'Two pieces of crispy fried chicken with regular chips', price_usd: 5.50, weight_kg: 0.5, category: 'Meals',  prep_minutes: 15 },
+      { name: 'Streetwise 2',            description: 'Two pieces, chips and a soft drink',                   price_usd: 6.00, weight_kg: 0.7, category: 'Combos', prep_minutes: 15 },
+      { name: 'Chicken Burger',          description: 'Crumbed fillet, lettuce, mayo on a toasted bun',      price_usd: 4.50, weight_kg: 0.3, category: 'Burgers', prep_minutes: 12 },
+      { name: '8 Piece Family Bucket',   description: 'Eight pieces of chicken with large chips',             price_usd: 17.00, weight_kg: 1.8, category: 'Family', prep_minutes: 20 },
+      { name: 'Large Chips',             description: 'Golden crispy chips',                                  price_usd: 2.50, weight_kg: 0.3, category: 'Sides',  prep_minutes: 8 },
+      { name: 'Coca-Cola 500ml',         description: 'Ice cold',                                             price_usd: 1.00, weight_kg: 0.5, category: 'Drinks', prep_minutes: 2 },
+    ],
+  },
+  {
+    brand: { name: 'Pizza Inn', category: 'food', description: 'Hot, freshly baked pizzas with generous toppings.' },
+    branch: { branch_name: 'Pizza Inn Avondale', address: 'King George Rd, Avondale, Harare', phone: '0242335100', location: { lat: -17.8005, lng: 31.0390 } },
+    items: [
+      { name: 'Regular Something Meaty',  description: 'Beef, ham, pepperoni and mozzarella',  price_usd: 8.00, weight_kg: 0.6, category: 'Pizzas', prep_minutes: 20 },
+      { name: 'Regular Chicken Mayo',     description: 'Chicken strips, mayo, mozzarella',     price_usd: 7.50, weight_kg: 0.6, category: 'Pizzas', prep_minutes: 20 },
+      { name: 'Large Margherita',         description: 'Tomato, mozzarella and oregano',       price_usd: 9.00, weight_kg: 0.9, category: 'Pizzas', prep_minutes: 20 },
+      { name: 'Garlic Bread',             description: 'Toasted with garlic butter',           price_usd: 2.50, weight_kg: 0.2, category: 'Sides',  prep_minutes: 10 },
+      { name: 'Two-for-One Deal',         description: 'Two regular pizzas of your choice',    price_usd: 13.00, weight_kg: 1.2, category: 'Deals', prep_minutes: 25 },
+    ],
+  },
+  {
+    brand: { name: "Gogo's Kitchen", category: 'food', description: 'Home-style sadza, stews and traditional favourites.' },
+    branch: { branch_name: "Gogo's Kitchen Belvedere", address: 'Bishop Gaul Ave, Belvedere, Harare', phone: '0772555010', location: { lat: -17.8330, lng: 31.0180 } },
+    items: [
+      { name: 'Sadza & Beef Stew',      description: 'Fresh sadza with slow-cooked beef and greens', price_usd: 4.00, weight_kg: 0.7, category: 'Mains', prep_minutes: 15 },
+      { name: 'Sadza & Road Runner',    description: 'Free-range village chicken stew',             price_usd: 5.50, weight_kg: 0.7, category: 'Mains', prep_minutes: 20 },
+      { name: 'Sadza & Matemba',        description: 'Crispy kapenta with tomato and onion relish', price_usd: 3.50, weight_kg: 0.6, category: 'Mains', prep_minutes: 15 },
+      { name: 'Muriwo une Dovi',        description: 'Greens in peanut butter sauce',               price_usd: 2.00, weight_kg: 0.3, category: 'Sides', prep_minutes: 10 },
+      { name: 'Maheu 500ml',            description: 'Traditional sorghum drink',                   price_usd: 1.20, weight_kg: 0.5, category: 'Drinks', prep_minutes: 2 },
+    ],
+  },
   // ══ GROCERY ══
   {
     brand: {
