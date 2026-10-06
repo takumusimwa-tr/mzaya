@@ -35,7 +35,7 @@ export default function OrderDetail() {
   })
 
   // Real-time: refresh when this order's status changes.
-  useSocketEvent('order:updated', (payload) => {
+  useSocketEvent('order:status_changed', (payload) => {
     if (payload?.orderId === id) queryClient.invalidateQueries(['order', id])
   }, [id])
 

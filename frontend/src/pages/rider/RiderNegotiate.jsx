@@ -18,7 +18,7 @@ export default function RiderNegotiate() {
 
   // Live: new negotiable order posted, or one got taken.
   useSocketEvent('order:new', () => queryClient.invalidateQueries(['negotiable-orders']), [])
-  useSocketEvent('order:updated', () => queryClient.invalidateQueries(['negotiable-orders']), [])
+  useSocketEvent('order:status_changed', () => queryClient.invalidateQueries(['negotiable-orders']), [])
   // If one of my offers gets chosen, jump to the delivery.
   useSocketEvent('offer:chosen', (payload) => {
     queryClient.invalidateQueries(['rider-orders'])

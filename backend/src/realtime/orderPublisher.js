@@ -53,7 +53,10 @@ function publishOrderCreated(order) {
   if (payload.vendorId) {
     io.to(rooms.vendor(payload.vendorId)).emit('order:new', payload);
   }
-  if (payload.cityId) {
+  // Only advertise to the city's Mzayas if nobody has it yet. Orders are often
+  // auto-assigned at placement; broadcasting those shows every other Mzaya a
+  // phantom job that 409s when they tap it.
+  if (payload.cityId && !payload.riderId && (!payload.status || payload.status === 'pending')) {
     io.to(rooms.city(payload.cityId)).emit('order:available', payload);
   }
   io.to(rooms.admins()).emit('order:new', payload);
@@ -61,6 +64,9 @@ function publishOrderCreated(order) {
 
 function publishOrderStatusChanged(order, transition = {}) {
   emitToOrderParticipants('order:status_changed', order, {
+    // Order has no vendor_id column (the vendor lives on the detail row), so
+    // callers pass it here; without it the vendor room never hears the change.
+    ...(transition.vendorId ? { vendorId: transition.vendorId } : {}),
     fromStatus: transition.fromStatus || null,
     changedAt:
       transition.changedAt?.toISOString?.() ||

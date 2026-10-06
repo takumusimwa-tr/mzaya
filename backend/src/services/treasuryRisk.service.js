@@ -1,7 +1,6 @@
 const {
   TreasuryLimit,
   TreasuryAlert,
-  TreasuryFxExposure,
 } = require('../models/associations');
 
 async function evaluateTreasuryLimits({

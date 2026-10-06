@@ -6,9 +6,11 @@ const {
   getRiderOrders,
   updateOrderStatus,
   cancelOrder,
+  resolveVendorId,
 } = require('../services/order.service');
 const { VEHICLE_RANK } = require('../config/constants');
 const { logger } = require('../utils/logger');
+const { publishOrderStatusChanged } = require('../realtime/orderPublisher');
 
 // Default an unknown/missing vehicle to bicycle-level capability (rank 1) so a
 // rider with a bad record still sees the lightest orders but nothing gated.
@@ -89,7 +91,10 @@ async function availableOrders(req, res) {
     try {
       if (rider.city_id && City) {
         const city = await City.findByPk(rider.city_id);
-        if (city) cityName = city.name.toLowerCase();
+        // Orders store the city SLUG (CheckoutPage sends vendorCity / slug). Matching
+        // on name.toLowerCase() only worked while every name was one word —
+        // "Victoria Falls" (slug victoria-falls) would have had an empty board.
+        if (city) cityName = city.slug || city.name.toLowerCase();
       }
     } catch (e) {
       cityName = null;
@@ -161,6 +166,18 @@ async function claimOrder(req, res) {
     }
 
     const claimed = await Order.findByPk(order.id);
+
+    // Tell everyone on the order that a Mzaya accepted it: the customer sees
+    // "on the way", the vendor knows who is coming, and other Mzayas' job boards
+    // drop it. Best-effort — the claim already committed, so a failed emit must
+    // never turn a successful claim into an error response.
+    try {
+      const vendorId = await resolveVendorId(order.id);
+      publishOrderStatusChanged(claimed, { vendorId, fromStatus: 'pending' });
+    } catch (emitErr) {
+      logger.error('realtime_emit_claim_failed_error', { error: emitErr.message });
+    }
+
     return res.status(200).json({ message: 'Order claimed', order: claimed });
   } catch (err) {
     logger.error('claimorder_error', { error: err.message });
@@ -177,7 +194,7 @@ async function upgradeVehicle(req, res) {
     const { Order, Vendor, OrderFood, OrderGrocery, OrderMaterials } = require('../models/associations');
     const { VEHICLE_RANK, VEHICLE_META, ORDER_STATUS } = require('../config/constants');
     const { calculateFees, convertToZig } = require('../utils/feeCalculator');
-    const { feeTierFor, calculateDistanceKm, rankOf } = require('../services/dispatch.service');
+    const { feeTierFor, calculateDistanceKm, rankOf } = require('../services/orderDispatch.service');
     const { getCurrentRate } = require('../services/currency.service');
 
     const { vehicle_type } = req.body;

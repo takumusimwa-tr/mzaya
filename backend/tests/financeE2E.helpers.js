@@ -4,8 +4,6 @@ const {
 } = require('./setup');
 
 const {
-  FinancePostingTemplate,
-  FinancePostingRule,
   FinanceOutboxEvent,
   FinanceBusinessEvent,
   FinanceAccountingEvent,

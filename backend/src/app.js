@@ -50,6 +50,7 @@ const adminRoutes     = require('./routes/admin.routes');
 const browseRoutes    = require('./routes/browse.routes');
 const negotiationRoutes = require('./routes/negotiation.routes');
 const chatRoutes      = require('./routes/chat.routes');
+const orderChatRoutes = require('./routes/orderChat.routes');
 
 // Finance event engine and operational-finance integrations.
 const ledgerRoutes = require('./routes/ledger.routes');
@@ -148,8 +149,13 @@ app.use('/api/auth',      authRoutes);
 app.use('/api/orders',    writeLimiter);
 app.use('/api/uploads',   writeLimiter);
 app.use('/api/orders',    negotiationRoutes);
-app.use('/api/orders',    chatRoutes);
+// Order chat lives under /api/orders/:id/{messages,contacts}. The conversation
+// chat API (GET /:conversationId) used to be mounted here too, AHEAD of the order
+// routes — so it swallowed GET /api/orders/:id, /my, /vendor and /available,
+// killing the whole order flow. It belongs at /api/chat, which is what useChat calls.
+app.use('/api/orders',    orderChatRoutes);
 app.use('/api/orders',    orderRoutes);
+app.use('/api/chat',      chatRoutes);
 app.use('/api/vendors',   vendorRoutes);
 app.use('/api/riders',    riderRoutes);
 app.use('/api/cities',    cityRoutes);

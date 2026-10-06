@@ -1,4 +1,4 @@
-const { Op, fn, col } = require('sequelize');
+const { Op } = require('sequelize');
 const {
   FinanceOutboxEvent,
   FinanceDeliveryAttempt,

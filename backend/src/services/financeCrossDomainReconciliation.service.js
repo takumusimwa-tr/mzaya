@@ -2,7 +2,6 @@ const crypto = require('crypto');
 const {
   FinanceCrossDomainReconciliationRun,
   FinanceCrossDomainReconciliationException,
-  FinanceDomainReconciliationSnapshot,
   FinanceOutboxEvent,
   FinanceBusinessEvent,
   FinanceAccountingEvent,

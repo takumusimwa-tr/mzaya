@@ -3,7 +3,7 @@ const cron = require('node-cron');
 const { Op } = require('sequelize');
 const { Order } = require('../models/associations');
 const { ORDER_STATUS } = require('../config/constants');
-const { findAvailableRider } = require('../services/dispatch.service');
+const { findAvailableRider } = require('../services/orderDispatch.service');
 
 // How far ahead of the delivery time we start trying to dispatch, so a rider
 // is already assigned and en route by the requested time.

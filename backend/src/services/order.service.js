@@ -1,12 +1,16 @@
 const { CATEGORY_TYPE, ORDER_STATUS } = require('../config/constants');
 const { Order, OrderFood, OrderGrocery, OrderMaterials, OrderErrand, Promo } = require('../models/associations');
-const { dispatchOrder, assignVehicleType, calculateDistanceKm } = require('./dispatch.service');
+const { dispatchOrder, assignVehicleType, calculateDistanceKm } = require('./orderDispatch.service');
 const { calculateFees, convertToZig } = require('../utils/feeCalculator');
 const { evaluatePromo } = require('../utils/promoEval');
 const { getCurrentRate } = require('./currency.service');
 const { VEHICLE_META } = require('../config/constants');
 const mlService = require('./ml.service');
-const realtime = require('../realtime/socket');
+const {
+  publishOrderCreated,
+  publishOrderStatusChanged,
+  publishOrderAssigned,
+} = require('../realtime/orderPublisher');
 const { logger } = require('../utils/logger');
 const { sequelize } = require('../config/db');
 const {
@@ -193,14 +197,17 @@ async function createOrder(customerId, orderData) {
   try {
     const vendorId = detail?.restaurant_id || detail?.store_id || detail?.supplier_id || null;
     const cityId   = await resolveCityId(vendorId);
-    realtime.emitOrderNew({
+    publishOrderCreated({
       id: updatedOrder.id,
+      status: updatedOrder.status,
+      customer_id: updatedOrder.customer_id,
+      rider_id: updatedOrder.rider_id,
       vendor_id: vendorId,
       city_id: cityId,
     });
     // If a rider was assigned on dispatch, notify them.
     if (updatedOrder.rider_id) {
-      realtime.emitOrderAssigned(updatedOrder.rider_id, updatedOrder);
+      publishOrderAssigned(updatedOrder, updatedOrder.rider_id);
     }
   } catch (err) {
     logger.error('realtime_emit_new_order_failed_error', { error: err.message });
@@ -338,7 +345,7 @@ async function updateOrderStatus(orderId, newStatus, riderId) {
   // ── Real-time: broadcast the status change after durable commit ───────────
   try {
     const vendorId = await resolveVendorId(order.id);
-    realtime.emitOrderUpdated(order, { vendorId });
+    publishOrderStatusChanged(order, { vendorId });
   } catch (err) {
     logger.error('realtime_emit_status_failed_error', {
       error: err.message,
@@ -487,4 +494,5 @@ async function resolveCityId(vendorId) {
 module.exports = {
   createOrder, quoteOrder, getOrderById, getCustomerOrders,
   getRiderOrders, updateOrderStatus, cancelOrder,
+  resolveVendorId,
 };

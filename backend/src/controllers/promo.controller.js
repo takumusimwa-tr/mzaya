@@ -15,7 +15,14 @@ async function validateCode(req, res) {
     const promo = await Promo.findOne({ where: { code: String(code).trim().toUpperCase() } });
 
     // Compute the order's subtotal + fee the same way checkout does.
-    const q = quoteOrder({ category_type, detail });
+    // quoteOrder throws on a malformed cart — that's the caller's mistake (400),
+    // not a server fault (500).
+    let q;
+    try {
+      q = quoteOrder({ category_type, detail });
+    } catch (quoteErr) {
+      return res.status(400).json({ error: quoteErr.message });
+    }
     const result = evaluatePromo(promo, {
       subtotalUsd:    q.subtotal_usd,
       deliveryFeeUsd: q.delivery_fee_usd,

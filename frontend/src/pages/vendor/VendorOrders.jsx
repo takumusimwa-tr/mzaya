@@ -15,7 +15,7 @@
  * • PATCH /orders/:id/status
  * • GET /vehicles
  * • POST /orders/:id/upgrade-vehicle
- * • Socket rooms and order:new / order:updated events
+ * • Socket rooms and order:new / order:status_changed events
  * • 15-second polling fallback
  * • Wake Lock and Web Audio order alert behavior
  * • Existing OrderChat integration
@@ -127,7 +127,7 @@ export default function VendorOrders() {
 
   // Real-time: refetch orders when this branch gets a new/updated order.
   useSocketEvent('order:new', () => queryClient.invalidateQueries({ queryKey: ['vendor-orders'] }), [])
-  useSocketEvent('order:updated', () => queryClient.invalidateQueries({ queryKey: ['vendor-orders'] }), [])
+  useSocketEvent('order:status_changed', () => queryClient.invalidateQueries({ queryKey: ['vendor-orders'] }), [])
 
   // Loud alert when the pending count rises.
   useEffect(() => {

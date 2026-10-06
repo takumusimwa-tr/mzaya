@@ -1,5 +1,4 @@
 const crypto = require('crypto');
-const { Op } = require('sequelize');
 const {
   FinanceDomainReconciliationSnapshot,
 } = require('../models/associations');

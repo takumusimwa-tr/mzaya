@@ -1,7 +1,6 @@
 const {
   TaxTransaction,
   TaxLiability,
-  TaxRemittance,
   TaxFinanceReconciliationResult,
 } = require('../models/associations');
 const {

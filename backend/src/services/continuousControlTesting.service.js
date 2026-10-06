@@ -4,8 +4,6 @@ const {
   FinancialApprovalDecision,
   LedgerTransaction,
   LedgerEntry,
-  TreasuryTransfer,
-  TreasuryReconciliation,
   FinanceContinuousControlResult,
 } = require('../models/associations');
 

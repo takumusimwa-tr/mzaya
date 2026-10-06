@@ -16,7 +16,7 @@ function currentMonthRange() {
 
 export default function ExecutiveFinanceDashboard() {
   const [currency, setCurrency] = useState('USD')
-  const range = useMemo(currentMonthRange, [])
+  const range = useMemo(() => currentMonthRange(), [])
   const { summary, loading } = useExecutiveFinance({
     currency,
     from: range.from,

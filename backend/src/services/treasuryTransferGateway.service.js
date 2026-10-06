@@ -3,7 +3,7 @@
  * Production providers must implement idempotent submission using the transfer
  * reference as the external idempotency key.
  */
-async function submitTreasuryTransfer({ transfer, fromAccount, toAccount }) {
+async function submitTreasuryTransfer({ transfer: _transfer, fromAccount: _fromAccount, toAccount: _toAccount }) {
   if (process.env.TREASURY_TRANSFER_MODE !== 'enabled') {
     return {
       skipped: true,

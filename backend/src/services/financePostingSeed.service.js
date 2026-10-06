@@ -19,7 +19,6 @@ function loadPostingTemplateConfigs() {
     .sort()
     .map((name) => {
       // Config files are code-owned, not user-controlled dynamic modules.
-      // eslint-disable-next-line global-require, import/no-dynamic-require
       return require(path.join(TEMPLATE_DIR, name));
     });
 }

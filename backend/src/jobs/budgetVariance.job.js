@@ -1,7 +1,6 @@
 const cron = require('node-cron');
 const {
   BudgetVersion,
-  ForecastVersion,
 } = require('../models/associations');
 const {
   generateVarianceReport,

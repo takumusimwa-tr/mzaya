@@ -1,7 +1,7 @@
 // backend/src/controllers/negotiation.controller.js
 // inDrive-style fare negotiation for materials/errands.
 const { Order, OrderOffer, Rider, User } = require('../models/associations');
-const realtime = require('../realtime/socket');
+const { publishOrderStatusChanged } = require('../realtime/orderPublisher');
 const { getIO } = require('../realtime/socket');
 const { logger } = require('../utils/logger');
 
@@ -123,7 +123,7 @@ async function chooseOffer(req, res) {
     if (io) {
       io.to(`user:${offer.rider_id}`).emit('offer:chosen', { orderId: order.id });
       // The order is no longer available on any rider board.
-      realtime.emitOrderUpdated(order);
+      publishOrderStatusChanged(order);
     }
 
     return res.status(200).json({ message: 'Rider assigned', order });

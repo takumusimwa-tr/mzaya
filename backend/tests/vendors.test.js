@@ -84,7 +84,8 @@ describe('Vendor profile authorization', () => {
     const response = await request(app)
       .put(`/api/vendors/${branch.id}`)
       .set('Authorization', `Bearer ${tokenFor(owner)}`)
-      .send({ opening_hours: openingHours });
+      // PUT is a full update — mirror what VendorSettings sends (the whole form).
+      .send({ name: branch.name, phone: branch.phone || '0771234567', address: branch.address || '1 Test Rd', opening_hours: openingHours });
 
     expect(response.status).toBe(200);
     expect(response.body.vendor.opening_hours.sun.closed).toBe(true);
