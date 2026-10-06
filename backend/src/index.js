@@ -66,12 +66,15 @@ async function boot() {
     await sequelize.sync({ alter: true });
     logger.info('models_synced', { alter: true, environment: runtimeEnvironment });
   } else {
-    // Staging is allowed to create missing tables while its recreated database is
-    // being baselined, but must not run Sequelize's ALTER/index reconciliation on
-    // every deploy. That path can attempt to recreate truncated PostgreSQL index
-    // names and make an otherwise healthy restart fail.
-    await sequelize.sync();
-    logger.info('models_synced', { alter: false, environment: runtimeEnvironment });
+    // The staging database has now been bootstrapped. Sequelize sync() still
+    // reconciles model indexes even without `alter`, which can collide with
+    // PostgreSQL's 63-byte identifier truncation (as seen on the finance journal
+    // batch composite index). Do not mutate or reconcile deployed schemas at boot.
+    // From this point forward staging schema changes are explicit migrations too.
+    logger.info('schema_sync_skipped', {
+      reason: 'staging schema is baselined; deployed schemas use migrations',
+      environment: runtimeEnvironment,
+    });
   }
 
   await verifyRateLimitStore();
