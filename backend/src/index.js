@@ -28,7 +28,11 @@ const { logger } = require('./utils/logger');
 const { startCurrencySyncJob } = require('./jobs/currencySync.job');
 const { startScheduledReleaseJob } = require('./jobs/scheduledRelease.job');
 const { startFinanceRuntime } = require('./runtime/financeRuntime');
-const { isProduction, name: runtimeEnvironment } = require('./config/runtimeEnv');
+const {
+  isProduction,
+  isDevelopment,
+  name: runtimeEnvironment,
+} = require('./config/runtimeEnv');
 const { verifyRateLimitStore, closeRateLimitStore } = require('./middleware/rateLimit.middleware');
 
 async function boot() {
@@ -58,9 +62,16 @@ async function boot() {
   // deliberately before the new code starts.
   if (isProd) {
     logger.info('schema_sync_skipped', { reason: 'production uses migrations' });
-  } else {
+  } else if (isDevelopment) {
     await sequelize.sync({ alter: true });
-    logger.info('models_synced', { alter: true });
+    logger.info('models_synced', { alter: true, environment: runtimeEnvironment });
+  } else {
+    // Staging is allowed to create missing tables while its recreated database is
+    // being baselined, but must not run Sequelize's ALTER/index reconciliation on
+    // every deploy. That path can attempt to recreate truncated PostgreSQL index
+    // names and make an otherwise healthy restart fail.
+    await sequelize.sync();
+    logger.info('models_synced', { alter: false, environment: runtimeEnvironment });
   }
 
   await verifyRateLimitStore();

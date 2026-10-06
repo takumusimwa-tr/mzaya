@@ -22,21 +22,22 @@ function buildRedisStore() {
     logger.error('ratelimit_redis_error', { error: err.message });
   });
 
-  // Connection happens eagerly, but request handling does not await Redis. The
-  // store itself fails requests safely according to express-rate-limit behavior;
-  // startup readiness is verified explicitly from index.js before listening.
-  redisClient.connect().catch((err) => {
-    logger.error('ratelimit_redis_connect_failed', { error: err.message });
-  });
-
-  logger.info('ratelimit_redis_store_configured');
-  return new RedisStore({
-    sendCommand: (...args) => redisClient.sendCommand(args),
-    prefix: 'mzaya:rl:',
-  });
+  logger.info('ratelimit_redis_client_configured');
+  return redisClient;
 }
 
-const store = buildRedisStore();
+buildRedisStore();
+
+function limiterStore(prefix) {
+  if (!redisClient) return undefined;
+
+  // express-rate-limit requires a distinct Store instance for every limiter.
+  // The Redis client may be shared; the store instance and key namespace may not.
+  return new RedisStore({
+    sendCommand: (...args) => redisClient.sendCommand(args),
+    prefix: `mzaya:rl:${prefix}:`,
+  });
+}
 
 async function verifyRateLimitStore() {
   if (!isDeployed) return;
@@ -53,7 +54,6 @@ async function closeRateLimitStore() {
 const base = {
   standardHeaders: true,
   legacyHeaders: false,
-  store,
   handler: (req, res) => {
     logger.warn('ratelimit_hit', { reqId: req.id, path: req.originalUrl, ip: req.ip });
     res.status(429).json({
@@ -66,6 +66,7 @@ const base = {
 
 const authLimiter = rateLimit({
   ...base,
+  store: limiterStore('auth'),
   windowMs: 15 * 60 * 1000,
   max: 10,
   skipSuccessfulRequests: true,
@@ -77,8 +78,18 @@ const authLimiter = rateLimit({
   },
 });
 
-const writeLimiter = rateLimit({ ...base, windowMs: 60 * 1000, max: 30 });
-const apiLimiter = rateLimit({ ...base, windowMs: 60 * 1000, max: 300 });
+const writeLimiter = rateLimit({
+  ...base,
+  store: limiterStore('write'),
+  windowMs: 60 * 1000,
+  max: 30,
+});
+const apiLimiter = rateLimit({
+  ...base,
+  store: limiterStore('api'),
+  windowMs: 60 * 1000,
+  max: 300,
+});
 
 module.exports = {
   authLimiter,
