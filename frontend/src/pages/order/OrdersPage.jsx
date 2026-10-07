@@ -21,7 +21,13 @@ export default function OrdersPage() {
 
   return (
     <div className="pb-24">
-      <div className="px-4 pt-14 pb-4">
+      <div className="px-4 pt-14 pb-4 flex items-center gap-3">
+        {/* Orders used to be a tab with no way back; it's now reached from Home or Account. */}
+        <button onClick={() => navigate(-1)} aria-label="Back" className="p-2 rounded-full bg-gray-100">
+          <svg className="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+          </svg>
+        </button>
         <h1 className="text-xl font-bold text-gray-900">My Orders</h1>
       </div>
 

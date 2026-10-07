@@ -11,7 +11,7 @@ export default function LiquidityForecastCard({ forecast }) {
     <article className="liquidity-forecast-card">
       <div>
         <strong>{forecast.forecast_reference}</strong>
-        <span>{forecast.forecast_start} — {forecast.forecast_end}</span>
+        <span>{forecast.forecast_start} to {forecast.forecast_end}</span>
       </div>
       <strong>
         {forecast.currency} {(Number(closing) / 100).toFixed(2)}

@@ -9,7 +9,7 @@ export default function ControlAssessmentCard({ assessment }) {
       </div>
       <strong>
         {assessment.effectiveness_score == null
-          ? '—'
+          ? 'N/A'
           : `${(Number(assessment.effectiveness_score) * 100).toFixed(1)}%`}
       </strong>
       <span className={`audit-status is-${assessment.operating_rating}`}>

@@ -1,6 +1,6 @@
 module.exports = {
   templateKey: 'order_completed_revenue_allocation',
-  name: 'Order completed — revenue allocation',
+  name: 'Order completed: revenue allocation',
   eventType: 'order.completed',
   lines: [
     {

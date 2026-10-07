@@ -9,10 +9,10 @@ export default function PaymentReconciliationTable({ results, onReconcile }) {
             <strong>{item.payment_id}</strong>
             <span>{item.result_reference}</span>
           </div>
-          <span>{item.currency || '—'}</span>
+          <span>{item.currency || 'N/A'}</span>
           <span>
             {item.expected_amount_minor == null
-              ? '—'
+              ? 'N/A'
               : (Number(item.expected_amount_minor) / 100).toFixed(2)}
           </span>
           <span className="payment-finance-status">

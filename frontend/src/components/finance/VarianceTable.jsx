@@ -10,7 +10,7 @@ export default function VarianceTable({ reports }) {
             <span>{report.report_type.replaceAll('_', ' ')}</span>
           </div>
 
-          <span>{report.period_from} — {report.period_to}</span>
+          <span>{report.period_from} to {report.period_to}</span>
 
           <strong>{report.currency}</strong>
 

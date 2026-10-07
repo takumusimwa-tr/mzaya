@@ -72,7 +72,7 @@ async function createBranchForOwner(ownerId, payload) {
 
   if (!brand) {
     throw new BranchServiceError(
-      'No brand found — register a business first',
+      'No brand found. Register a business first.',
       404,
       'BRAND_NOT_FOUND'
     );

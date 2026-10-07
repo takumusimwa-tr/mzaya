@@ -1,6 +1,6 @@
 module.exports = {
   templateKey: 'treasury_transfer_approved_trace',
-  name: 'Treasury transfer approved — non-posting trace',
+  name: 'Treasury transfer approved: non-posting trace',
   eventType: 'treasury.transfer_approved',
   lines: [
     {

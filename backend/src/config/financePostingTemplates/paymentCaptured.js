@@ -1,6 +1,6 @@
 module.exports = {
   templateKey: 'payment_capture_customer_funds',
-  name: 'Payment captured — customer funds',
+  name: 'Payment captured: customer funds',
   eventType: 'payment.captured',
   lines: [
     {

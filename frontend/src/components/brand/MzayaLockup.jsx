@@ -20,7 +20,7 @@ export function MzayaLockup({ iconSize = 64, stacked = false, tagline = true, on
       </div>
     )
   }
-  return <img src={onDark ? lockupWhite : lockupPrimary} alt="Mzaya — Tumai Mzaya" className={`w-auto ${className}`} style={{ height: Math.max(iconSize, 42) }} />
+  return <img src={onDark ? lockupWhite : lockupPrimary} alt="Mzaya. Tumai Mzaya" className={`w-auto ${className}`} style={{ height: Math.max(iconSize, 42) }} />
 }
 
 export default MzayaLockup

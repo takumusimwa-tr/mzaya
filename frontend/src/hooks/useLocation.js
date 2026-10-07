@@ -90,7 +90,7 @@ export default function useLocation() {
         },
         () => {
           if (cancelled) return
-          fallbackToDefault('Location access denied — defaulting to Harare')
+          fallbackToDefault('Location access denied. Showing Harare.')
         },
         { timeout: 5000, maximumAge: 300000 }
       )

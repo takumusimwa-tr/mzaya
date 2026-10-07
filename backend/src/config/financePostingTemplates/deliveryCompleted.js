@@ -1,6 +1,6 @@
 module.exports = {
   templateKey: 'delivery_completed_revenue',
-  name: 'Delivery completed — delivery revenue',
+  name: 'Delivery completed: delivery revenue',
   eventType: 'delivery.completed',
   lines: [
     {

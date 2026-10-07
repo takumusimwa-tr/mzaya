@@ -188,7 +188,7 @@ export default function VendorPage() {
 
       {/* ── Floating cart bar ── */}
       {cartCount > 0 && (
-        <div className="fixed bottom-16 left-1/2 -translate-x-1/2 w-full max-w-md px-4 pt-3 pb-3 z-30
+        <div className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-md px-4 pt-3 pb-[calc(12px+env(safe-area-inset-bottom))] z-30
                       bg-gradient-to-t from-white via-white to-transparent">
           <button onClick={() => navigate('/cart')}
             className="w-full flex items-center justify-between px-5 py-4 rounded-2xl text-white font-bold active:scale-98 transition-transform"

@@ -12,7 +12,7 @@ export default function TreasuryReconciliationTable({
             <strong>{item.transfer_id}</strong>
             <span>{item.result_reference}</span>
           </div>
-          <span>{item.currency || '—'}</span>
+          <span>{item.currency || 'N/A'}</span>
           <span className="treasury-status">{item.status}</span>
           <button
             type="button"

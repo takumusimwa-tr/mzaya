@@ -54,7 +54,7 @@ async function resolvePin(req, res) {
 function outOfBoundsWarn(coords) {
   return looksLikeZimCoords(coords.lat, coords.lng)
     ? null
-    : 'This pin looks like it may be outside Zimbabwe — double-check it.';
+    : 'This pin looks like it may be outside Zimbabwe. Please double-check it.';
 }
 
 module.exports = { resolvePin };

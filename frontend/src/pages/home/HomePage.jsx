@@ -3,8 +3,10 @@ import { useQuery } from '@tanstack/react-query'
 import { useNavigate } from 'react-router-dom'
 import {
   ArrowLeft, ChevronDown, ChevronRight, Clock, Heart, MapPin, Search, ShoppingBag, Star, UserRound, X,
+  Bike,
 } from 'lucide-react'
-import { browseAPI } from '../../api/api'
+import { browseAPI, orderAPI } from '../../api/api'
+import useSocketEvent from '../../hooks/useSocketEvent'
 import useCartStore from '../../store/useCartStore'
 import useLocation from '../../hooks/useLocation'
 import LoadingScreen from '../../components/ui/LoadingScreen'
@@ -40,6 +42,15 @@ const COPY = {
   food: { search: 'Search dishes or restaurants', popular: 'Popular dishes near you', stores: 'All restaurants' },
   grocery: { search: 'Search groceries or stores', popular: 'Popular groceries', stores: 'All stores' },
   materials: { search: 'Search materials or suppliers', popular: 'Popular materials', stores: 'All suppliers' },
+}
+
+// What the live order bar says at each stage. Plain words, no jargon.
+const LIVE_STATUS = {
+  scheduled: { title: 'Order scheduled', sub: 'We will send it out at your chosen time' },
+  pending: { title: 'Finding a Mzaya', sub: 'Matching your order with someone nearby' },
+  accepted: { title: 'A Mzaya is on it', sub: 'Heading to collect your order' },
+  picked_up: { title: 'Order picked up', sub: 'Your Mzaya is on the way to you' },
+  en_route: { title: 'Almost there', sub: 'Your Mzaya is nearly at your door' },
 }
 
 const RECENTS_KEY = 'mzaya_recent_searches'
@@ -87,6 +98,15 @@ export default function HomePage() {
     enabled: !!selectedCity,
   })
   const products = productData?.products || []
+
+  // Orders no longer has a tab, so an order in progress surfaces right here.
+  const { data: myOrders = [], refetch: refetchOrders } = useQuery({
+    queryKey: ['my-orders'],
+    queryFn: () => orderAPI.myOrders().then((r) => r.data.orders || []),
+    refetchInterval: 30000,
+  })
+  useSocketEvent('order:status_changed', () => refetchOrders())
+  const liveOrder = myOrders.find((o) => LIVE_STATUS[o.status])
 
   if (locationLoading) return <LoadingScreen message="Preparing Mzaya..." />
 
@@ -184,7 +204,7 @@ export default function HomePage() {
               <div className="flex flex-1 flex-col justify-center py-4 pl-4 pr-2">
                 <p className="text-[11px] font-bold uppercase tracking-[0.08em]" style={{ color: '#0A7A3D' }}>Only on Mzaya</p>
                 <p className="mt-1 text-[19px] font-extrabold leading-tight" style={{ color: T.greenDeep }}>Skip the queue.</p>
-                <p className="mt-1 text-[13px] leading-snug" style={{ color: T.ink2 }}>ZIMRA, banks, document drop-offs — a Mzaya stands in line for you.</p>
+                <p className="mt-1 text-[13px] leading-snug" style={{ color: T.ink2 }}>ZIMRA, banks, document drop-offs. A Mzaya stands in line for you.</p>
                 <span className="mt-3 inline-flex h-8 w-fit items-center rounded-full px-3.5 text-[13px] font-bold text-white" style={{ background: T.green }}>
                   Book an errand
                 </span>
@@ -229,19 +249,38 @@ export default function HomePage() {
         </>
       )}
 
-      {/* ── Floating cart bar ─────────────────────────────────────────────── */}
-      {totalItems > 0 && (
-        <div className="fixed inset-x-0 z-40 px-4" style={{ bottom: 'calc(76px + env(safe-area-inset-bottom))' }}>
-          <button type="button" onClick={() => navigate('/cart')}
-            className="mx-auto flex h-14 w-full max-w-md items-center gap-3 rounded-full px-5 text-white shadow-[0_10px_28px_rgba(0,166,81,0.35)] transition-transform active:scale-[0.99]"
-            style={{ background: T.green }}>
-            <ShoppingBag size={20} strokeWidth={2.2} />
-            <span className="flex-1 text-left leading-tight">
-              <span className="block text-[11px] font-semibold uppercase tracking-[0.06em] text-white/80">View cart · {totalItems}</span>
-              <span className="block truncate text-[15px] font-bold">{cartVendor || 'Your order'}</span>
-            </span>
-            <span className="text-[15px] font-bold"><Money usd={cartTotal} /></span>
-          </button>
+      {/* ── Bottom dock: live order + cart ─────────────────────────────── */}
+      {(liveOrder || totalItems > 0) && (
+        <div className="fixed inset-x-0 z-40 flex flex-col gap-2 px-4" style={{ bottom: 'calc(16px + env(safe-area-inset-bottom))' }}>
+          {liveOrder && (
+            <button type="button" onClick={() => navigate(`/track/${liveOrder.id}`)}
+              className="mx-auto flex h-16 w-full max-w-md items-center gap-3 rounded-2xl px-4 text-left text-white shadow-[0_10px_28px_rgba(0,0,0,0.25)] transition-transform active:scale-[0.99]"
+              style={{ background: T.ink }}>
+              <span className="relative flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full" style={{ background: 'rgba(0,166,81,0.18)', color: '#3DDC84' }}>
+                <Bike size={20} strokeWidth={2.2} />
+                <span className="absolute right-0 top-0 h-2.5 w-2.5 animate-pulse rounded-full ring-2" style={{ background: '#3DDC84', '--tw-ring-color': T.ink }} />
+              </span>
+              <span className="min-w-0 flex-1 leading-tight">
+                <span className="block truncate text-[15px] font-bold">{LIVE_STATUS[liveOrder.status].title}</span>
+                <span className="mt-0.5 block truncate text-[12px] text-white/70">{LIVE_STATUS[liveOrder.status].sub}</span>
+              </span>
+              <span className="flex items-center gap-0.5 text-[13px] font-bold" style={{ color: '#3DDC84' }}>
+                Track <ChevronRight size={16} strokeWidth={2.6} />
+              </span>
+            </button>
+          )}
+          {totalItems > 0 && (
+            <button type="button" onClick={() => navigate('/cart')}
+              className="mx-auto flex h-14 w-full max-w-md items-center gap-3 rounded-full px-5 text-white shadow-[0_10px_28px_rgba(0,166,81,0.35)] transition-transform active:scale-[0.99]"
+              style={{ background: T.green }}>
+              <ShoppingBag size={20} strokeWidth={2.2} />
+              <span className="flex-1 text-left leading-tight">
+                <span className="block text-[11px] font-semibold uppercase tracking-[0.06em] text-white/80">View cart · {totalItems}</span>
+                <span className="block truncate text-[15px] font-bold">{cartVendor || 'Your order'}</span>
+              </span>
+              <span className="text-[15px] font-bold"><Money usd={cartTotal} /></span>
+            </button>
+          )}
         </div>
       )}
 

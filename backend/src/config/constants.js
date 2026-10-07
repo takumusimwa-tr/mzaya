@@ -65,17 +65,17 @@ const VEHICLE_MAX_KG = {
 // name = what riders/customers see; hint = capacity guidance shown alongside.
 // Exposed via GET /api/vehicles so the UI never hardcodes this list.
 const VEHICLE_META = {
-  bicycle:     { name: 'Bicycle',             hint: 'Up to 10kg — documents, small food' },
-  motorbike:   { name: 'Motorbike',           hint: 'Up to 30kg — food, errands, documents' },
-  hatchback:   { name: 'Hatchback',           hint: 'Up to 150kg — groceries, small parcels' },
-  sedan:       { name: 'Sedan',               hint: 'Up to 200kg — groceries, medium parcels' },
-  suv:         { name: 'SUV / Station wagon', hint: 'Up to 400kg — bulk groceries, bigger loads' },
-  pickup_half: { name: 'Bakkie (½-tonne)',    hint: 'Up to 500kg — light materials, appliances' },
-  pickup_1t:   { name: '1-tonne pickup',      hint: 'Up to 1,000kg — materials, furniture' },
-  truck_2t:    { name: '2-tonne truck',       hint: 'Up to 2,000kg — medium materials, small moves' },
-  truck_5t:    { name: '5-tonne truck',       hint: 'Up to 5,000kg — bulk cement, sand' },
-  truck_7t:    { name: '7-tonne truck',       hint: 'Up to 7,000kg — heavy building materials' },
-  truck_10t:   { name: '10-tonne truck',      hint: 'Over 7,000kg — bulk / heavy loads' },
+  bicycle:     { name: 'Bicycle',             hint: 'Up to 10kg: documents, small food' },
+  motorbike:   { name: 'Motorbike',           hint: 'Up to 30kg: food, errands, documents' },
+  hatchback:   { name: 'Hatchback',           hint: 'Up to 150kg: groceries, small parcels' },
+  sedan:       { name: 'Sedan',               hint: 'Up to 200kg: groceries, medium parcels' },
+  suv:         { name: 'SUV / Station wagon', hint: 'Up to 400kg: bulk groceries, bigger loads' },
+  pickup_half: { name: 'Bakkie (½-tonne)',    hint: 'Up to 500kg: light materials, appliances' },
+  pickup_1t:   { name: '1-tonne pickup',      hint: 'Up to 1,000kg: materials, furniture' },
+  truck_2t:    { name: '2-tonne truck',       hint: 'Up to 2,000kg: medium materials, small moves' },
+  truck_5t:    { name: '5-tonne truck',       hint: 'Up to 5,000kg: bulk cement, sand' },
+  truck_7t:    { name: '7-tonne truck',       hint: 'Up to 7,000kg: heavy building materials' },
+  truck_10t:   { name: '10-tonne truck',      hint: 'Over 7,000kg: bulk / heavy loads' },
 };
 
 // Ascending list of { cls, maxKg, rank } for weight → vehicle resolution.

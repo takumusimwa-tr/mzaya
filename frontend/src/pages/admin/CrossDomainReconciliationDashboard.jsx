@@ -41,7 +41,7 @@ export default function CrossDomainReconciliationDashboard() {
       <section className="cross-domain-run-summary">
         <article>
           <span>Latest run</span>
-          <strong>{runs[0]?.run_reference || '—'}</strong>
+          <strong>{runs[0]?.run_reference || 'N/A'}</strong>
         </article>
         <article>
           <span>Blocking exceptions</span>
@@ -49,7 +49,7 @@ export default function CrossDomainReconciliationDashboard() {
         </article>
         <article>
           <span>Status</span>
-          <strong>{runs[0]?.status || '—'}</strong>
+          <strong>{runs[0]?.status || 'N/A'}</strong>
         </article>
       </section>
 

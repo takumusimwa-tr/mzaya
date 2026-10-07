@@ -63,11 +63,11 @@ export default function NotificationOperations() {
       <section className="notification-health-grid">
         <article>
           <span>Total notifications</span>
-          <strong>{summary?.notifications ?? '—'}</strong>
+          <strong>{summary?.notifications ?? 'N/A'}</strong>
         </article>
         <article>
           <span>Unread</span>
-          <strong>{summary?.unread ?? '—'}</strong>
+          <strong>{summary?.unread ?? 'N/A'}</strong>
         </article>
         <article>
           <span>Failed deliveries</span>

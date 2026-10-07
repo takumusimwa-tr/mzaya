@@ -145,7 +145,7 @@ export default function AboutMzayaPage({
               style={{ color: 'var(--mzaya-text-muted)' }}
             >
               Secure account, payment and privacy practices are treated as part
-              of the product—not an afterthought.
+              of the product, not an afterthought.
             </p>
           </article>
         </section>

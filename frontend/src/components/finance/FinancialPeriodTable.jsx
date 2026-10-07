@@ -11,7 +11,7 @@ export default function FinancialPeriodTable({
         <article key={period.id}>
           <div>
             <strong>{period.code}</strong>
-            <span>{period.start_date} — {period.end_date}</span>
+            <span>{period.start_date} to {period.end_date}</span>
           </div>
 
           <span className={`period-status is-${period.status}`}>

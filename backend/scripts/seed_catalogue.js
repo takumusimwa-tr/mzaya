@@ -20,7 +20,7 @@ const { Brand, Vendor, MenuItem, City, User } = require('../src/models/associati
 const CATALOGUE = [
   // ══ FOOD ══
   {
-    brand: { name: 'Chicken Inn', category: 'food', description: 'Fried chicken, chips and burgers — a Zimbabwean favourite.' },
+    brand: { name: 'Chicken Inn', category: 'food', description: 'Fried chicken, chips and burgers. A Zimbabwean favourite.' },
     branch: { branch_name: 'Chicken Inn Samora Machel', address: 'Samora Machel Ave, Harare CBD', phone: '0242700100', location: { lat: -17.8277, lng: 31.0480 } },
     items: [
       { name: '2 Piece Chicken & Chips', description: 'Two pieces of crispy fried chicken with regular chips', price_usd: 5.50, weight_kg: 0.5, category: 'Meals',  prep_minutes: 15 },
@@ -67,7 +67,7 @@ const CATALOGUE = [
       location: { lat: -17.8292, lng: 31.0522 },
     },
     items: [
-      { name: 'Mealie Meal 10kg',      description: 'Roller meal — the staple',            price_usd: 8.50,  weight_kg: 10,   category: 'Staples', prep_minutes: 10 },
+      { name: 'Mealie Meal 10kg',      description: 'Roller meal, the staple',            price_usd: 8.50,  weight_kg: 10,   category: 'Staples', prep_minutes: 10 },
       { name: 'Cooking Oil 2L',        description: 'Sunflower cooking oil',                price_usd: 4.20,  weight_kg: 2,    category: 'Staples', prep_minutes: 10 },
       { name: 'White Sugar 2kg',       description: 'Refined white sugar',                  price_usd: 2.80,  weight_kg: 2,    category: 'Staples', prep_minutes: 10 },
       { name: 'Bread (Standard Loaf)', description: 'Fresh white bread',                    price_usd: 1.00,  weight_kg: 0.7,  category: 'Bakery',  prep_minutes: 10 },

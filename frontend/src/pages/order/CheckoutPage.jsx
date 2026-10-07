@@ -450,7 +450,7 @@ export default function CheckoutPage() {
             <div className="flex items-center justify-between mb-1">
               <div>
                 <h2 className="text-sm font-bold text-gray-700">Name your fare</h2>
-                <p className="text-xs text-gray-400 mt-0.5">Offer a price — Mzayas accept or counter.</p>
+                <p className="text-xs text-gray-400 mt-0.5">Offer a price. Mzayas accept or counter.</p>
               </div>
               <button type="button" onClick={() => setNameYourFare((v) => !v)}
                 className="relative w-11 h-6 rounded-full transition-colors"
@@ -573,7 +573,7 @@ export default function CheckoutPage() {
               <span>Delivery fee</span>
               <span>
                 {quoteLoading && !quote ? '…'
-                  : quoteError ? '—'
+                  : quoteError ? 'Unavailable'
                   : `$${deliveryFee.toFixed(2)}`}
               </span>
             </div>
@@ -597,7 +597,7 @@ export default function CheckoutPage() {
             </div>
             {quoteError && (
               <p className="text-xs text-amber-600 mt-2">
-                Couldn't fetch live delivery fee — final amount confirmed after you place the order.
+                Couldn't fetch the live delivery fee. The final amount is confirmed after you place the order.
               </p>
             )}
           </div>
@@ -605,11 +605,9 @@ export default function CheckoutPage() {
       </div>
 
       {/* Place order */}
-      {/* Sits DIRECTLY on the bottom nav — no floating gap.
-          It used to be `bottom-20`, which parked the button 80px up and left a
-          dead band of empty screen between it and the nav. That's prime real
-          estate on a phone; it should either do something or not exist. */}
-      <div className="fixed bottom-16 left-1/2 -translate-x-1/2 w-full max-w-md px-4 pt-3 pb-3 z-30
+      {/* Pinned to the screen's bottom edge; the customer app has no tab bar.
+          The padding clears the iPhone home indicator. */}
+      <div className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-md px-4 pt-3 pb-[calc(12px+env(safe-area-inset-bottom))] z-30
                       bg-gradient-to-t from-white via-white to-transparent">
         <button onClick={handleSubmit} disabled={loading}
           className="w-full flex items-center justify-between px-5 py-4 rounded-2xl text-white font-bold active:scale-98 transition-transform disabled:opacity-70"

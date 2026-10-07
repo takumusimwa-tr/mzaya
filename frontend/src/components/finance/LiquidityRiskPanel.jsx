@@ -32,7 +32,7 @@ export default function LiquidityRiskPanel({
         </article>
         <article>
           <span>Runway</span>
-          <strong>{liquidity?.runway_days || '—'} days</strong>
+          <strong>{liquidity?.runway_days || 'N/A'} days</strong>
         </article>
       </div>
     </section>

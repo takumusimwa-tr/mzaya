@@ -7,7 +7,7 @@ export default function ReportingPackCard({ pack }) {
         <span>{pack.pack_type}</span>
         <strong>{pack.title}</strong>
       </div>
-      <span>{pack.period_from} — {pack.period_to}</span>
+      <span>{pack.period_from} to {pack.period_to}</span>
       <strong>{pack.currency || 'Multi-currency'}</strong>
       <span>{pack.status}</span>
     </article>

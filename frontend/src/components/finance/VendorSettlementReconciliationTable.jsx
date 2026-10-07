@@ -12,7 +12,7 @@ export default function VendorSettlementReconciliationTable({
             <strong>{item.settlement_id}</strong>
             <span>{item.result_reference}</span>
           </div>
-          <span>{item.currency || '—'}</span>
+          <span>{item.currency || 'N/A'}</span>
           <span className="vendor-settlement-status">
             {item.status}
           </span>

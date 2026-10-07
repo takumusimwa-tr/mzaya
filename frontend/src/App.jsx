@@ -69,7 +69,6 @@ const CrossDomainReconciliationDashboard = lazy(() => import('./pages/admin/Cros
 
 
 // Layout — always needed, so not lazy.
-import BottomNav       from './components/layout/BottomNav'
 import RiderBottomNav  from './components/layout/RiderBottomNav'
 import VendorSideRail  from './components/layout/VendorSideRail'
 
@@ -224,7 +223,6 @@ function AppShell() {
         </Routes>
       </Suspense>
 
-      {token && role === 'customer' && <BottomNav />}
       {token && role === 'rider' && location.pathname !== '/rider/setup' && <RiderBottomNav />}
     </div>
   )

@@ -1,6 +1,6 @@
 module.exports = {
   templateKey: 'procurement_completed_spend',
-  name: 'Procurement completed — spend and fee recognition',
+  name: 'Procurement completed: spend and fee recognition',
   eventType: 'procurement.completed',
   lines: [
     {

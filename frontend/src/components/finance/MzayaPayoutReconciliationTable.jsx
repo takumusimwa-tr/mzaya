@@ -12,7 +12,7 @@ export default function MzayaPayoutReconciliationTable({
             <strong>{item.payout_id}</strong>
             <span>{item.result_reference}</span>
           </div>
-          <span>{item.currency || '—'}</span>
+          <span>{item.currency || 'N/A'}</span>
           <span className="mzaya-payout-status">
             {item.status}
           </span>

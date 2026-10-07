@@ -33,6 +33,13 @@ export default defineConfig([
       // occurrence teaches people to ignore the linter; the remaining hook
       // rules (exhaustive-deps, rules-of-hooks) still catch the real mistakes.
       'react-hooks/set-state-in-effect': 'off',
+      // House style: no em dashes in anything a user can see. Use a period,
+      // colon or comma instead. Comments are fine; strings and JSX text are not.
+      'no-restricted-syntax': ['error',
+        { selector: 'Literal[value=/\\u2014/]', message: 'No em dashes in UI text. Use a period, colon or comma.' },
+        { selector: 'JSXText[value=/\\u2014/]', message: 'No em dashes in UI text. Use a period, colon or comma.' },
+        { selector: 'TemplateElement[value.raw=/\\u2014/]', message: 'No em dashes in UI text. Use a period, colon or comma.' },
+      ],
       // Without this, a component destructured for JSX (e.g. `{ icon: Icon }`
       // then `<Icon />`) reads as "unused" — ESLint core doesn't parse JSX as a
       // variable use. This marks JSX-referenced identifiers as used.

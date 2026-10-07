@@ -1,6 +1,6 @@
 module.exports = {
   templateKey: 'payment_refunded_customer_funds',
-  name: 'Payment refunded — customer funds',
+  name: 'Payment refunded: customer funds',
   eventType: 'payment.refunded',
   lines: [
     {

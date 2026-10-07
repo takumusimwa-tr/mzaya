@@ -13,11 +13,11 @@ export default function OrderReconciliationTable({
             <span>{item.order_type} · {item.result_reference}</span>
           </div>
 
-          <span>{item.currency || '—'}</span>
+          <span>{item.currency || 'N/A'}</span>
 
           <span>
             {item.expected_gov_minor == null
-              ? '—'
+              ? 'N/A'
               : (Number(item.expected_gov_minor) / 100).toFixed(2)}
           </span>
 

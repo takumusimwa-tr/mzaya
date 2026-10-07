@@ -20,7 +20,7 @@ function startManagementPackJob({ logger = console } = {}) {
     try {
       await generateReportingPack({
         packType: 'management',
-        title: `Monthly Management Pack — ${periodTo.toISOString().slice(0, 7)}`,
+        title: `Monthly Management Pack: ${periodTo.toISOString().slice(0, 7)}`,
         periodFrom: periodFrom.toISOString().slice(0, 10),
         periodTo: periodTo.toISOString().slice(0, 10),
         currency: process.env.FINANCE_REPORTING_CURRENCY || 'USD',

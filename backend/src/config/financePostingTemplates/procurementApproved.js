@@ -1,6 +1,6 @@
 module.exports = {
   templateKey: 'procurement_approved_authorization',
-  name: 'Procurement approved — authorization trace',
+  name: 'Procurement approved: authorization trace',
   eventType: 'procurement.approved',
   lines: [
     {

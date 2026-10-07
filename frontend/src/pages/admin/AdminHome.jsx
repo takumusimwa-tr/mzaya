@@ -139,7 +139,7 @@ function VendorsQueue() {
               <div className="flex items-start justify-between">
                 <div className="min-w-0">
                   <p className="font-bold text-gray-900">{v.name}</p>
-                  <p className="text-xs text-gray-400 capitalize">{v.category} · {v.city?.name || '—'}</p>
+                  <p className="text-xs text-gray-400 capitalize">{v.category} · {v.city?.name || 'N/A'}</p>
                   {v.owner && <p className="text-xs text-gray-400 mt-0.5">{v.owner.name} · {v.owner.phone}</p>}
                 </div>
                 <StatusPill active={v.is_active} />
@@ -191,7 +191,7 @@ function RidersQueue() {
               <div className="flex items-start justify-between">
                 <div>
                   <p className="font-bold text-gray-900">{r.user?.name || 'Mzaya'}</p>
-                  <p className="text-xs text-gray-400">{r.user?.phone} · {r.city?.name || '—'}</p>
+                  <p className="text-xs text-gray-400">{r.user?.phone} · {r.city?.name || 'N/A'}</p>
                   <p className="text-xs text-gray-400 capitalize mt-0.5">{r.vehicle_type?.replace('_', ' ') || 'no vehicle'}</p>
                 </div>
                 <StatusPill active={r.is_approved} activeLabel="Approved" inactiveLabel="Pending" />
@@ -386,7 +386,7 @@ function MzayaAI() {
       <div className="rounded-2xl p-4" style={{ background: '#EDFAF3', border: '1px solid #BBF7D0' }}>
         <p className="text-sm font-bold" style={{ color: '#00A651' }}><Icon name="ai" size={14} className="inline" /> Mzaya AI</p>
         <p className="text-xs mt-1" style={{ color: '#15803D' }}>
-          Live intelligence from the ML service — order anomaly detection, demand signals, and spending trends.
+          Live intelligence from the ML service: order anomaly detection, demand signals, and spending trends.
         </p>
       </div>
 

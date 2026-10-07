@@ -1,6 +1,6 @@
 module.exports = {
   templateKey: 'order_cancelled_no_revenue',
-  name: 'Order cancelled — no revenue posting',
+  name: 'Order cancelled: no revenue posting',
   eventType: 'order.cancelled',
   lines: [
     {

@@ -11,17 +11,17 @@ const SLIDES = [
   {
     image:    illoCommerce,
     title:    'Food, groceries & more',
-    subtitle: 'Order from restaurants, supermarkets and hardware stores — all in one app, delivered to your door.',
+    subtitle: 'Order from restaurants, supermarkets and hardware stores, all in one app and delivered to your door.',
   },
   {
     image:    illoErrands,
     title:    'Errands, handled',
-    subtitle: 'ZIMRA runs, bank queues, document drop-offs — send a Mzaya to stand in line so you don\u2019t have to.',
+    subtitle: 'ZIMRA runs, bank queues, document drop-offs: send a Mzaya to stand in line so you don\u2019t have to.',
   },
   {
     image:    illoDelivery,
     title:    'Fast delivery, easy payment',
-    subtitle: 'Track your Mzaya in real time. Pay with EcoCash, OneMoney, InnBucks or card — USD and ZiG accepted.',
+    subtitle: 'Track your Mzaya in real time. Pay with EcoCash, OneMoney, InnBucks or card. USD and ZiG accepted.',
   },
 ]
 
@@ -110,7 +110,7 @@ function RoleSelection({ navigate }) {
       role:    'rider',
       icon:    'rider',
       title:   'I want to deliver',
-      desc:    'Become a Mzaya — accept delivery jobs and earn money',
+      desc:    'Become a Mzaya: accept delivery jobs and earn money',
       color:   'border-green-500 bg-green-50',
       badge:   'bg-green-100 text-green-700',
     },

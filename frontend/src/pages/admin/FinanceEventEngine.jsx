@@ -34,7 +34,7 @@ export default function FinanceEventEngine() {
               <strong>{event.event_type}</strong>
               <span>{event.source_system} · {event.event_key}</span>
             </div>
-            <span>{event.currency || '—'}</span>
+            <span>{event.currency || 'N/A'}</span>
             <span className="finance-event-status">{event.status}</span>
             {['received', 'failed'].includes(event.status) ? (
               <button

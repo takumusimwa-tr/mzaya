@@ -266,7 +266,7 @@ export default function RiderHome() {
             style={{ boxShadow: '0 1px 8px rgba(0,0,0,0.06)' }}>
             <div className="text-5xl mb-3 animate-pulse">⏳</div>
             <h2 className="font-bold text-gray-900 mb-1">Waiting for orders</h2>
-            <p className="text-gray-400 text-sm">Stay nearby — new orders refresh every 10 seconds</p>
+            <p className="text-gray-400 text-sm">Stay nearby. New orders refresh every 10 seconds.</p>
           </div>
         ) : (
           <div>

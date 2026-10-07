@@ -92,7 +92,7 @@ function NegotiableCard({ order }) {
 
       {alreadyOffered ? (
         <div className="text-center py-2 rounded-xl bg-green-50 text-sm font-semibold" style={{ color: '#00A651' }}>
-          ✓ You offered US${Number(alreadyOffered.amount_usd).toFixed(2)} — waiting for the customer
+          ✓ You offered US${Number(alreadyOffered.amount_usd).toFixed(2)}. Waiting for the customer.
         </div>
       ) : mode === 'counter' ? (
         <div>

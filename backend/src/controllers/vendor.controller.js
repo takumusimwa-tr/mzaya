@@ -44,7 +44,7 @@ async function addBranch(req, res, next) {
       req.body
     );
     return res.status(201).json({
-      message: 'Branch added — pending approval',
+      message: 'Branch added and pending approval',
       branch,
     });
   } catch (error) {
@@ -67,7 +67,7 @@ async function createVendor(req, res, next) {
   try {
     const result = await vendorService.createVendor(req.user.id, req.body);
     return res.status(201).json({
-      message: 'Business registered — pending approval',
+      message: 'Business registered and pending approval',
       ...result,
     });
   } catch (error) {

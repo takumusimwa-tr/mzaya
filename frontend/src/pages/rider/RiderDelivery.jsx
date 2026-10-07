@@ -172,7 +172,7 @@ export default function RiderDelivery() {
                 label="Take / upload proof"
                 shape="square"
               />
-              {!proofUrl && <p className="text-[11px] text-gray-400 mt-2">Required — snap the package at the drop-off.</p>}
+              {!proofUrl && <p className="text-[11px] text-gray-400 mt-2">Required: snap the package at the drop-off.</p>}
             </div>
           )}
           <button

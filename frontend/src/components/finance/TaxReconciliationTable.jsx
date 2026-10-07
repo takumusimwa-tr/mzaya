@@ -12,7 +12,7 @@ export default function TaxReconciliationTable({
             <strong>{item.tax_transaction_id}</strong>
             <span>{item.result_reference}</span>
           </div>
-          <span>{item.currency || '—'}</span>
+          <span>{item.currency || 'N/A'}</span>
           <span className="tax-finance-status">{item.status}</span>
           <button
             type="button"
