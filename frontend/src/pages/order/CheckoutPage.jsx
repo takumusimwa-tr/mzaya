@@ -1,11 +1,18 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { useNavigate } from 'react-router-dom'
-import { orderAPI, geoAPI, promoAPI } from '../../api/api'
+import { Navigate, useNavigate } from 'react-router-dom'
+import {
+  ArrowLeft, ChevronDown, Clock, Crosshair, Link2, MapPin, MessageCircle, Tag, Truck, X, Zap,
+} from 'lucide-react'
+import api, { orderAPI, geoAPI, promoAPI } from '../../api/api'
 import useCartStore from '../../store/useCartStore'
-import api from '../../api/api'
-import Icon from '../../components/ui/Icon'
+import Money from '../../components/ui/Money'
 
+const T = {
+  green: '#00A651', greenDeep: '#0B4A3F', greenTint: '#E9F7EF',
+  ink: '#16191A', ink2: '#5F6B66', ink3: '#8C9692', line: '#ECEFED', fill: '#F4F6F5',
+  red: '#C0392B', amber: '#9A6200', amberTint: '#FFF6E6',
+}
 
 // Build category-specific order detail. Includes total_weight_kg so the backend
 // can size the vehicle correctly (grocery/materials); harmless for food.
@@ -33,53 +40,64 @@ function buildDetail(cart, totalWeightKg) {
   }
 }
 
+// <input type="datetime-local"> takes LOCAL time. The old code passed a UTC ISO
+// string, so in Harare (UTC+2) the earliest allowed slot was two hours early and
+// the picker offered times that validation then rejected.
+function toLocalInputValue(date) {
+  const p = (n) => String(n).padStart(2, '0')
+  return `${date.getFullYear()}-${p(date.getMonth() + 1)}-${p(date.getDate())}T${p(date.getHours())}:${p(date.getMinutes())}`
+}
+
+const TIPS = [0, 1, 2, 5]
+const NEGOTIABLE = ['materials', 'errand']
+
 export default function CheckoutPage() {
   const navigate = useNavigate()
-  const cart     = useCartStore()
+  const cart = useCartStore()
+  const dropoffRef = useRef(null)
 
   const { data: savedAddresses } = useQuery({
     queryKey: ['addresses'],
-    queryFn:  () => api.get('/addresses').then((r) => r.data.addresses),
+    queryFn: () => api.get('/addresses').then((r) => r.data.addresses),
   })
 
-  const [dropoff, setDropoff]             = useState('')
-  const [landmark, setLandmark]           = useState('')
-  const [pinLink, setPinLink]             = useState('')
-  const [pinCoords, setPinCoords]         = useState(null)
-  const [pinStatus, setPinStatus]         = useState('') // '', 'loading', 'ok', 'error'
-  const [pinError, setPinError]           = useState('')
-  const [instructions, setInstructions]   = useState('')
-  const [tip, setTip]                     = useState(0)
-  const [customTip, setCustomTip]         = useState('')
-  const [nameYourFare, setNameYourFare]   = useState(false)
-  const [offeredFare, setOfferedFare]     = useState('')
-  const [promoInput, setPromoInput]       = useState('')
-  const [promo, setPromo]                 = useState(null) // { code, discount_usd, free_delivery }
-  const [promoStatus, setPromoStatus]     = useState('')   // '', 'loading', 'ok', 'error'
-  const [promoError, setPromoError]       = useState('')
-  const [scheduleMode, setScheduleMode]   = useState('now') // 'now' | 'later'
-  const [scheduledFor, setScheduledFor]   = useState('')
-  const [loading, setLoading]             = useState(false)
-  const [error, setError]                 = useState('')
+  const [dropoff, setDropoff] = useState('')
+  const [savedId, setSavedId] = useState(null)
+  const [landmark, setLandmark] = useState('')
+  const [pinLink, setPinLink] = useState('')
+  const [pinCoords, setPinCoords] = useState(null)
+  const [pinStatus, setPinStatus] = useState('') // '', 'loading', 'ok', 'error'
+  const [pinError, setPinError] = useState('')
+  const [instructions, setInstructions] = useState('')
+  const [tip, setTip] = useState(0)
+  const [customTip, setCustomTip] = useState('')
+  const [nameYourFare, setNameYourFare] = useState(false)
+  const [offeredFare, setOfferedFare] = useState('')
+  const [promoOpen, setPromoOpen] = useState(false)
+  const [promoInput, setPromoInput] = useState('')
+  const [promo, setPromo] = useState(null) // { code, discount_usd, free_delivery }
+  const [promoStatus, setPromoStatus] = useState('')
+  const [promoError, setPromoError] = useState('')
+  const [scheduleMode, setScheduleMode] = useState('now') // 'now' | 'later'
+  const [scheduledFor, setScheduledFor] = useState('')
+  const [summaryOpen, setSummaryOpen] = useState(false)
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
+  const [addressInvalid, setAddressInvalid] = useState(false)
 
-
-  const subtotal    = cart.totalPrice()
+  const subtotal = cart.totalPrice()
   const totalWeight = cart.totalWeight()
+  const itemCount = cart.totalItems()
 
   // Longest prep time in the cart drives the earliest a scheduled order can be.
   const longestPrep = cart.items.reduce((max, i) => Math.max(max, i.prep_minutes || 0), 0)
   const minLeadMinutes = Math.max(30, longestPrep)
 
-  // ── Live quote from backend — single source of truth for fee + vehicle ──────
-  // Recomputes when cart category/subtotal/weight changes. Uses the same logic
-  // the backend uses at placement, so the price shown is the price charged.
-  const {
-    data: quote,
-    isLoading: quoteLoading,
-    isError: quoteError,
-  } = useQuery({
+  // Live quote from the backend: the single source of truth for fee and vehicle,
+  // computed exactly as at placement, so the price shown is the price charged.
+  const { data: quote, isLoading: quoteLoading, isError: quoteError } = useQuery({
     queryKey: ['quote', cart.categoryType, subtotal, totalWeight, tip, promo?.discount_usd || 0],
-    enabled:  cart.items.length > 0,
+    enabled: cart.items.length > 0,
     queryFn: () =>
       orderAPI.quote({
         category_type: cart.categoryType,
@@ -90,14 +108,11 @@ export default function CheckoutPage() {
   })
 
   const deliveryFee = quote ? quote.delivery_fee_usd : null
-  const total       = quote ? quote.total_usd : subtotal
-
-  // Fare negotiation applies to materials + errands (inDrive-style).
-  const NEGOTIABLE = ['materials', 'errand']
+  const total = quote ? quote.total_usd : subtotal
   const canNegotiate = NEGOTIABLE.includes(cart.categoryType)
 
-  // Resolve a pasted WhatsApp/Maps pin to coordinates via the backend
-  // (backend reads coords directly if present, or follows short goo.gl links).
+  // ── Location ────────────────────────────────────────────────────────────────
+  // Resolve a pasted WhatsApp/Maps pin to coordinates via the backend.
   const resolvePin = async (link) => {
     const value = (link ?? pinLink).trim()
     if (!value) return
@@ -122,12 +137,9 @@ export default function CheckoutPage() {
     setPinCoords(null)
     setPinError('')
     const looksLikeLink = /https?:\/\/|maps\.|goo\.gl|-?\d+\.\d+,\s*-?\d+\.\d+/i.test(value)
-    if (looksLikeLink && value.trim().length > 8) {
-      resolvePin(value)
-    }
+    if (looksLikeLink && value.trim().length > 8) resolvePin(value)
   }
 
-  // One-tap: use the customer's current GPS position as the drop-off.
   const useCurrentLocation = () => {
     if (!navigator.geolocation) {
       setPinStatus('error')
@@ -150,11 +162,10 @@ export default function CheckoutPage() {
     )
   }
 
-  // Open WhatsApp so the customer can ask someone to share their location pin.
   const requestViaWhatsApp = () => {
     const msg = encodeURIComponent(
-      "Hi! Please share your location pin so I can send your Mzaya delivery. " +
-      "Tap the 📎 (attach) → Location → Send your current location, then send me the link."
+      'Hi! Please share your location pin so I can send your Mzaya delivery. '
+      + 'Tap the attach button, then Location, then Send your current location, and send me the link.'
     )
     window.open(`https://wa.me/?text=${msg}`, '_blank')
   }
@@ -163,7 +174,20 @@ export default function CheckoutPage() {
     setPinLink(''); setPinCoords(null); setPinStatus(''); setPinError('')
   }
 
-  // Validate a promo code against the current cart (server computes discount).
+  // A saved address carries its pin and notes, not just the street text.
+  const pickSaved = (addr) => {
+    setSavedId(addr.id)
+    setDropoff(addr.address)
+    if (addressInvalid) setError('')
+    setAddressInvalid(false)
+    if (addr.location?.lat != null && addr.location?.lng != null) {
+      setPinCoords({ lat: Number(addr.location.lat), lng: Number(addr.location.lng) })
+      setPinStatus('ok'); setPinLink(''); setPinError('')
+    }
+    if (addr.notes) setLandmark(addr.notes)
+  }
+
+  // ── Promo ───────────────────────────────────────────────────────────────────
   const applyPromo = async () => {
     const code = promoInput.trim()
     if (!code) return
@@ -181,12 +205,12 @@ export default function CheckoutPage() {
       } else {
         setPromo(null)
         setPromoStatus('error')
-        setPromoError(data.reason || 'Invalid code')
+        setPromoError(data.reason || 'That code is not valid')
       }
     } catch (err) {
       setPromo(null)
       setPromoStatus('error')
-      setPromoError(err.response?.data?.error || 'Could not apply code')
+      setPromoError(err.response?.data?.error || 'Could not apply that code')
     }
   }
 
@@ -194,24 +218,29 @@ export default function CheckoutPage() {
     setPromo(null); setPromoInput(''); setPromoStatus(''); setPromoError('')
   }
 
-  const handleSubmit = async (e) => {
-    e.preventDefault()
+  // ── Place order ─────────────────────────────────────────────────────────────
+  const fail = (message, { address = false } = {}) => {
+    setError(message)
+    if (address) {
+      setAddressInvalid(true)
+      dropoffRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      dropoffRef.current?.focus({ preventScroll: true })
+    }
+  }
+
+  const handleSubmit = async () => {
     setError('')
 
+    if (!dropoff.trim()) return fail('Add your delivery address', { address: true })
     if (canNegotiate && nameYourFare) {
       const f = parseFloat(offeredFare)
-      if (!f || f <= 0) { setError('Enter the fare you want to offer'); return }
-    }
-    if (!dropoff.trim()) {
-      setError('Please enter your delivery address')
-      return
+      if (!f || f <= 0) return fail('Enter the fare you want to offer')
     }
     if (scheduleMode === 'later') {
-      if (!scheduledFor) { setError('Please pick a delivery time'); return }
+      if (!scheduledFor) return fail('Pick a delivery time')
       const when = new Date(scheduledFor).getTime()
       if (when < Date.now() + minLeadMinutes * 60 * 1000) {
-        setError(`Schedule at least ${minLeadMinutes} minutes ahead${longestPrep > 30 ? ' (some items need prep time)' : ''}`)
-        return
+        return fail(`Schedule at least ${minLeadMinutes} minutes ahead${longestPrep > 30 ? ' (some items need prep time)' : ''}`)
       }
     }
 
@@ -219,403 +248,361 @@ export default function CheckoutPage() {
     try {
       const useNegotiation = canNegotiate && nameYourFare
       const orderData = {
-        category_type:   cart.categoryType,
-        city:            cart.vendorCity || 'harare', // order belongs to the vendor's city
-        pickup_address:  cart.vendorAddress,
+        category_type: cart.categoryType,
+        city: cart.vendorCity || 'harare', // the order belongs to the vendor's city
+        pickup_address: cart.vendorAddress,
         dropoff_address: dropoff,
         dropoff_location: pinCoords || null,
         dropoff_landmark: landmark || null,
-        // A placeholder. The customer picks the real method on the pay step,
-        // which overwrites this — the orders table needs a non-null value here.
-        payment_method:  'ecocash',
-        tip_usd:         tip,
-        promo_code:      promo?.code || null,
-        scheduled_for:   scheduleMode === 'later' && scheduledFor ? new Date(scheduledFor).toISOString() : null,
+        // Placeholder: the customer picks the real method on the pay step, which
+        // overwrites this. The orders table needs a non-null value here.
+        payment_method: 'ecocash',
+        tip_usd: tip,
+        promo_code: promo?.code || null,
+        scheduled_for: scheduleMode === 'later' && scheduledFor ? new Date(scheduledFor).toISOString() : null,
         special_instructions: instructions || null,
         detail: buildDetail(cart, totalWeight),
-        ...(useNegotiation ? {
-          is_negotiable:    true,
-          offered_fare_usd: parseFloat(offeredFare),
-        } : {}),
+        ...(useNegotiation ? { is_negotiable: true, offered_fare_usd: parseFloat(offeredFare) } : {}),
       }
 
       const { data } = await orderAPI.place(orderData)
+      // Leave the page BEFORE emptying the cart: an empty cart redirects this
+      // page to Home, which would race the move to the new order.
+      navigate(`/orders/${data.order.id}`, { replace: true })
       cart.clearCart()
-      navigate(`/orders/${data.order.id}`)
     } catch (err) {
-      setError(err.response?.data?.error || 'Could not place order')
+      setError(err.response?.data?.error || 'Could not place your order. Please try again.')
     } finally {
       setLoading(false)
     }
+    return undefined
   }
 
-  if (cart.items.length === 0) {
-    navigate('/home')
-    return null
-  }
+  if (cart.items.length === 0) return <Navigate to="/home" replace />
 
-  // Show required-vehicle note only when it's a real (non-light) vehicle.
-  const showVehicleNote =
-    quote?.vehicle &&
-    !['bicycle', 'motorbike'].includes(quote.vehicle.type)
+  // Only worth mentioning for a real (non-light) vehicle.
+  const showVehicleNote = quote?.vehicle && !['bicycle', 'motorbike'].includes(quote.vehicle.type)
+  const feeValue = quoteLoading && !quote ? 'Calculating' : quoteError ? 'Unavailable' : <Money usd={deliveryFee} />
 
   return (
-    <div className="min-h-screen pb-32" style={{ background: '#F8F8F8' }}>
-      {/* Header */}
-      <div className="flex items-center gap-3 px-4 pt-14 pb-4 bg-white border-b border-gray-100">
-        <button onClick={() => navigate(-1)} className="p-2 rounded-full bg-gray-100">
-          <svg className="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
-          </svg>
+    <main className="min-h-screen bg-white pb-44" style={{ color: T.ink }}>
+      <header className="sticky top-0 z-20 flex items-center gap-1 bg-white/95 px-2 backdrop-blur"
+        style={{ paddingTop: 'env(safe-area-inset-top)' }}>
+        <button type="button" aria-label="Back" onClick={() => navigate(-1)} className="flex h-11 w-11 items-center justify-center rounded-full active:bg-black/5">
+          <ArrowLeft size={21} strokeWidth={2.2} />
         </button>
-        <h1 className="text-lg font-bold text-gray-900">Checkout</h1>
+        <div className="flex h-14 min-w-0 flex-1 flex-col justify-center">
+          <h1 className="text-[18px] font-extrabold leading-tight">Checkout</h1>
+          <p className="truncate text-[12px]" style={{ color: T.ink2 }}>{cart.vendorName}</p>
+        </div>
+      </header>
+
+      {/* ── When ─────────────────────────────────────────────────────────── */}
+      <div className="px-4 pt-2">
+        <div className="grid grid-cols-2 rounded-full p-1" style={{ background: T.fill }} role="tablist" aria-label="Delivery time">
+          {[['now', 'Deliver now', Zap], ['later', 'Schedule', Clock]].map(([mode, label, IconC]) => {
+            const active = scheduleMode === mode
+            return (
+              <button key={mode} type="button" role="tab" aria-selected={active} onClick={() => setScheduleMode(mode)}
+                className="flex h-10 items-center justify-center gap-1.5 rounded-full text-[14px] font-bold transition-colors"
+                style={active ? { background: '#fff', color: T.ink, boxShadow: '0 1px 4px rgba(0,0,0,0.12)' } : { color: T.ink2 }}>
+                <IconC size={15} strokeWidth={2.4} />{label}
+              </button>
+            )
+          })}
+        </div>
+        {scheduleMode === 'later' && (
+          <div className="mt-3">
+            <input type="datetime-local" value={scheduledFor}
+              min={toLocalInputValue(new Date(Date.now() + minLeadMinutes * 60 * 1000))}
+              onChange={(e) => setScheduledFor(e.target.value)}
+              aria-label="Delivery date and time"
+              className="h-12 w-full rounded-xl border px-4 text-[15px] outline-none focus:border-[#00A651]" style={{ borderColor: T.line }} />
+            <p className="mt-1.5 text-[12px]" style={{ color: T.ink2 }}>
+              {longestPrep > 30
+                ? `Some items need about ${longestPrep} min to prepare, so the earliest is ${minLeadMinutes} minutes from now.`
+                : 'At least 30 minutes ahead, up to 7 days. We send a Mzaya close to your chosen time.'}
+            </p>
+          </div>
+        )}
       </div>
 
-      <div className="px-4 mt-4 flex flex-col gap-4">
-        {error && (
-          <div className="p-3 bg-red-50 border border-red-100 rounded-xl">
-            <p className="text-sm text-red-600">{error}</p>
+      {/* ── Where ────────────────────────────────────────────────────────── */}
+      <Section title="Deliver to">
+        {savedAddresses?.length > 0 && (
+          <div className="-mx-4 mb-3 flex gap-2 overflow-x-auto px-4 no-scrollbar">
+            {savedAddresses.map((addr) => {
+              const active = savedId === addr.id && dropoff === addr.address
+              return (
+                <button key={addr.id} type="button" onClick={() => pickSaved(addr)}
+                  className="flex h-10 flex-shrink-0 items-center gap-1.5 rounded-full border px-4 text-[14px] font-semibold active:scale-95 transition-transform"
+                  style={active ? { borderColor: T.green, background: T.greenTint, color: T.greenDeep } : { borderColor: T.line, color: T.ink }}>
+                  <MapPin size={15} strokeWidth={2.2} />{addr.label}
+                </button>
+              )
+            })}
           </div>
         )}
 
-        {/* Delivery details */}
-        <div className="bg-white rounded-2xl p-4 border border-gray-100">
-          <h2 className="text-sm font-bold text-gray-700 mb-3">Delivery details</h2>
+        <Field label="Address" required invalid={addressInvalid}>
+          <input ref={dropoffRef} type="text" value={dropoff}
+            onChange={(e) => { setDropoff(e.target.value); if (addressInvalid) setError(''); setAddressInvalid(false); setSavedId(null) }}
+            placeholder="House number, street and suburb" autoComplete="street-address"
+            className="h-12 w-full bg-transparent px-4 text-[15px] outline-none" />
+        </Field>
 
-          <label className="text-xs text-gray-500">Pickup from</label>
-          <div className="flex items-center gap-2 bg-gray-50 rounded-xl px-3 py-3 mt-1 mb-3">
-            <span className="text-green-500">↑</span>
-            <span className="text-sm text-gray-500">{cart.vendorAddress}</span>
-          </div>
-
-          {/* Saved address chips */}
-          {savedAddresses && savedAddresses.length > 0 && (
-            <div className="flex gap-2 overflow-x-auto no-scrollbar mb-2 mt-1">
-              {savedAddresses.map((addr) => (
-                <button key={addr.id} type="button"
-                  onClick={() => setDropoff(addr.address)}
-                  className="flex-shrink-0 flex items-center gap-1.5 px-3 py-2 rounded-xl border text-sm active:scale-95 transition-transform"
-                  style={dropoff === addr.address
-                    ? { borderColor: '#00A651', background: '#EDFAF3', color: '#00A651' }
-                    : { borderColor: '#E5E5E5', color: '#444' }
-                  }>
-                  <Icon name="location" size={16} />
-                  <span className="font-semibold">{addr.label}</span>
-                </button>
-              ))}
-            </div>
-          )}
-
-          <label className="text-xs text-gray-500">Deliver to <span className="text-red-500">*</span></label>
-          <input
-            type="text"
-            value={dropoff}
-            onChange={(e) => setDropoff(e.target.value)}
-            placeholder="e.g. 15 Borrowdale Rd, Harare"
-            className="w-full mt-1 mb-3 px-4 py-3 rounded-xl border border-gray-200 text-sm outline-none focus:border-green-500"
-          />
-
-          {/* Location — GPS first, paste second, WhatsApp request third */}
-          <label className="text-xs text-gray-500">Pin the exact drop-off (optional)</label>
-
-          {/* Primary: use my current location */}
+        {/* Exact drop-off pin: GPS first, pasted pin second, ask on WhatsApp third */}
+        <div className="mt-3">
           {pinStatus === 'ok' ? (
-            <div className="flex items-center justify-between mt-1 mb-2 px-4 py-3 rounded-xl"
-              style={{ background: '#F0FDF4', border: '1px solid #BBF7D0' }}>
-              <div className="flex items-center gap-2">
-                <Icon name="location" size={16} />
-                <span className="text-sm font-semibold" style={{ color: '#16A34A' }}>
-                  Location pinned
-                </span>
-                <span className="text-xs" style={{ color: '#15803D' }}>
-                  ({pinCoords.lat.toFixed(4)}, {pinCoords.lng.toFixed(4)})
-                </span>
-              </div>
-              <button type="button" onClick={clearPin} className="text-xs font-semibold" style={{ color: '#DC2626' }}>
-                Change
-              </button>
+            <div className="flex items-center gap-3 rounded-xl px-4 py-3" style={{ background: T.greenTint }}>
+              <MapPin size={18} strokeWidth={2.2} style={{ color: T.green }} />
+              <span className="min-w-0 flex-1">
+                <span className="block text-[14px] font-bold" style={{ color: T.greenDeep }}>Exact location pinned</span>
+                <span className="block text-[12px]" style={{ color: T.ink2 }}>Your Mzaya will navigate straight to it</span>
+              </span>
+              <button type="button" onClick={clearPin} className="text-[13px] font-bold" style={{ color: T.green }}>Change</button>
             </div>
           ) : (
             <>
-              <button type="button" onClick={useCurrentLocation}
-                disabled={pinStatus === 'loading'}
-                className="w-full flex items-center justify-center gap-2 mt-1 mb-2 px-4 py-3 rounded-xl text-sm font-semibold text-white active:scale-98 transition-transform disabled:opacity-60"
-                style={{ background: '#00A651' }}>
-                <Icon name="location" size={16} />
-                {pinStatus === 'loading' ? 'Getting location…' : 'Use my current location'}
-              </button>
-
-              {/* Secondary: paste a shared pin (auto-resolves) */}
-              <input
-                type="text"
-                value={pinLink}
-                onChange={(e) => onPinPaste(e.target.value)}
-                placeholder="or paste a shared WhatsApp / Maps pin link"
-                className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm outline-none focus:border-green-500"
-              />
-
-              {/* Tertiary: ask someone via WhatsApp */}
-              <button type="button" onClick={requestViaWhatsApp}
-                className="w-full flex items-center justify-center gap-2 mt-2 mb-2 px-4 py-2.5 rounded-xl text-sm font-semibold active:scale-98 transition-transform"
-                style={{ background: '#F0FDF4', color: '#128C7E', border: '1px solid #A7F3D0' }}>
-                <Icon name="chat" size={16} />
-                Request location via WhatsApp
-              </button>
-            </>
-          )}
-          {pinStatus === 'error' && (
-            <p className="text-xs mb-2 text-red-500">{pinError}</p>
-          )}
-          {pinStatus === 'ok' && pinError && (
-            <p className="text-xs mb-2" style={{ color: '#B45309' }}>{pinError}</p>
-          )}
-
-          {/* Landmark — human cue for unstructured Zim addresses */}
-          <label className="text-xs text-gray-500 block mt-1">Landmark / directions (optional)</label>
-          <input
-            type="text"
-            value={landmark}
-            onChange={(e) => setLandmark(e.target.value)}
-            placeholder="e.g. blue gate opposite Total garage, ask for tuckshop"
-            className="w-full mt-1 mb-3 px-4 py-3 rounded-xl border border-gray-200 text-sm outline-none focus:border-green-500"
-          />
-
-          <label className="text-xs text-gray-500">Delivery instructions (optional)</label>
-          <input
-            type="text"
-            value={instructions}
-            onChange={(e) => setInstructions(e.target.value)}
-            placeholder="e.g. Call when you arrive, gate code 1234"
-            className="w-full mt-1 px-4 py-3 rounded-xl border border-gray-200 text-sm outline-none focus:border-green-500"
-          />
-        </div>
-
-        {/* Required vehicle note — materials / heavy loads */}
-        {showVehicleNote && (
-          <div className="flex items-start gap-3 p-3 rounded-xl border" style={{ borderColor: '#FFD9A0', background: '#FFF8EE' }}>
-            <Icon name="vehicle" size={18} />
-            <div>
-              <p className="text-sm font-semibold" style={{ color: '#8A5A00' }}>
-                This load needs a {quote.vehicle.name}
-              </p>
-              <p className="text-xs" style={{ color: '#A97A2E' }}>
-                {quote.vehicle.hint} · total ~{totalWeight.toFixed(0)}kg
-              </p>
-            </div>
-          </div>
-        )}
-
-        {/* Schedule */}
-        <div className="bg-white rounded-2xl p-4 border border-gray-100">
-          <h2 className="text-sm font-bold text-gray-700 mb-3">When to deliver</h2>
-          <div className="flex gap-2 mb-2">
-            <button type="button" onClick={() => setScheduleMode('now')}
-              className="flex-1 py-2.5 rounded-xl border text-sm font-semibold transition-all active:scale-95"
-              style={scheduleMode === 'now'
-                ? { borderColor: '#00A651', background: '#EDFAF3', color: '#00A651' }
-                : { borderColor: '#E5E5E5', color: '#444' }
-              }>
-              Deliver now
-            </button>
-            <button type="button" onClick={() => setScheduleMode('later')}
-              className="flex-1 py-2.5 rounded-xl border text-sm font-semibold transition-all active:scale-95"
-              style={scheduleMode === 'later'
-                ? { borderColor: '#00A651', background: '#EDFAF3', color: '#00A651' }
-                : { borderColor: '#E5E5E5', color: '#444' }
-              }>
-              Schedule for later
-            </button>
-          </div>
-          {scheduleMode === 'later' && (
-            <>
-              <input
-                type="datetime-local"
-                value={scheduledFor}
-                min={new Date(Date.now() + minLeadMinutes * 60 * 1000).toISOString().slice(0, 16)}
-                onChange={(e) => setScheduledFor(e.target.value)}
-                className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm outline-none focus:border-green-500"
-              />
-              <p className="text-xs text-gray-400 mt-2">
-                {longestPrep > 30
-                  ? `Some items need ~${longestPrep} min prep, so the earliest is ${minLeadMinutes} minutes from now.`
-                  : "At least 30 minutes ahead, up to 7 days. We'll dispatch a Mzaya close to your chosen time."}
-              </p>
-            </>
-          )}
-        </div>
-
-        {/* Name your fare — materials/errands only (inDrive-style) */}
-        {canNegotiate && (
-          <div className="bg-white rounded-2xl p-4 border border-gray-100">
-            <div className="flex items-center justify-between mb-1">
-              <div>
-                <h2 className="text-sm font-bold text-gray-700">Name your fare</h2>
-                <p className="text-xs text-gray-400 mt-0.5">Offer a price. Mzayas accept or counter.</p>
-              </div>
-              <button type="button" onClick={() => setNameYourFare((v) => !v)}
-                className="relative w-11 h-6 rounded-full transition-colors"
-                style={{ background: nameYourFare ? '#00A651' : '#D1D5DB' }}>
-                <span className="absolute top-0.5 w-5 h-5 rounded-full bg-white transition-all"
-                  style={{ left: nameYourFare ? '22px' : '2px' }} />
-              </button>
-            </div>
-
-            {nameYourFare && (
-              <div className="mt-3">
-                <div className="flex items-center gap-2 px-4 py-3 rounded-xl border border-gray-200">
-                  <span className="text-gray-400 font-bold">$</span>
-                  <input
-                    type="number" inputMode="decimal" value={offeredFare}
-                    onChange={(e) => setOfferedFare(e.target.value)}
-                    placeholder={quote ? deliveryFee.toFixed(2) : '0.00'}
-                    className="flex-1 bg-transparent text-lg font-bold text-gray-900 outline-none"
-                  />
-                </div>
-                <p className="text-xs text-gray-400 mt-2">
-                  {quote ? `Suggested fare ~$${deliveryFee.toFixed(2)} based on distance and load. ` : ''}
-                  Riders nearby will see your offer and can accept or propose a different price.
-                </p>
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* Tip the rider */}
-        <div className="bg-white rounded-2xl p-4 border border-gray-100">
-          <h2 className="text-sm font-bold text-gray-700 mb-1">Tip your Mzaya</h2>
-          <p className="text-xs text-gray-400 mb-3">100% goes to your Mzaya. Optional, but appreciated.</p>
-          <div className="flex gap-2">
-            {[0, 1, 2, 5].map((amt) => (
-              <button key={amt} type="button"
-                onClick={() => { setTip(amt); setCustomTip('') }}
-                className="flex-1 py-2.5 rounded-xl border text-sm font-semibold transition-all active:scale-95"
-                style={tip === amt && customTip === ''
-                  ? { borderColor: '#00A651', background: '#EDFAF3', color: '#00A651' }
-                  : { borderColor: '#E5E5E5', color: '#444' }
-                }>
-                {amt === 0 ? 'No tip' : `$${amt}`}
-              </button>
-            ))}
-          </div>
-          <div className="mt-2 flex items-center gap-2">
-            <span className="text-sm text-gray-400">$</span>
-            <input
-              type="text"
-              inputMode="decimal"
-              value={customTip}
-              onChange={(e) => {
-                const v = e.target.value.replace(/[^\d.]/g, '')
-                setCustomTip(v)
-                setTip(v ? Math.max(0, parseFloat(v) || 0) : 0)
-              }}
-              placeholder="Custom amount"
-              className="flex-1 px-4 py-2.5 rounded-xl border text-sm outline-none focus:border-green-500"
-              style={{ borderColor: customTip ? '#00A651' : '#E5E5E5' }}
-            />
-          </div>
-        </div>
-
-        {/* Promo code */}
-        <div className="bg-white rounded-2xl p-4 border border-gray-100">
-          <h2 className="text-sm font-bold text-gray-700 mb-3">Promo code</h2>
-          {promoStatus === 'ok' && promo ? (
-            <div className="flex items-center justify-between px-4 py-3 rounded-xl"
-              style={{ background: '#F0FDF4', border: '1px solid #BBF7D0' }}>
-              <div className="flex items-center gap-2">
-                <Icon name="promo" size={16} />
-                <span className="text-sm font-semibold" style={{ color: '#16A34A' }}>{promo.code}</span>
-                <span className="text-xs" style={{ color: '#15803D' }}>
-                  {promo.free_delivery ? 'Free delivery' : `−$${promo.discount_usd.toFixed(2)}`}
-                </span>
-              </div>
-              <button type="button" onClick={removePromo} className="text-xs font-semibold" style={{ color: '#DC2626' }}>
-                Remove
-              </button>
-            </div>
-          ) : (
-            <>
-              <div className="flex gap-2">
-                <input
-                  type="text"
-                  value={promoInput}
-                  onChange={(e) => { setPromoInput(e.target.value.toUpperCase()); setPromoStatus(''); setPromoError('') }}
-                  placeholder="Enter code"
-                  className="flex-1 px-4 py-3 rounded-xl border border-gray-200 text-sm outline-none focus:border-green-500 uppercase"
-                />
-                <button type="button" onClick={applyPromo}
-                  disabled={!promoInput.trim() || promoStatus === 'loading'}
-                  className="px-5 py-3 rounded-xl text-sm font-semibold text-white disabled:opacity-50"
-                  style={{ background: '#00A651' }}>
-                  {promoStatus === 'loading' ? '…' : 'Apply'}
+              <div className="grid grid-cols-2 gap-2">
+                <button type="button" onClick={useCurrentLocation} disabled={pinStatus === 'loading'}
+                  className="flex h-11 items-center justify-center gap-1.5 rounded-xl text-[14px] font-bold text-white disabled:opacity-60 active:scale-[0.98] transition-transform"
+                  style={{ background: T.green }}>
+                  <Crosshair size={16} strokeWidth={2.4} />{pinStatus === 'loading' ? 'Locating' : 'Use my location'}
+                </button>
+                <button type="button" onClick={requestViaWhatsApp}
+                  className="flex h-11 items-center justify-center gap-1.5 rounded-xl border text-[14px] font-bold active:scale-[0.98] transition-transform"
+                  style={{ borderColor: T.line, color: T.ink }}>
+                  <MessageCircle size={16} strokeWidth={2.4} />Ask on WhatsApp
                 </button>
               </div>
-              {promoStatus === 'error' && (
-                <p className="text-xs mt-2 text-red-500">{promoError}</p>
-              )}
+              <label className="mt-2 flex h-11 items-center gap-2 rounded-xl px-3" style={{ background: T.fill }}>
+                <Link2 size={16} style={{ color: T.ink3 }} />
+                <input type="text" value={pinLink} onChange={(e) => onPinPaste(e.target.value)}
+                  placeholder="Or paste a WhatsApp or Maps pin link" aria-label="Location pin link"
+                  className="h-full flex-1 bg-transparent text-[14px] outline-none" />
+              </label>
             </>
           )}
+          {pinStatus === 'error' && <p className="mt-1.5 text-[12px]" style={{ color: T.red }}>{pinError}</p>}
+          {pinStatus === 'ok' && pinError && <p className="mt-1.5 text-[12px]" style={{ color: T.amber }}>{pinError}</p>}
         </div>
 
-        {/* Order summary */}
-        <div className="bg-white rounded-2xl p-4 border border-gray-100">
-          <h2 className="text-sm font-bold text-gray-700 mb-3">Order summary</h2>
-          {cart.items.map((item, i) => (
-            <div key={i} className="flex justify-between text-sm text-gray-600 mb-1">
-              <span>{item.name} × {item.qty}</span>
-              <span>${(item.unit_price_usd * item.qty).toFixed(2)}</span>
-            </div>
-          ))}
-          <div className="border-t border-gray-100 mt-3 pt-3">
-            <div className="flex justify-between text-sm text-gray-600 mb-1">
-              <span>Subtotal</span><span>${subtotal.toFixed(2)}</span>
-            </div>
-            <div className="flex justify-between text-sm text-gray-600 mb-2">
-              <span>Delivery fee</span>
-              <span>
-                {quoteLoading && !quote ? '…'
-                  : quoteError ? 'Unavailable'
-                  : `$${deliveryFee.toFixed(2)}`}
-              </span>
-            </div>
-            {tip > 0 && (
-              <div className="flex justify-between text-sm text-gray-600 mb-2">
-                <span>Mzaya tip</span>
-                <span>${tip.toFixed(2)}</span>
-              </div>
-            )}
-            {quote?.discount_usd > 0 && (
-              <div className="flex justify-between text-sm mb-2" style={{ color: '#16A34A' }}>
-                <span>Discount {promo?.code ? `(${promo.code})` : ''}</span>
-                <span>−${quote.discount_usd.toFixed(2)}</span>
-              </div>
-            )}
-            <div className="flex justify-between font-black text-gray-900 text-base">
-              <span>Total</span>
-              <span>
-                {quoteLoading && !quote ? '…' : `$${total.toFixed(2)}`}
-              </span>
-            </div>
-            {quoteError && (
-              <p className="text-xs text-amber-600 mt-2">
-                Couldn't fetch the live delivery fee. The final amount is confirmed after you place the order.
-              </p>
-            )}
+        <div className="mt-3 grid gap-3">
+          <Field label="Landmark or directions">
+            <input type="text" value={landmark} onChange={(e) => setLandmark(e.target.value)}
+              placeholder="Blue gate opposite the garage"
+              className="h-12 w-full bg-transparent px-4 text-[15px] outline-none" />
+          </Field>
+          <Field label="Note for your Mzaya">
+            <input type="text" value={instructions} onChange={(e) => setInstructions(e.target.value)}
+              placeholder="Call when you arrive"
+              className="h-12 w-full bg-transparent px-4 text-[15px] outline-none" />
+          </Field>
+        </div>
+      </Section>
+
+      {showVehicleNote && (
+        <div className="mx-4 mt-4 flex items-start gap-3 rounded-xl px-4 py-3" style={{ background: T.amberTint }}>
+          <Truck size={18} strokeWidth={2.2} style={{ color: T.amber }} className="mt-0.5 flex-shrink-0" />
+          <span>
+            <span className="block text-[14px] font-bold" style={{ color: T.amber }}>This load needs a {quote.vehicle.name}</span>
+            <span className="block text-[12px]" style={{ color: T.amber }}>{quote.vehicle.hint} · about {totalWeight.toFixed(0)}kg in total</span>
+          </span>
+        </div>
+      )}
+
+      {/* ── Name your fare (materials, errands) ──────────────────────────── */}
+      {canNegotiate && (
+        <Section>
+          <div className="flex items-center justify-between gap-3">
+            <span>
+              <span className="block text-[16px] font-extrabold">Name your fare</span>
+              <span className="block text-[13px]" style={{ color: T.ink2 }}>Offer a price. Mzayas accept or counter.</span>
+            </span>
+            <button type="button" role="switch" aria-checked={nameYourFare} aria-label="Name your fare"
+              onClick={() => setNameYourFare((v) => !v)}
+              className="relative h-7 w-12 flex-shrink-0 rounded-full transition-colors" style={{ background: nameYourFare ? T.green : '#D5DBD8' }}>
+              <span className="absolute top-0.5 h-6 w-6 rounded-full bg-white shadow transition-all" style={{ left: nameYourFare ? 22 : 2 }} />
+            </button>
           </div>
-        </div>
-      </div>
+          {nameYourFare && (
+            <div className="mt-3">
+              <Field label="Your offer">
+                <span className="flex items-center px-4">
+                  <span className="text-[15px] font-bold" style={{ color: T.ink3 }}>US$</span>
+                  <input type="number" inputMode="decimal" value={offeredFare} onChange={(e) => setOfferedFare(e.target.value)}
+                    placeholder={quote ? deliveryFee.toFixed(2) : '0.00'}
+                    className="h-12 w-full bg-transparent pl-2 text-[18px] font-bold outline-none" />
+                </span>
+              </Field>
+              <p className="mt-1.5 text-[12px]" style={{ color: T.ink2 }}>
+                {quote ? <>Suggested fare about <Money usd={deliveryFee} />, based on distance and load. </> : null}
+                Nearby Mzayas see your offer and can accept or suggest another price.
+              </p>
+            </div>
+          )}
+        </Section>
+      )}
 
-      {/* Place order */}
-      {/* Pinned to the screen's bottom edge; the customer app has no tab bar.
-          The padding clears the iPhone home indicator. */}
-      <div className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-md px-4 pt-3 pb-[calc(12px+env(safe-area-inset-bottom))] z-30
-                      bg-gradient-to-t from-white via-white to-transparent">
-        <button onClick={handleSubmit} disabled={loading}
-          className="w-full flex items-center justify-between px-5 py-4 rounded-2xl text-white font-bold active:scale-98 transition-transform disabled:opacity-70"
-          style={{ background: '#00A651', boxShadow: '0 8px 24px #00A65150' }}>
-          <span>{loading ? 'Placing order...' : (scheduleMode === 'later' ? 'Schedule order' : 'Place order')}</span>
-          <span>{quote ? `$${total.toFixed(2)}` : `$${subtotal.toFixed(2)}`}</span>
+      {/* ── Order summary ────────────────────────────────────────────────── */}
+      <Section>
+        <button type="button" onClick={() => setSummaryOpen((v) => !v)} aria-expanded={summaryOpen}
+          className="flex w-full items-center justify-between text-left">
+          <span>
+            <span className="block text-[16px] font-extrabold">Order summary</span>
+            <span className="block text-[13px]" style={{ color: T.ink2 }}>{itemCount} {itemCount === 1 ? 'item' : 'items'} from {cart.vendorName}</span>
+          </span>
+          <ChevronDown size={20} style={{ color: T.ink2, transform: summaryOpen ? 'rotate(180deg)' : 'none' }} className="transition-transform" />
+        </button>
+        {summaryOpen && (
+          <ul className="mt-3">
+            {cart.items.map((item, i) => (
+              <li key={`${item.id}-${i}`} className="flex justify-between gap-3 py-1.5 text-[14px]">
+                <span><span className="font-bold">{item.qty}×</span> {item.name}</span>
+                <span className="font-semibold"><Money usd={item.unit_price_usd * item.qty} /></span>
+              </li>
+            ))}
+          </ul>
+        )}
+      </Section>
+
+      {/* ── Tip ──────────────────────────────────────────────────────────── */}
+      <Section title="Tip your Mzaya" sub="100% goes to your Mzaya. Optional, always appreciated.">
+        <div className="grid grid-cols-4 gap-2">
+          {TIPS.map((amt) => {
+            const active = tip === amt && customTip === ''
+            return (
+              <button key={amt} type="button" onClick={() => { setTip(amt); setCustomTip('') }} aria-pressed={active}
+                className="h-11 rounded-full border text-[14px] font-bold transition-colors active:scale-95"
+                style={active ? { borderColor: T.ink, background: T.ink, color: '#fff' } : { borderColor: T.line, color: T.ink }}>
+                {amt === 0 ? 'None' : `US$${amt}`}
+              </button>
+            )
+          })}
+        </div>
+        <label className="mt-2 flex h-11 items-center gap-1 rounded-full border px-4" style={{ borderColor: customTip ? T.ink : T.line }}>
+          <span className="text-[14px] font-semibold" style={{ color: T.ink3 }}>US$</span>
+          <input type="text" inputMode="decimal" value={customTip} aria-label="Custom tip"
+            onChange={(e) => {
+              const v = e.target.value.replace(/[^\d.]/g, '')
+              setCustomTip(v)
+              setTip(v ? Math.max(0, parseFloat(v) || 0) : 0)
+            }}
+            placeholder="Other amount" className="h-full flex-1 bg-transparent text-[14px] outline-none" />
+        </label>
+      </Section>
+
+      {/* ── Promo ────────────────────────────────────────────────────────── */}
+      <Section>
+        {promoStatus === 'ok' && promo ? (
+          <div className="flex items-center gap-3">
+            <Tag size={18} strokeWidth={2.2} style={{ color: T.green }} />
+            <span className="flex-1">
+              <span className="block text-[15px] font-bold">{promo.code}</span>
+              <span className="block text-[13px]" style={{ color: T.green }}>
+                {promo.free_delivery ? 'Free delivery applied' : <>You save <Money usd={promo.discount_usd} /></>}
+              </span>
+            </span>
+            <button type="button" onClick={removePromo} aria-label="Remove promo code" className="flex h-9 w-9 items-center justify-center rounded-full active:bg-black/5">
+              <X size={18} />
+            </button>
+          </div>
+        ) : !promoOpen ? (
+          <button type="button" onClick={() => setPromoOpen(true)} className="flex w-full items-center gap-3 text-left">
+            <Tag size={18} strokeWidth={2.2} style={{ color: T.ink }} />
+            <span className="flex-1 text-[15px] font-bold">Add a promo code</span>
+            <span className="text-[13px] font-bold" style={{ color: T.green }}>Add</span>
+          </button>
+        ) : (
+          <>
+            <div className="flex gap-2">
+              <input type="text" value={promoInput} autoFocus aria-label="Promo code"
+                onChange={(e) => { setPromoInput(e.target.value.toUpperCase()); setPromoStatus(''); setPromoError('') }}
+                onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); applyPromo() } }}
+                placeholder="Promo code"
+                className="h-12 flex-1 rounded-xl border px-4 text-[15px] uppercase outline-none focus:border-[#00A651]" style={{ borderColor: T.line }} />
+              <button type="button" onClick={applyPromo} disabled={!promoInput.trim() || promoStatus === 'loading'}
+                className="h-12 rounded-xl px-5 text-[14px] font-bold text-white disabled:opacity-50" style={{ background: T.ink }}>
+                {promoStatus === 'loading' ? 'Checking' : 'Apply'}
+              </button>
+            </div>
+            {promoStatus === 'error' && <p className="mt-1.5 text-[12px]" style={{ color: T.red }}>{promoError}</p>}
+          </>
+        )}
+      </Section>
+
+      {/* ── Totals ───────────────────────────────────────────────────────── */}
+      <Section>
+        <Line label="Subtotal" value={<Money usd={subtotal} />} />
+        <Line label="Delivery fee" value={feeValue} />
+        {tip > 0 && <Line label="Mzaya tip" value={<Money usd={tip} />} />}
+        {quote?.discount_usd > 0 && (
+          <Line label={`Discount${promo?.code ? ` (${promo.code})` : ''}`} value={<>-<Money usd={quote.discount_usd} /></>} green />
+        )}
+        <div className="mt-2 flex items-center justify-between border-t pt-3" style={{ borderColor: T.line }}>
+          <span className="text-[17px] font-extrabold">Total</span>
+          <span className="text-[17px] font-extrabold">{quoteLoading && !quote ? 'Calculating' : <Money usd={total} />}</span>
+        </div>
+        {quoteError && (
+          <p className="mt-2 text-[12px]" style={{ color: T.amber }}>
+            We couldn&apos;t fetch the live delivery fee. You&apos;ll see the final amount before you pay.
+          </p>
+        )}
+        <p className="mt-3 text-[12px]" style={{ color: T.ink3 }}>
+          You choose how to pay on the next step: EcoCash, OneMoney, InnBucks or card.
+        </p>
+      </Section>
+
+      {/* ── Place order ──────────────────────────────────────────────────── */}
+      <div className="fixed inset-x-0 bottom-0 z-30 mx-auto w-full max-w-md bg-white px-4 pt-3"
+        style={{ paddingBottom: 'calc(12px + env(safe-area-inset-bottom))', boxShadow: '0 -8px 24px rgba(0,0,0,0.06)' }}>
+        {error && (
+          <p role="alert" className="mb-2 rounded-xl px-3 py-2 text-[13px] font-semibold" style={{ background: '#FDECEA', color: T.red }}>
+            {error}
+          </p>
+        )}
+        <button type="button" onClick={handleSubmit} disabled={loading}
+          className="flex h-14 w-full items-center justify-between rounded-full px-6 text-[16px] font-bold text-white disabled:opacity-70 active:scale-[0.99] transition-transform"
+          style={{ background: T.green }}>
+          <span>{loading ? 'Placing your order' : scheduleMode === 'later' ? 'Schedule order' : 'Place order'}</span>
+          <Money usd={quote ? total : subtotal} />
         </button>
       </div>
+    </main>
+  )
+}
+
+function Section({ title, sub, children }) {
+  return (
+    <section className="mt-4 border-t px-4 pt-4" style={{ borderColor: T.line }}>
+      {title && <h2 className="text-[16px] font-extrabold">{title}</h2>}
+      {sub && <p className="mb-3 mt-0.5 text-[13px]" style={{ color: T.ink2 }}>{sub}</p>}
+      {title && !sub && <div className="h-3" />}
+      {children}
+    </section>
+  )
+}
+
+function Field({ label, required, invalid, children }) {
+  return (
+    <label className="block">
+      <span className="mb-1 block text-[13px] font-semibold" style={{ color: invalid ? T.red : T.ink2 }}>
+        {label}{required && <span style={{ color: T.red }}> *</span>}
+      </span>
+      <span className="block rounded-xl border bg-white transition-colors focus-within:border-[#00A651]"
+        style={{ borderColor: invalid ? T.red : T.line }}>
+        {children}
+      </span>
+    </label>
+  )
+}
+
+function Line({ label, value, green }) {
+  return (
+    <div className="flex items-center justify-between py-1 text-[15px]" style={{ color: green ? T.green : T.ink2 }}>
+      <span>{label}</span>
+      <span className="font-semibold" style={{ color: green ? T.green : T.ink }}>{value}</span>
     </div>
   )
 }
