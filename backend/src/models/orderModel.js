@@ -166,6 +166,20 @@ const Order = sequelize.define('Order', {
     allowNull: true,
   },
 
+  // Customer's rating of a delivered order. These columns were missing, so
+  // POST /orders/:id/rate replied "Rating submitted" while Sequelize silently
+  // dropped both values: no rating was ever stored.
+  rating: {
+    type: DataTypes.INTEGER,
+    allowNull: true,
+    validate: { min: 1, max: 5 },
+  },
+
+  review: {
+    type: DataTypes.TEXT,
+    allowNull: true,
+  },
+
   // Optional cancellation reason
   cancel_reason: {
     type: DataTypes.STRING,

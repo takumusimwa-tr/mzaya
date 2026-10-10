@@ -400,7 +400,12 @@ async function cancelOrder(orderId, customerId, reason) {
       throw new Error('Access denied');
     }
 
+    // SCHEDULED: a future order nobody has been sent for yet is the safest kind
+    // to cancel. It used to be refused, so a customer who booked for next week
+    // had no way out. The release job only picks up status='scheduled' orders,
+    // so a cancelled one is never dispatched.
     const cancellable = [
+      ORDER_STATUS.SCHEDULED,
       ORDER_STATUS.PENDING,
       ORDER_STATUS.ACCEPTED,
     ];

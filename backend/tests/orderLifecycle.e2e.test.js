@@ -131,11 +131,17 @@ describe('Order lifecycle (end to end)', () => {
       .send({ status: 'delivered', delivery_proof_url: 'https://res.cloudinary.com/demo/proof.jpg' });
     expect(delivered.status).toBe(200);
     expect((await request(app).post(`/api/orders/${id}/rate`).set(auth(w.customer))
-      .send({ rating: 5 })).status).toBe(200);
+      .send({ rating: 5, review: 'Hot and on time' })).status).toBe(200);
+    // The rating must actually be stored (it used to be silently dropped), and
+    // an order can only be rated once.
+    expect((await request(app).post(`/api/orders/${id}/rate`).set(auth(w.customer))
+      .send({ rating: 1 })).status).toBe(409);
 
     const final = await request(app).get(`/api/orders/${id}`).set(auth(w.customer));
     expect(final.body.order.status).toBe('delivered');
     expect(final.body.order.payment_status).toBe('success');
+    expect(final.body.order.rating).toBe(5);
+    expect(final.body.order.review).toBe('Hot and on time');
 
     await settle();
     // Auto-assigned at placement: the vendor hears about the new order, the

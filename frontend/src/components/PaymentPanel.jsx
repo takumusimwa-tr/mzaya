@@ -116,9 +116,9 @@ export default function PaymentPanel({ order, onPaid }) {
       <div className="flex items-center justify-between mb-3">
         <h2 className="text-sm font-bold text-gray-700">Pay for your order</h2>
         <div className="text-right">
-          <span className="font-black text-gray-900">${Number(order.total_usd).toFixed(2)}</span>
+          <span className="font-black text-gray-900">US${Number(order.total_usd).toFixed(2)}</span>
           {order.total_zig > 0 && (
-            <p className="text-[11px] text-gray-400">≈ ZiG {Number(order.total_zig).toFixed(2)}</p>
+            <p className="text-[11px] text-gray-400">About ZiG {Number(order.total_zig).toFixed(2)}</p>
           )}
         </div>
       </div>
@@ -167,7 +167,7 @@ export default function PaymentPanel({ order, onPaid }) {
           <button onClick={pay}
             className="w-full py-3.5 rounded-xl text-white font-bold active:scale-98 transition-transform"
             style={{ background: '#00A651' }}>
-            Pay ${Number(order.total_usd).toFixed(2)}
+            Pay US${Number(order.total_usd).toFixed(2)}
           </button>
           {stage === 'failed' && (
             <button onClick={() => setStage('choose')} className="w-full mt-2 text-xs text-gray-400">Try again</button>

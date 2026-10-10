@@ -362,7 +362,7 @@ async function vendorOrders(req, res) {
 async function rateOrder(req, res) {
   try {
     const { rating, review } = req.body;
-    if (!rating || rating < 1 || rating > 5) {
+    if (!Number.isInteger(rating) || rating < 1 || rating > 5) {
       return res.status(400).json({ error: 'Rating must be between 1 and 5' });
     }
     const { Order } = require('../models/associations');
@@ -370,7 +370,8 @@ async function rateOrder(req, res) {
     if (!order) return res.status(404).json({ error: 'Order not found' });
     if (order.customer_id !== req.user.id) return res.status(403).json({ error: 'Access denied' });
     if (order.status !== 'delivered') return res.status(400).json({ error: 'Can only rate delivered orders' });
-    await order.update({ rating, review: review || null });
+    if (order.rating) return res.status(409).json({ error: 'You have already rated this order' });
+    await order.update({ rating, review: typeof review === 'string' && review.trim() ? review.trim().slice(0, 1000) : null });
     return res.status(200).json({ message: 'Rating submitted', rating });
   } catch (err) {
     logger.error('rateorder_error', { error: err.message });

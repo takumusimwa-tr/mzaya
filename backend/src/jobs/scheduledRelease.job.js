@@ -34,11 +34,15 @@ function startScheduledReleaseJob() {
             ? await findAvailableRider(order.city, order.vehicle_type)
             : null;
 
-          await order.update({
+          // Conditional update: only release if it is STILL scheduled. The rider
+          // lookup above takes time; a customer can cancel in that window, and an
+          // unconditional update would silently resurrect the cancelled order.
+          const [released] = await Order.update({
             status:      rider ? ORDER_STATUS.ACCEPTED : ORDER_STATUS.PENDING,
             rider_id:    rider?.id || null,
             accepted_at: rider ? new Date() : null,
-          });
+          }, { where: { id: order.id, status: ORDER_STATUS.SCHEDULED } });
+          if (!released) continue; // cancelled (or changed) meanwhile: leave it alone
 
           console.log(`[ScheduledRelease] Released order ${order.id.slice(0, 8)} → ${rider ? 'accepted' : 'pending'}`);
         } catch (e) {
