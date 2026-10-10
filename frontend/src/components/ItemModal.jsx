@@ -1,9 +1,10 @@
 import { useState } from 'react'
 import useCartStore from '../store/useCartStore'
 import imageUrl from '../utils/imageUrl'
+import cartVendor from '../utils/cartVendor'
 import Icon from './ui/Icon'
 
-export default function ItemModal({ item, vendor, onClose }) {
+export default function ItemModal({ item, vendor, onClose, canOrder = true }) {
   const cart = useCartStore()
   const [qty, setQty]                   = useState(1)
   const [instructions, setInstructions] = useState('')
@@ -22,6 +23,7 @@ export default function ItemModal({ item, vendor, onClose }) {
   const placeholder = placeholders[vendor.category] || 'Any special requests...'  
 
   const handleAdd = () => {
+    if (!canOrder) return
     setAdding(true)
     cart.addItem({
       id:                   item.id,
@@ -31,13 +33,7 @@ export default function ItemModal({ item, vendor, onClose }) {
       special_instructions: instructions || null,
       weight_kg:            item.weight_kg || 0.5,
       prep_minutes:         item.prep_minutes || 0,
-    }, {
-      vendorId:      vendor.id,
-      vendorName:    vendor.name,
-      vendorAddress: vendor.address,
-      vendorCity:    vendor.city?.name ? vendor.city.name.toLowerCase() : null,
-      categoryType:  vendor.category,
-    })
+    }, cartVendor(vendor))
     setTimeout(() => { setAdding(false); onClose() }, 200)
   }
 
@@ -105,10 +101,10 @@ export default function ItemModal({ item, vendor, onClose }) {
           </div>
 
           <button onClick={handleAdd}
-            disabled={adding}
+            disabled={adding || !canOrder}
             className="flex-1 flex items-center justify-between px-5 py-3.5 rounded-2xl text-white font-bold active:scale-98 transition-transform disabled:opacity-70"
             style={{ background: '#00A651' }}>
-            <span>{adding ? 'Added!' : 'Add to cart'}</span>
+            <span>{!canOrder ? 'Store is closed' : adding ? 'Added!' : 'Add to cart'}</span>
             <span>US${total.toFixed(2)}</span>
           </button>
         </div>

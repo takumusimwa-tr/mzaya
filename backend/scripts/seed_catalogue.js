@@ -146,15 +146,23 @@ const CATALOGUE = [
   },
 ];
 
+// Keys MUST be mon..sun: that's what the server, validator and vendor Settings
+// use. Long names (monday...) matched nothing, so every seeded store was closed.
 const DEFAULT_HOURS = {
-  monday:    { open: '08:00', close: '18:00', closed: false },
-  tuesday:   { open: '08:00', close: '18:00', closed: false },
-  wednesday: { open: '08:00', close: '18:00', closed: false },
-  thursday:  { open: '08:00', close: '18:00', closed: false },
-  friday:    { open: '08:00', close: '18:00', closed: false },
-  saturday:  { open: '08:00', close: '16:00', closed: false },
-  sunday:    { open: '09:00', close: '13:00', closed: false },
+  mon:    { open: '08:00', close: '18:00', closed: false },
+  tue:   { open: '08:00', close: '18:00', closed: false },
+  wed: { open: '08:00', close: '18:00', closed: false },
+  thu:  { open: '08:00', close: '18:00', closed: false },
+  fri:    { open: '08:00', close: '18:00', closed: false },
+  sat:  { open: '08:00', close: '16:00', closed: false },
+  sun:    { open: '09:00', close: '13:00', closed: false },
 };
+
+// Restaurants trade into the evening; shop hours would close them before dinner.
+const FOOD_HOURS = Object.fromEntries(
+  ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'].map((d) => [d, { open: '09:00', close: '21:30', closed: false }])
+);
+const hoursFor = (category) => (category === 'food' ? FOOD_HOURS : DEFAULT_HOURS);
 
 async function seed() {
   await sequelize.authenticate();
@@ -204,12 +212,18 @@ async function seed() {
         phone:         entry.branch.phone,
         address:       entry.branch.address,
         location:      entry.branch.location,
-        opening_hours: DEFAULT_HOURS,
+        opening_hours: hoursFor(entry.brand.category),
         is_active:     true,   // pre-approved — these are seeds, not applications
         is_open:       true,
         is_paused:     false,
       },
     });
+    // Repair branches seeded by older versions of this script, whose hours used
+    // long day names (monday...) that the server never matches: always closed.
+    if (!branchNew && branch.opening_hours && 'monday' in branch.opening_hours) {
+      await branch.update({ opening_hours: hoursFor(entry.brand.category) });
+      console.log(`  ~ repaired opening hours for ${branch.branch_name}`);
+    }
     console.log(`${branchNew ? '  + branch' : '  · branch'} ${branch.branch_name}`);
 
     // ── Items ──
