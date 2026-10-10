@@ -1,0 +1,18 @@
+{
+  "batch": "08.6.6",
+  "title": "Dependency Security, Database Migration Baseline & Deployment Hardening",
+  "baseline": "mzaya-main(7).zip",
+  "files": [
+    "backend/package.json",
+    "backend/config/config.js",
+    "backend/migrations/20261010000000-baseline-existing-staging-schema.js",
+    "backend/DEPLOYMENT_HARDENING_08_6_6.md",
+    "BATCH_08_6_6_INTEGRATION.md"
+  ],
+  "validation": {
+    "baseline_08_6_5B_schema_sync_skipped": "confirmed",
+    "authored_js_node_check": "2/2 passed",
+    "jest": "not run in packaging environment",
+    "npm_audit": "registry-backed local run required; no vulnerability remediation claimed"
+  }
+}

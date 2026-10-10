@@ -6,22 +6,44 @@ function usdToMinor(value) {
   return Math.round(Number(value || 0) * 100);
 }
 
+function firstDefined(...values) {
+  return values.find((value) => value !== undefined && value !== null);
+}
+
+function moneyMinor(order, minorField, usdField) {
+  const minorValue = firstDefined(order[minorField]);
+
+  if (minorValue !== undefined) {
+    return Math.round(Number(minorValue || 0));
+  }
+
+  return usdToMinor(order[usdField]);
+}
+
 function normalizeOrderType(orderType) {
   const value = String(orderType || '').toLowerCase();
   const aliases = {
     food: 'food',
+    orderfood: 'food',
     grocery: 'grocery',
+    ordergrocery: 'grocery',
     materials: 'materials',
     material: 'materials',
+    ordermaterials: 'materials',
+    ordermaterial: 'materials',
     errand: 'errand',
+    ordererrand: 'errand',
   };
+
   const normalized = aliases[value];
+
   if (!normalized) {
     const error = new Error(`Unsupported order type: ${orderType}`);
     error.status = 422;
     error.code = 'UNSUPPORTED_ORDER_TYPE';
     throw error;
   }
+
   return normalized;
 }
 
@@ -36,15 +58,21 @@ function orderBasePayload(order, orderType) {
     customerId: order.customer_id || null,
     mzayaId: order.rider_id || null,
     cityCode: order.city || null,
-    currency: String(order.currency_paid || 'USD').toUpperCase(),
-    grossOrderValueMinor: usdToMinor(order.total_usd),
-    merchandiseValueMinor: usdToMinor(order.subtotal_usd),
-    deliveryFeeMinor: usdToMinor(order.delivery_fee_usd),
-    platformFeeMinor: 0,
-    procurementFeeMinor: 0,
-    taxMinor: 0,
-    discountMinor: usdToMinor(order.discount_usd),
-    tipMinor: usdToMinor(order.tip_usd),
+    currency: String(
+      firstDefined(order.currency_paid, order.currency, 'USD')
+    ).toUpperCase(),
+    grossOrderValueMinor: moneyMinor(order, 'total_amount_minor', 'total_usd'),
+    merchandiseValueMinor: moneyMinor(order, 'subtotal_minor', 'subtotal_usd'),
+    deliveryFeeMinor: moneyMinor(order, 'delivery_fee_minor', 'delivery_fee_usd'),
+    platformFeeMinor: moneyMinor(order, 'service_fee_minor', 'service_fee_usd'),
+    procurementFeeMinor: moneyMinor(
+      order,
+      'procurement_fee_minor',
+      'procurement_fee_usd'
+    ),
+    taxMinor: moneyMinor(order, 'tax_minor', 'tax_usd'),
+    discountMinor: moneyMinor(order, 'discount_minor', 'discount_usd'),
+    tipMinor: moneyMinor(order, 'tip_minor', 'tip_usd'),
   };
 }
 

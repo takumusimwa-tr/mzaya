@@ -1,0 +1,10 @@
+{
+  "batch": "08.6.6D.4",
+  "files": [
+    "backend/migrations/20261011_staging_favorites_brand_uniqueness_repair.sql",
+    "BATCH_08_6_6D4_INTEGRATION.md",
+    "BATCH_08_6_6D4_MANIFEST.json"
+  ],
+  "effect": "Add missing UNIQUE(customer_id, brand_id) constraint if absent.",
+  "do_not_execute": "favorites_to_brands.sql"
+}

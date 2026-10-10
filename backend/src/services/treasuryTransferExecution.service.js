@@ -22,10 +22,7 @@ function serviceError(message, status = 400, code = 'TREASURY_TRANSFER_ERROR') {
   return error;
 }
 
-async function approveTreasuryTransfer({
-  transferId,
-  approverId,
-}) {
+async function approveTreasuryTransfer({ transferId, approverId }) {
   const transfer = await TreasuryTransfer.findByPk(transferId);
 
   if (!transfer) {
@@ -36,7 +33,8 @@ async function approveTreasuryTransfer({
     throw serviceError('Only draft transfers can be approved', 409, 'INVALID_TRANSFER_STATUS');
   }
 
-  if (String(transfer.requested_by) === String(approverId)) {
+  const requesterId = transfer.requested_by || transfer.initiated_by;
+  if (requesterId && String(requesterId) === String(approverId)) {
     throw serviceError(
       'Requester cannot approve the same treasury transfer',
       403,
@@ -66,10 +64,25 @@ async function approveTreasuryTransfer({
   return transfer;
 }
 
-async function executeTreasuryTransfer({
-  transferId,
-  actorId,
-}) {
+function assertExecutableBankTransfer(transfer) {
+  const missing = [];
+  if (!transfer.from_bank_account_id) missing.push('from_bank_account_id');
+  if (!transfer.to_bank_account_id) missing.push('to_bank_account_id');
+  if (!transfer.source_currency) missing.push('source_currency');
+  if (!transfer.destination_currency) missing.push('destination_currency');
+  if (transfer.source_amount_minor == null) missing.push('source_amount_minor');
+  if (transfer.destination_amount_minor == null) missing.push('destination_amount_minor');
+
+  if (missing.length) {
+    throw serviceError(
+      `Treasury transfer is not executable as an internal bank transfer; missing ${missing.join(', ')}`,
+      409,
+      'TREASURY_EXECUTION_CONTRACT_INCOMPLETE'
+    );
+  }
+}
+
+async function executeTreasuryTransfer({ transferId, actorId }) {
   return sequelize.transaction(async (transaction) => {
     const transfer = await TreasuryTransfer.findByPk(transferId, {
       transaction,
@@ -88,6 +101,10 @@ async function executeTreasuryTransfer({
       );
     }
 
+    // External/manual transfers can exist in the shared treasury domain but
+    // must never accidentally cross the bank-transfer provider boundary.
+    assertExecutableBankTransfer(transfer);
+
     const [fromAccount, toAccount] = await Promise.all([
       BankAccount.findByPk(transfer.from_bank_account_id, {
         transaction,
@@ -98,6 +115,14 @@ async function executeTreasuryTransfer({
         lock: transaction.LOCK.UPDATE,
       }),
     ]);
+
+    if (!fromAccount || !toAccount) {
+      throw serviceError(
+        'Treasury transfer references an unavailable bank account',
+        409,
+        'TREASURY_BANK_ACCOUNT_NOT_FOUND'
+      );
+    }
 
     if (Number(fromAccount.available_balance_minor) < Number(transfer.source_amount_minor)) {
       throw serviceError(
@@ -146,20 +171,16 @@ async function executeTreasuryTransfer({
 
       await fromAccount.update({
         current_balance_minor:
-          Number(fromAccount.current_balance_minor) -
-          Number(transfer.source_amount_minor),
+          Number(fromAccount.current_balance_minor) - Number(transfer.source_amount_minor),
         available_balance_minor:
-          Number(fromAccount.available_balance_minor) -
-          Number(transfer.source_amount_minor),
+          Number(fromAccount.available_balance_minor) - Number(transfer.source_amount_minor),
       }, { transaction });
 
       await toAccount.update({
         current_balance_minor:
-          Number(toAccount.current_balance_minor) +
-          Number(transfer.destination_amount_minor),
+          Number(toAccount.current_balance_minor) + Number(transfer.destination_amount_minor),
         available_balance_minor:
-          Number(toAccount.available_balance_minor) +
-          Number(transfer.destination_amount_minor),
+          Number(toAccount.available_balance_minor) + Number(transfer.destination_amount_minor),
       }, { transaction });
 
       await attempt.update({
@@ -173,6 +194,7 @@ async function executeTreasuryTransfer({
       await transfer.update({
         status: 'completed',
         completed_at: new Date(),
+        provider_reference: result.providerReference || null,
         metadata: {
           ...(transfer.metadata || {}),
           provider: result.provider,
@@ -208,6 +230,7 @@ async function executeTreasuryTransfer({
 
       await transfer.update({
         status: 'failed',
+        failed_at: new Date(),
         failure_reason: String(error.message || error).slice(0, 1000),
       }, { transaction });
 

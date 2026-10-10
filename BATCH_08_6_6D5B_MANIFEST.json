@@ -1,0 +1,14 @@
+{
+  "batch": "08.6.6D.5B",
+  "files": [
+    "backend/migrations/20261011_staging_treasury_fx_rate_parity_repair.sql",
+    "BATCH_08_6_6D5B_INTEGRATION.md"
+  ],
+  "verified_gap": "treasury_transfers.fx_rate_id and FK absent after historical treasury migration",
+  "safety": {
+    "additive_ddl_only": true,
+    "row_updates": false,
+    "external_money_movement": false,
+    "historical_accounting_mutation": false
+  }
+}

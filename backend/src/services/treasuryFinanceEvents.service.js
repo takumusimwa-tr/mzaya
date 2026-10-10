@@ -1,16 +1,33 @@
 const { enqueueFinanceOutboxEvent } = require('./financeOutbox.service');
 
 function transferPayload(transfer) {
+  const sourceAccountId =
+    transfer.from_bank_account_id || transfer.source_account_id || null;
+  const destinationAccountId =
+    transfer.to_bank_account_id || transfer.destination_account_id || null;
+  const currency =
+    transfer.source_currency || transfer.currency || null;
+  const amountMinor =
+    transfer.source_amount_minor ?? transfer.amount_minor ?? 0;
+
   return {
     transferId: transfer.id,
     transferReference: transfer.transfer_reference,
     transferType: transfer.transfer_type,
-    sourceAccountId: transfer.source_account_id || null,
-    destinationAccountId: transfer.destination_account_id || null,
-    currency: transfer.currency,
-    amountMinor: Number(transfer.amount_minor || 0),
-    provider: transfer.provider || null,
-    providerReference: transfer.provider_reference || null,
+    sourceAccountId,
+    destinationAccountId,
+    currency,
+    amountMinor: Number(amountMinor),
+    sourceCurrency: transfer.source_currency || currency,
+    destinationCurrency: transfer.destination_currency || currency,
+    sourceAmountMinor: Number(transfer.source_amount_minor ?? amountMinor),
+    destinationAmountMinor: Number(transfer.destination_amount_minor ?? amountMinor),
+    fxRateId: transfer.fx_rate_id || null,
+    provider: transfer.provider || transfer.metadata?.provider || null,
+    providerReference:
+      transfer.provider_reference ||
+      transfer.metadata?.providerReference ||
+      null,
   };
 }
 

@@ -1,49 +1,127 @@
 // backend/tests/setup.js
 //
-// Test factories and lifecycle. The ENVIRONMENT bootstrap (NODE_ENV, mock
-// payments, test DB URL) lives in env.js, which Jest runs via setupFiles BEFORE
-// this file or any test module loads. That ordering matters: the test files
-// require app.js on line 2, before they require this module, so env setup had to
-// move even earlier — into setupFiles — or app.js loads with the wrong config.
+// Test factories and lifecycle.
 //
-// By the time anything here runs, the environment is already correct.
+// The ENVIRONMENT bootstrap (NODE_ENV, mock payments, SSL, and test DB URL)
+// lives in env.js, which Jest runs via setupFiles BEFORE this file or any test
+// module loads.
+//
+// That ordering matters because test files may require app.js before requiring
+// this module. app.js transitively loads services and config/db.js, both of
+// which read environment variables at module-load time.
+//
+// By the time anything here runs, tests/env.js must already have established
+// the isolated test environment.
 
 const { sequelize } = require('../src/config/db');
 const models = require('../src/models/associations');
-const bcrypt = require('bcrypt');   // the project uses bcrypt, not bcryptjs
+const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 
 const {
-  User, City, Brand, Vendor, MenuItem, Rider, Order,
+  User,
+  City,
+  Brand,
+  Vendor,
+  MenuItem,
+  Rider,
+  Order,
 } = models;
 
 // ─── Lifecycle ────────────────────────────────────────────────────────────────
 
-// Build the schema once, from the models. (Production uses migrations; tests use
-// sync because we want a schema derived from the code under test, and we're
-// throwing the database away afterwards either way.)
-async function resetDatabase() {
-  // ⚠ sync({ force: true }) DROPS EVERY TABLE.
-  //
-  // If the test process ever picked up the development DB_URL — one bad dotenv
-  // ordering away — this line would silently destroy your real data. So refuse to
-  // run against anything that isn't obviously a test database.
-  const url = process.env.DB_URL || '';
-  if (!/test/i.test(url)) {
+/**
+ * Return a safe identifier for the configured database.
+ *
+ * Never return the raw connection string because it may contain credentials.
+ */
+function getSafeDatabaseTarget() {
+  try {
+    const parsed = new URL(process.env.DB_URL || '');
+    const databaseName = parsed.pathname.replace(/^\//, '');
+
+    return `${parsed.hostname}/${databaseName}`;
+  } catch {
+    return 'configured test database';
+  }
+}
+
+/**
+ * Verify that destructive test setup is targeting an explicitly test-named
+ * database.
+ *
+ * resetDatabase() calls sequelize.sync({ force: true }), which DROPS every
+ * table managed by Sequelize. This guard is intentionally independent from the
+ * corresponding guard in tests/env.js so that one accidental configuration
+ * regression cannot silently expose staging or production data.
+ */
+function assertSafeTestDatabase() {
+  const rawUrl = process.env.DB_URL || '';
+
+  if (!rawUrl) {
     throw new Error(
-      `Refusing to run tests against "${url.replace(/:[^:@]*@/, ':***@')}".\n` +
+      'Refusing to reset database because DB_URL is not configured.'
+    );
+  }
+
+  let parsed;
+
+  try {
+    parsed = new URL(rawUrl);
+  } catch {
+    throw new Error(
+      'Refusing to reset database because DB_URL is not a valid connection URL.'
+    );
+  }
+
+  const databaseName = parsed.pathname.replace(/^\//, '');
+
+  if (!/test/i.test(databaseName)) {
+    throw new Error(
+      `Refusing to run destructive tests against non-test database ` +
+      `"${parsed.hostname}/${databaseName}". ` +
       'The database name must contain "test". Set TEST_DB_URL.'
     );
   }
+
+  if (process.env.NODE_ENV !== 'test') {
+    throw new Error(
+      `Refusing to reset the test database while NODE_ENV=` +
+      `"${process.env.NODE_ENV || 'unset'}". NODE_ENV must be "test".`
+    );
+  }
+}
+
+// Build the schema from the models.
+//
+// Production and staging use migrations. Tests intentionally use
+// sync({ force: true }) because the test database is disposable and we want
+// each test group to start from a schema derived from the code under test.
+//
+// WARNING:
+// sequelize.sync({ force: true }) DROPS TABLES. Never weaken the safety checks
+// above without replacing them with an equivalent or stronger isolation
+// mechanism.
+async function resetDatabase() {
+  assertSafeTestDatabase();
 
   try {
     await sequelize.authenticate();
     await sequelize.sync({ force: true });
   } catch (err) {
-    // Surface the ACTUAL cause. Jest otherwise shows only a generic Sequelize
-    // stack, which is what sent us in circles.
-    const detail = err.parent?.message || err.original?.message || err.message;
-    throw new Error(`resetDatabase failed against ${process.env.DB_URL}: ${detail}`);
+    // Surface the useful database error while NEVER including DB_URL itself.
+    //
+    // DB_URL can contain a username and password, and including it here caused
+    // credentials to appear in Jest output during an earlier failed test run.
+    const detail =
+      err.parent?.message ||
+      err.original?.message ||
+      err.message ||
+      'Unknown database error';
+
+    throw new Error(
+      `resetDatabase failed against ${getSafeDatabaseTarget()}: ${detail}`
+    );
   }
 }
 
@@ -52,50 +130,81 @@ async function closeDatabase() {
 }
 
 // ─── Factories ────────────────────────────────────────────────────────────────
-// Small, explicit, and boring. A test that has to construct five objects before it
-// can assert one thing is a test nobody will maintain.
+//
+// Keep factories small and explicit. Tests should be able to construct the
+// minimum state they need without depending on unrelated application flows.
 
-// A monotonic counter — guaranteed unique within a run. The previous version
-// sliced a timestamp, so calls in the same millisecond collided. That's what broke
-// the full suite while single tests passed: makeUser built near-identical phone
-// numbers, and the second insert hit the unique constraint on users.phone.
+// Monotonic counter guaranteed to be unique within the current Jest process.
+//
+// The previous timestamp-based implementation could collide when factories
+// executed during the same millisecond, producing unique-constraint failures.
 let counter = 0;
+
 const uniq = () => String(++counter).padStart(8, '0');
 
 async function makeCity(overrides = {}) {
   try {
     return await City.create({
-      name: `Harare ${uniq()}`,   // City.name is UNIQUE — can't be a constant
+      // City.name is UNIQUE, so generated test cities cannot use a constant.
+      name: `Harare ${uniq()}`,
       slug: `harare-${uniq()}`,
-      center: { lat: -17.8292, lng: 31.0522 },
-      bounds: { north: -17.70, south: -17.95, east: 31.20, west: 30.95 },
+      center: {
+        lat: -17.8292,
+        lng: 31.0522,
+      },
+      bounds: {
+        north: -17.70,
+        south: -17.95,
+        east: 31.20,
+        west: 30.95,
+      },
       is_active: true,
       ...overrides,
     });
   } catch (err) {
-    const detail = err.parent?.message || err.original?.message || err.message;
-    const fields = err.errors?.map((e) => `${e.path}: ${e.message}`).join('; ');
-    throw new Error(`makeCity failed: ${detail}${fields ? ' | ' + fields : ''}`);
+    const detail =
+      err.parent?.message ||
+      err.original?.message ||
+      err.message;
+
+    const fields = err.errors
+      ?.map((error) => `${error.path}: ${error.message}`)
+      .join('; ');
+
+    throw new Error(
+      `makeCity failed: ${detail}${fields ? ` | ${fields}` : ''}`
+    );
   }
 }
 
 async function makeUser(role = 'customer', overrides = {}) {
   const password = await bcrypt.hash('test1234', 10);
+
   return User.create({
     name: `Test ${role}`,
-    phone: `078${uniq().slice(1)}`,   // 078 prefix — can't collide with 077 test data
+
+    // 078 prefix keeps generated factory numbers separate from static 077 test
+    // fixtures while uniq() prevents collisions inside the current test run.
+    phone: `078${uniq().slice(1)}`,
+
     password,
     role,
     ...overrides,
   });
 }
 
-// A token the API will accept — same shape auth.controller issues.
+// Generate a token matching the shape issued by auth.controller.
 function tokenFor(user) {
   return jwt.sign(
-    { id: user.id, role: user.role, phone: user.phone },
+    {
+      id: user.id,
+      role: user.role,
+      phone: user.phone,
+    },
     process.env.JWT_SECRET,
-    { expiresIn: '1h' }
+    {
+      expiresIn: '1h',
+    }
   );
 }
 
@@ -116,13 +225,19 @@ async function makeVendor(owner, city, overrides = {}) {
     category: 'food',
     phone: '0771234567',
     address: 'Somewhere, Harare',
-    location: { lat: -17.83, lng: 31.05 },
+    location: {
+      lat: -17.83,
+      lng: 31.05,
+    },
     is_active: true,
     is_open: true,
     ...overrides,
   });
 
-  return { brand, branch };
+  return {
+    brand,
+    branch,
+  };
 }
 
 async function makeMenuItem(branch, overrides = {}) {

@@ -1,0 +1,8 @@
+{
+  "batch": "08.6.6C",
+  "files": [
+    "backend/scripts/migrate.js",
+    "BATCH_08_6_6C_INTEGRATION.md"
+  ],
+  "database_changes": "none"
+}

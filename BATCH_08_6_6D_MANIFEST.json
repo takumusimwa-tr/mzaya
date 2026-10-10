@@ -1,0 +1,8 @@
+{
+  "batch": "08.6.6D",
+  "files": [
+    "backend/scripts/probe-migration.js",
+    "BATCH_08_6_6D_INTEGRATION.md"
+  ],
+  "db_commit": "none; probe always rolls back"
+}

@@ -15,6 +15,14 @@ const {
   matchBankMovement,
 } = require('./bankMovementMatching.service');
 
+function transferCurrency(transfer) {
+  return transfer.source_currency || transfer.currency || null;
+}
+
+function transferAmount(transfer) {
+  return transfer.source_amount_minor ?? transfer.amount_minor ?? 0;
+}
+
 async function reconcileTreasuryTransfer(transferId) {
   const transfer = await TreasuryTransfer.findByPk(transferId);
 
@@ -68,19 +76,20 @@ async function reconcileTreasuryTransfer(transferId) {
   }
 
   if (accountingEvent?.ledger_transaction_id) {
-    ledger = await LedgerTransaction.findByPk(
-      accountingEvent.ledger_transaction_id
-    );
+    ledger = await LedgerTransaction.findByPk(accountingEvent.ledger_transaction_id);
   } else if (accountingEvent && !accountingEventIsSatisfied(accountingEvent)) {
     exceptionCode = 'TREASURY_ACCOUNTING_EVENT_NOT_POSTED';
     exceptionMessage = 'Treasury accounting event has not posted to the ledger.';
   }
 
+  const currency = transferCurrency(transfer);
+  const amount = Number(transferAmount(transfer));
+
   if (!bankMovement) {
     const unmatched = await BankMovement.findAll({
       where: {
-        currency: transfer.currency,
-        amount_minor: transfer.amount_minor,
+        currency,
+        amount_minor: amount,
         status: 'unmatched',
       },
       limit: 20,
@@ -100,12 +109,9 @@ async function reconcileTreasuryTransfer(transferId) {
     exceptionMessage = 'Completed treasury transfer has no matched bank movement.';
   }
 
-  const expected = Number(transfer.amount_minor || 0);
-  const observed = bankMovement
-    ? Number(bankMovement.amount_minor || 0)
-    : null;
+  const observed = bankMovement ? Number(bankMovement.amount_minor || 0) : null;
 
-  if (!exceptionCode && observed !== expected) {
+  if (!exceptionCode && observed !== amount) {
     exceptionCode = 'TREASURY_BANK_AMOUNT_MISMATCH';
     exceptionMessage = 'Treasury transfer and bank movement amounts differ.';
   }
@@ -113,8 +119,7 @@ async function reconcileTreasuryTransfer(transferId) {
   if (
     !exceptionCode &&
     bankMovement &&
-    String(bankMovement.currency).toUpperCase() !==
-      String(transfer.currency).toUpperCase()
+    String(bankMovement.currency).toUpperCase() !== String(currency).toUpperCase()
   ) {
     exceptionCode = 'TREASURY_BANK_CURRENCY_MISMATCH';
     exceptionMessage = 'Treasury transfer and bank movement currencies differ.';
@@ -122,8 +127,7 @@ async function reconcileTreasuryTransfer(transferId) {
 
   const result = await TreasuryFinanceReconciliationResult.create({
     transfer_id: transfer.id,
-    result_reference:
-      `TFR-${crypto.randomUUID().slice(0, 10).toUpperCase()}`,
+    result_reference: `TFR-${crypto.randomUUID().slice(0, 10).toUpperCase()}`,
     status: exceptionCode ? 'exception' : 'matched',
     exception_code: exceptionCode,
     exception_message: exceptionMessage,
@@ -132,14 +136,13 @@ async function reconcileTreasuryTransfer(transferId) {
     accounting_event_id: accountingEvent?.id || null,
     ledger_transaction_id: ledger?.id || null,
     bank_movement_id: bankMovement?.id || null,
-    expected_amount_minor: expected,
+    expected_amount_minor: amount,
     observed_amount_minor: observed,
-    currency: transfer.currency,
+    currency,
   });
 
   await transfer.update({
-    finance_reconciliation_status:
-      exceptionCode ? 'exception' : 'matched',
+    finance_reconciliation_status: exceptionCode ? 'exception' : 'matched',
     finance_last_reconciled_at: new Date(),
   });
 

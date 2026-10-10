@@ -1,0 +1,9 @@
+{
+  "batch": "08.6.6D.2",
+  "files": [
+    "backend/migrations/20261011_staging_finance_timestamp_repair.sql",
+    "BATCH_08_6_6D2_INTEGRATION.md"
+  ],
+  "historical_migrations_modified": false,
+  "execution_authorized": false
+}

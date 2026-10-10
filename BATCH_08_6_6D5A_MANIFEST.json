@@ -1,0 +1,8 @@
+{
+  "batch": "08.6.6D.5A",
+  "supersedes": "08.6.6D.5 (not applied)",
+  "files": [
+    "backend/migrations/20261011_staging_treasury_transfer_contract_repair.sql",
+    "BATCH_08_6_6D5A_INTEGRATION.md"
+  ]
+}

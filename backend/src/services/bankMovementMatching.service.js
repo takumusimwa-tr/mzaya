@@ -4,30 +4,45 @@ const {
   TreasuryTransfer,
 } = require('../models/associations');
 
+function transferCurrency(transfer) {
+  return transfer.source_currency || transfer.currency || null;
+}
+
+function transferAmount(transfer) {
+  return transfer.source_amount_minor ?? transfer.amount_minor ?? null;
+}
+
 async function findTransferMatch(bankMovement) {
   if (bankMovement.treasury_transfer_id) {
     return TreasuryTransfer.findByPk(bankMovement.treasury_transfer_id);
   }
 
-  const candidates = await TreasuryTransfer.findAll({
+  // Transitional contract: fetch recent completed transfers and compare through
+  // canonical-first accessors rather than querying obsolete DB columns only.
+  const recent = await TreasuryTransfer.findAll({
     where: {
       status: 'completed',
-      currency: bankMovement.currency,
-      amount_minor: bankMovement.amount_minor,
       completed_at: {
         [Op.gte]: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000),
       },
     },
     order: [['completed_at', 'DESC']],
-    limit: 20,
+    limit: 100,
   });
 
+  const candidates = recent.filter((item) =>
+    String(transferCurrency(item) || '').toUpperCase() ===
+      String(bankMovement.currency || '').toUpperCase() &&
+    Number(transferAmount(item)) === Number(bankMovement.amount_minor)
+  );
+
   if (bankMovement.bank_reference) {
-    const exact = candidates.find(
-      (item) =>
-        item.provider_reference &&
-        String(item.provider_reference) === String(bankMovement.bank_reference)
-    );
+    const exact = candidates.find((item) => {
+      const providerReference =
+        item.provider_reference || item.metadata?.providerReference;
+      return providerReference &&
+        String(providerReference) === String(bankMovement.bank_reference);
+    });
     if (exact) return exact;
   }
 
@@ -44,7 +59,6 @@ async function matchBankMovement(bankMovementId) {
   }
 
   const transfer = await findTransferMatch(movement);
-
   if (!transfer) return null;
 
   await movement.update({

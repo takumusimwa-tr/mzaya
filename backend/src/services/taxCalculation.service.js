@@ -1,8 +1,4 @@
-function calculateTax({
-  taxableBaseMinor,
-  taxRateBps,
-  taxInclusive = false,
-}) {
+function validateTaxInputs(taxableBaseMinor, taxRateBps) {
   const base = Number(taxableBaseMinor);
   const rate = Number(taxRateBps);
 
@@ -19,6 +15,19 @@ function calculateTax({
     error.code = 'INVALID_TAX_RATE';
     throw error;
   }
+
+  return { base, rate };
+}
+
+function calculateTax({
+  taxableBaseMinor,
+  taxRateBps,
+  taxInclusive = false,
+}) {
+  const { base, rate } = validateTaxInputs(
+    taxableBaseMinor,
+    taxRateBps
+  );
 
   if (taxInclusive) {
     const taxAmountMinor = Math.round(
@@ -47,6 +56,18 @@ function calculateTax({
   };
 }
 
+function calculateTaxMinor({
+  taxableMinor,
+  rateBasisPoints,
+}) {
+  return calculateTax({
+    taxableBaseMinor: taxableMinor,
+    taxRateBps: rateBasisPoints,
+    taxInclusive: false,
+  }).taxAmountMinor;
+}
+
 module.exports = {
   calculateTax,
+  calculateTaxMinor,
 };

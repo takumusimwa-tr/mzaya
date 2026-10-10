@@ -1,0 +1,26 @@
+{
+  "batch": "08.6.6B",
+  "supersedes": [
+    "08.6.6 package/config migration tooling",
+    "08.6.6A package/test fixture"
+  ],
+  "files": [
+    "backend/package.json",
+    "backend/tests/paymentRefundFinance.e2e.test.js",
+    "backend/DEPLOYMENT_HARDENING_08_6_6.md",
+    "BATCH_08_6_6B_INTEGRATION.md"
+  ],
+  "delete_after_overlay": [
+    "backend/config/config.js",
+    "backend/migrations/20261010000000-baseline-existing-staging-schema.js"
+  ],
+  "validation": {
+    "node_check": [
+      "backend/tests/paymentRefundFinance.e2e.test.js",
+      "backend/scripts/migrate.js"
+    ],
+    "canonical_migration_runner": "backend/scripts/migrate.js",
+    "sequelize_cli": "not used",
+    "runtime_audit_from_user": "2 moderate, 0 high"
+  }
+}

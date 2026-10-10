@@ -1,0 +1,8 @@
+{
+  "batch": "08.6.6D.1",
+  "files": [
+    "backend/scripts/audit-migration-schema.js",
+    "BATCH_08_6_6D1_INTEGRATION.md"
+  ],
+  "database_effect": "none/read-only"
+}

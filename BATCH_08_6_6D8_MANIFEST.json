@@ -1,0 +1,16 @@
+{
+  "batch": "08.6.6D.8",
+  "name": "Regression Gate Repair",
+  "basis": "GitHub main + user-reported Jest failures",
+  "database_changes": false,
+  "external_money_movement": false,
+  "tests_run_by_assistant": false,
+  "files": [
+    "backend/src/services/orderFinanceEvents.service.js",
+    "backend/src/services/orderEconomicsIntegration.service.js",
+    "backend/src/services/taxCalculation.service.js",
+    "backend/src/services/profitability.service.js",
+    "BATCH_08_6_6D8_INTEGRATION.md",
+    "BATCH_08_6_6D8_MANIFEST.json"
+  ]
+}

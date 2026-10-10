@@ -1,0 +1,17 @@
+{
+  "batch": "08.6.6D.7",
+  "purpose": "Converge active treasury transfer application contracts without external money movement.",
+  "files": [
+    "backend/migrations/20261011_staging_treasury_contract_convergence.sql",
+    "backend/src/models/treasuryTransferModel.js",
+    "backend/src/services/treasuryTransfer.service.js",
+    "backend/src/services/treasuryFinanceEvents.service.js",
+    "backend/src/services/bankMovementMatching.service.js",
+    "backend/src/services/treasuryReconciliation.service.js",
+    "backend/src/services/treasuryTransferExecution.service.js",
+    "BATCH_08_6_6D7_INTEGRATION.md",
+    "BATCH_08_6_6D7_MANIFEST.json"
+  ],
+  "tests_run_by_assistant": "Static file construction only; repository tests not run in this environment.",
+  "database_execution": false
+}

@@ -1,0 +1,13 @@
+{
+  "batch": "08.6.6A",
+  "files": [
+    "backend/package.json",
+    "backend/tests/paymentRefundFinance.e2e.test.js",
+    "BATCH_08_6_6A_GATE_REPAIR.md"
+  ],
+  "validation": {
+    "node_check": "paymentRefundFinance.e2e.test.js passed",
+    "production_audit_from_user_run": "2 moderate, 0 high",
+    "audit_force_fix": "rejected because npm proposes breaking Sequelize downgrade"
+  }
+}

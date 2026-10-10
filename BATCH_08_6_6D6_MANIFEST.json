@@ -1,0 +1,13 @@
+{
+  "batch": "08.6.6D.6",
+  "files": [
+    "backend/migrations/20261011_staging_missing_finance_prerequisites.sql",
+    "BATCH_08_6_6D6_INTEGRATION.md"
+  ],
+  "safety": {
+    "additive_ddl_only": true,
+    "data_backfill": false,
+    "external_money_movement": false,
+    "historical_ledger_mutation": false
+  }
+}

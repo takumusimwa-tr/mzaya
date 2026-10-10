@@ -1,0 +1,11 @@
+{
+  "batch": "08.6.6D.3",
+  "supersedes": [
+    "08.6.6C backend/scripts/migrate.js"
+  ],
+  "files": [
+    "backend/scripts/migrate.js",
+    "BATCH_08_6_6D3_INTEGRATION.md"
+  ],
+  "authorized_execution": "20261011_staging_finance_timestamp_repair.sql only"
+}
