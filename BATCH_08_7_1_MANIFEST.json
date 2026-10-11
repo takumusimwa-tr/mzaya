@@ -1,0 +1,22 @@
+{
+  "batch": "08.7.1",
+  "title": "Customer Product Architecture Consolidation",
+  "baseline": "523138285b9a44701a2b3fa716759e75ef521d69",
+  "files": [
+    "frontend/src/api/api.js",
+    "frontend/src/hooks/useFavorites.js",
+    "frontend/src/pages/profile/AddressesPage.jsx",
+    "BATCH_08_7_1_INTEGRATION.md",
+    "BATCH_08_7_1_MANIFEST.json"
+  ],
+  "runtime_scope": "frontend only",
+  "database_migrations": 0,
+  "backend_changes": 0,
+  "route_changes": 0,
+  "deletions": 0,
+  "tests_run_by_assistant": false,
+  "required_user_gate": [
+    "frontend: npm run build",
+    "frontend: npm run lint"
+  ]
+}

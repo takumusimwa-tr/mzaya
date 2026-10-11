@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import api from '../api/api'
+import { favoriteAPI } from '../api/api'
 
 // Favourites are on BRANDS ("I like Chicken Inn"), not on a specific branch.
 // The nearest branch is resolved when the customer taps through.
@@ -10,11 +10,11 @@ export function useFavoriteIds() {
 
   const { data: ids = [] } = useQuery({
     queryKey: ['favorite-ids'],
-    queryFn:  () => api.get('/favorites/ids').then((r) => r.data.ids),
+    queryFn:  () => favoriteAPI.ids().then((r) => r.data.ids),
   })
 
   const toggle = useMutation({
-    mutationFn: (brandId) => api.post(`/favorites/${brandId}`).then((r) => r.data),
+    mutationFn: (brandId) => favoriteAPI.toggle(brandId).then((r) => r.data),
     onMutate: async (brandId) => {
       // Optimistic update — the heart fills instantly, before the round trip.
       await queryClient.cancelQueries({ queryKey: ['favorite-ids'] })
@@ -42,9 +42,9 @@ export function useFavoriteIds() {
 export function useFavoriteBrands() {
   return useQuery({
     queryKey: ['favorites'],
-    queryFn:  () => api.get('/favorites').then((r) => r.data.brands),
+    queryFn:  () => favoriteAPI.list().then((r) => r.data.brands),
   })
 }
 
-// Back-compat alias — the page previously imported useFavoriteVendors.
+// Back-compat alias — retained until downstream imports are fully normalized.
 export const useFavoriteVendors = useFavoriteBrands

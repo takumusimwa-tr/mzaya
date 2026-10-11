@@ -44,7 +44,7 @@ export const orderAPI = {
   cancel:       (id, reason) => api.post(`/orders/${id}/cancel`, { reason }),
 };
 
-// ─── Vendors ──────────────────────────────────────────────────────────────────
+// ─── Vendors ─────────────────────────────────────────────────────────────────
 export const vendorAPI = {
   list:       (params) => api.get('/vendors', { params }),
   getById:    (id) => api.get(`/vendors/${id}`),
@@ -62,6 +62,25 @@ export const vendorAPI = {
     api.put(`/vendors/${vendorId}/menu/${itemId}`, data),
   deleteMenuItem: (vendorId, itemId) =>
     api.delete(`/vendors/${vendorId}/menu/${itemId}`),
+};
+
+// ─── Customer addresses ──────────────────────────────────────────────────────
+// Purpose: keep customer persistence contracts out of page components.
+// Backend remains authoritative for ownership/default-address behavior.
+export const addressAPI = {
+  list:   ()         => api.get('/addresses'),
+  create: (data)     => api.post('/addresses', data),
+  update: (id, data) => api.put(`/addresses/${id}`, data),
+  remove: (id)       => api.delete(`/addresses/${id}`),
+};
+
+// ─── Customer favourites ─────────────────────────────────────────────────────
+// Favourites are brand-scoped. Branch resolution happens when a customer opens
+// a brand/vendor destination.
+export const favoriteAPI = {
+  ids:    ()        => api.get('/favorites/ids'),
+  list:   ()        => api.get('/favorites'),
+  toggle: (brandId) => api.post(`/favorites/${brandId}`),
 };
 
 // ─── Cities ───────────────────────────────────────────────────────────────────
