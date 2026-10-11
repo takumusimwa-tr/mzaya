@@ -1,0 +1,20 @@
+{
+  "batch": "08.7.2",
+  "title": "Profile & Account Contract Consolidation",
+  "baseline": "66e4dc5",
+  "files": [
+    "backend/src/controllers/auth.controller.js",
+    "backend/src/routes/auth.routes.js",
+    "backend/tests/authProfile.test.js",
+    "frontend/src/api/api.js",
+    "frontend/src/store/useAuthStore.js",
+    "frontend/src/pages/profile/ProfilePage.jsx",
+    "BATCH_08_7_2_INTEGRATION.md",
+    "BATCH_08_7_2_MANIFEST.json"
+  ],
+  "database_migrations": 0,
+  "finance_changes": false,
+  "provider_changes": false,
+  "branding_started": false,
+  "tests_run_by_assistant": false
+}
