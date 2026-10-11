@@ -1,0 +1,23 @@
+{
+  "batch": "08.6.7",
+  "title": "Release Baseline & Operational Closure",
+  "baseline_commit": "424e71d6c72fdde7dd6d933899a77c39a64da543",
+  "files": [
+    "BATCH_08_6_6_INTEGRATION.md",
+    "BATCH_08_6_6D8_INTEGRATION.md",
+    "backend/FINANCE_RELEASE_RUNBOOK.md",
+    "backend/scripts/release-gate.js",
+    "BATCH_08_6_7_INTEGRATION.md",
+    "BATCH_08_6_7_MANIFEST.json"
+  ],
+  "runtime_application_change": false,
+  "database_change": false,
+  "provider_change": false,
+  "branding_started": false,
+  "verified_prior_gate": {
+    "jest_suites": "129/129",
+    "jest_tests": "260/260",
+    "migrations": "50 total, 0 pending, 0 changed",
+    "production_audit": "0 high/critical; 2 moderate"
+  }
+}
