@@ -97,8 +97,8 @@ export default function AddressesPage() {
       <div className="flex items-center gap-3 px-4 pt-14 pb-4 bg-white border-b border-gray-100">
         <button
           type="button"
-          aria-label="Go back"
-          onClick={() => navigate(-1)}
+          aria-label="Back to profile"
+          onClick={() => navigate('/profile', { replace: true })}
           className="p-2 rounded-full bg-gray-100"
         >
           <svg className="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">

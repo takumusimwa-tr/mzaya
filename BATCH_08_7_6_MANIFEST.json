@@ -1,0 +1,22 @@
+{
+  "batch": "08.7.6",
+  "title": "Customer Navigation & Persistence Contract",
+  "baseline": "8db1ed2eefba25ea58b27f62ff4d7a1f728c8689",
+  "branding_started": false,
+  "backend_change": false,
+  "database_change": false,
+  "finance_change": false,
+  "provider_change": false,
+  "files_to_stage": [
+    "frontend/src/pages/order/OrdersPage.jsx",
+    "frontend/src/pages/order/OrderDetail.jsx",
+    "frontend/src/pages/order/CartPage.jsx",
+    "frontend/src/pages/order/CheckoutPage.jsx",
+    "frontend/src/pages/profile/FavoritesPage.jsx",
+    "frontend/src/pages/profile/AddressesPage.jsx",
+    "frontend/CUSTOMER_NAVIGATION_CONTRACT.md",
+    "BATCH_08_7_6_INTEGRATION.md",
+    "BATCH_08_7_6_MANIFEST.json"
+  ],
+  "one_time_apply_script": "scripts/apply-batch-08-7-6.js (delete after applying; do not stage)"
+}

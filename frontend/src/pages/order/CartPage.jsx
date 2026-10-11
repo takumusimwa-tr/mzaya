@@ -19,7 +19,7 @@ export default function CartPage() {
   if (items.length === 0) {
     return (
       <main className="flex min-h-screen flex-col bg-white" style={{ color: T.ink }}>
-        <Header onBack={() => navigate(-1)} title="Cart" />
+        <Header onBack={() => navigate('/home', { replace: true })} title="Cart" />
         <div className="flex flex-1 flex-col items-center justify-center px-8 pb-24 text-center">
           <img src={emptyCart} alt="" aria-hidden="true" className="mb-5 w-52 max-w-full select-none" draggable="false" />
           <h2 className="text-[20px] font-extrabold">Your cart is empty</h2>
@@ -36,7 +36,7 @@ export default function CartPage() {
 
   return (
     <main className="min-h-screen bg-white pb-32" style={{ color: T.ink }}>
-      <Header onBack={() => navigate(-1)} title="Your cart"
+      <Header onBack={() => navigate(cart.vendorId ? `/vendor/${cart.vendorId}` : '/home', { replace: true })} title="Your cart"
         action={<button type="button" onClick={() => cart.clearCart()} className="h-11 px-2 text-[14px] font-semibold" style={{ color: T.ink2 }}>Clear</button>} />
 
       {/* Which store this cart belongs to — one tap back to its menu */}

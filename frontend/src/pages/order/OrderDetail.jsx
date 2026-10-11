@@ -143,7 +143,7 @@ export default function OrderDetail() {
   return (
     <main className="min-h-screen bg-white pb-16" style={{ color: T.ink }}>
       <header className="sticky top-0 z-[1001] flex items-center gap-1 bg-white/95 px-2 backdrop-blur" style={{ paddingTop: 'env(safe-area-inset-top)' }}>
-        <button type="button" aria-label="Back" onClick={() => navigate(-1)} className="flex h-11 w-11 items-center justify-center rounded-full active:bg-black/5">
+        <button type="button" aria-label="Back" onClick={() => navigate('/orders', { replace: true })} className="flex h-11 w-11 items-center justify-center rounded-full active:bg-black/5">
           <ArrowLeft size={21} strokeWidth={2.2} />
         </button>
         <div className="flex h-14 min-w-0 flex-1 flex-col justify-center">

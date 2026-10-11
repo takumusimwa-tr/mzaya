@@ -16,7 +16,7 @@ export default function FavoritesPage() {
     <div className="min-h-screen pb-28" style={{ background: '#F8F8F8' }}>
       {/* Header */}
       <div className="flex items-center gap-3 px-4 pt-14 pb-4 bg-white border-b border-gray-100">
-        <button onClick={() => navigate(-1)} className="p-2 rounded-full bg-gray-100">
+        <button type="button" aria-label="Back to profile" onClick={() => navigate('/profile', { replace: true })} className="p-2 rounded-full bg-gray-100">
           <svg className="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
           </svg>

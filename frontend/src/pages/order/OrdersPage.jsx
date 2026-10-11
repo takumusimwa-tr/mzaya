@@ -22,8 +22,8 @@ export default function OrdersPage() {
   return (
     <div className="pb-24">
       <div className="px-4 pt-14 pb-4 flex items-center gap-3">
-        {/* Orders used to be a tab with no way back; it's now reached from Home or Account. */}
-        <button onClick={() => navigate(-1)} aria-label="Back" className="p-2 rounded-full bg-gray-100">
+        {/* Orders is a top-level customer utility: return to the stable account hub. */}
+        <button type="button" onClick={() => navigate('/profile', { replace: true })} aria-label="Back to profile" className="p-2 rounded-full bg-gray-100">
           <svg className="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
           </svg>

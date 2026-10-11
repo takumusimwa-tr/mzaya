@@ -4,7 +4,7 @@ import { Navigate, useNavigate } from 'react-router-dom'
 import {
   ArrowLeft, ChevronDown, Clock, Crosshair, Link2, MapPin, MessageCircle, Tag, Truck, X, Zap,
 } from 'lucide-react'
-import api, { orderAPI, geoAPI, promoAPI } from '../../api/api'
+import { addressAPI, orderAPI, geoAPI, promoAPI } from '../../api/api'
 import useCartStore from '../../store/useCartStore'
 import Money from '../../components/ui/Money'
 
@@ -58,7 +58,7 @@ export default function CheckoutPage() {
 
   const { data: savedAddresses } = useQuery({
     queryKey: ['addresses'],
-    queryFn: () => api.get('/addresses').then((r) => r.data.addresses),
+    queryFn: () => addressAPI.list().then((r) => r.data.addresses || []),
   })
 
   const [dropoff, setDropoff] = useState('')
