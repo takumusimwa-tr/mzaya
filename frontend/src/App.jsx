@@ -30,6 +30,7 @@ const AddressesPage = lazy(() => import('./pages/profile/AddressesPage'))
 const CustomerSupportPage = lazy(() => import('./pages/profile/CustomerSupportPage'))
 const CustomerFAQPage = lazy(() => import('./pages/profile/CustomerFAQPage'))
 const CustomerAboutPage = lazy(() => import('./pages/profile/CustomerAboutPage'))
+const NotificationsPage = lazy(() => import('./pages/profile/NotificationsPage'))
 
 // Rider
 const RiderHome        = lazy(() => import('./pages/rider/RiderHome'))
@@ -212,6 +213,7 @@ function AppShell() {
           <Route path="/help"       element={<ProtectedRoute><CustomerSupportPage /></ProtectedRoute>} />
           <Route path="/help/faq"   element={<ProtectedRoute><CustomerFAQPage /></ProtectedRoute>} />
           <Route path="/about"      element={<ProtectedRoute><CustomerAboutPage /></ProtectedRoute>} />
+          <Route path="/notifications" element={<ProtectedRoute><NotificationsPage /></ProtectedRoute>} />
 
           {/* Shared — every role has a profile. */}
           <Route path="/profile"    element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />

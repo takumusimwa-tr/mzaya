@@ -1,0 +1,18 @@
+{
+  "batch": "08.7.4",
+  "title": "Notification Center Product Activation",
+  "baseline": "7beb426",
+  "branding_started": false,
+  "backend_change": false,
+  "database_change": false,
+  "finance_change": false,
+  "provider_change": false,
+  "files_to_stage": [
+    "frontend/src/App.jsx",
+    "frontend/src/pages/profile/ProfilePage.jsx",
+    "frontend/src/pages/profile/NotificationsPage.jsx",
+    "BATCH_08_7_4_INTEGRATION.md",
+    "BATCH_08_7_4_MANIFEST.json"
+  ],
+  "one_time_apply_script": "scripts/apply-batch-08-7-4.js (delete after applying; do not stage)"
+}

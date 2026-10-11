@@ -181,7 +181,7 @@ export default function ProfilePage() {
         {user?.role === 'customer' && (
           <ProfileMenuItem icon="location" label="Saved Addresses" onClick={() => navigate('/addresses')} />
         )}
-        <ProfileMenuItem icon="notify" label="Notifications" onClick={() => {}} badge="Coming soon" />
+        <ProfileMenuItem icon="notify" label="Notifications" onClick={() => navigate('/notifications')} />
         <ProfileMenuItem icon="help" label="Help & Support" onClick={() => navigate('/help')} />
         <ProfileMenuItem icon="menu" label="About Mzaya" onClick={() => navigate('/about')} />
       </div>
