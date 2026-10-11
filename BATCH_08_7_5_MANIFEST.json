@@ -1,0 +1,18 @@
+{
+  "batch": "08.7.5",
+  "title": "Customer Route Ownership Consolidation",
+  "baseline": "e37f29e1af16d4f3bfcd41e0822edb9544ee7db8",
+  "branding_started": false,
+  "backend_change": false,
+  "database_change": false,
+  "finance_change": false,
+  "provider_change": false,
+  "files_to_stage": [
+    "frontend/src/App.jsx",
+    "frontend/src/pages/profile/ProfilePage.jsx",
+    "frontend/CUSTOMER_SURFACE_OWNERSHIP.md",
+    "BATCH_08_7_5_INTEGRATION.md",
+    "BATCH_08_7_5_MANIFEST.json"
+  ],
+  "one_time_apply_script": "scripts/apply-batch-08-7-5.js (delete after applying; do not stage)"
+}

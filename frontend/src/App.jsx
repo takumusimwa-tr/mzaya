@@ -210,10 +210,10 @@ function AppShell() {
           <Route path="/track/:id"  element={<RoleRoute allow={['customer']}><TrackingPage /></RoleRoute>} />
           <Route path="/favorites"  element={<RoleRoute allow={['customer']}><FavoritesPage /></RoleRoute>} />
           <Route path="/addresses"  element={<RoleRoute allow={['customer']}><AddressesPage /></RoleRoute>} />
-          <Route path="/help"       element={<ProtectedRoute><CustomerSupportPage /></ProtectedRoute>} />
-          <Route path="/help/faq"   element={<ProtectedRoute><CustomerFAQPage /></ProtectedRoute>} />
-          <Route path="/about"      element={<ProtectedRoute><CustomerAboutPage /></ProtectedRoute>} />
-          <Route path="/notifications" element={<ProtectedRoute><NotificationsPage /></ProtectedRoute>} />
+          <Route path="/help"       element={<RoleRoute allow={['customer']}><CustomerSupportPage /></RoleRoute>} />
+          <Route path="/help/faq"   element={<RoleRoute allow={['customer']}><CustomerFAQPage /></RoleRoute>} />
+          <Route path="/about"      element={<RoleRoute allow={['customer']}><CustomerAboutPage /></RoleRoute>} />
+          <Route path="/notifications" element={<RoleRoute allow={['customer']}><NotificationsPage /></RoleRoute>} />
 
           {/* Shared — every role has a profile. */}
           <Route path="/profile"    element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />

@@ -181,9 +181,15 @@ export default function ProfilePage() {
         {user?.role === 'customer' && (
           <ProfileMenuItem icon="location" label="Saved Addresses" onClick={() => navigate('/addresses')} />
         )}
-        <ProfileMenuItem icon="notify" label="Notifications" onClick={() => navigate('/notifications')} />
-        <ProfileMenuItem icon="help" label="Help & Support" onClick={() => navigate('/help')} />
-        <ProfileMenuItem icon="menu" label="About Mzaya" onClick={() => navigate('/about')} />
+        {user?.role === 'customer' && (
+          <ProfileMenuItem icon="notify" label="Notifications" onClick={() => navigate('/notifications')} />
+        )}
+        {user?.role === 'customer' && (
+          <ProfileMenuItem icon="help" label="Help & Support" onClick={() => navigate('/help')} />
+        )}
+        {user?.role === 'customer' && (
+          <ProfileMenuItem icon="menu" label="About Mzaya" onClick={() => navigate('/about')} />
+        )}
       </div>
 
       <p className="text-center text-xs text-gray-400 mt-6">Mzaya v1.0.0 · Built for Zimbabwe</p>
