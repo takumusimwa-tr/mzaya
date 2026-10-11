@@ -27,6 +27,9 @@ const TrackingPage  = lazy(() => import('./pages/tracking/TrackingPage'))
 const ProfilePage   = lazy(() => import('./pages/profile/ProfilePage'))
 const FavoritesPage = lazy(() => import('./pages/profile/FavoritesPage'))
 const AddressesPage = lazy(() => import('./pages/profile/AddressesPage'))
+const CustomerSupportPage = lazy(() => import('./pages/profile/CustomerSupportPage'))
+const CustomerFAQPage = lazy(() => import('./pages/profile/CustomerFAQPage'))
+const CustomerAboutPage = lazy(() => import('./pages/profile/CustomerAboutPage'))
 
 // Rider
 const RiderHome        = lazy(() => import('./pages/rider/RiderHome'))
@@ -206,6 +209,9 @@ function AppShell() {
           <Route path="/track/:id"  element={<RoleRoute allow={['customer']}><TrackingPage /></RoleRoute>} />
           <Route path="/favorites"  element={<RoleRoute allow={['customer']}><FavoritesPage /></RoleRoute>} />
           <Route path="/addresses"  element={<RoleRoute allow={['customer']}><AddressesPage /></RoleRoute>} />
+          <Route path="/help"       element={<ProtectedRoute><CustomerSupportPage /></ProtectedRoute>} />
+          <Route path="/help/faq"   element={<ProtectedRoute><CustomerFAQPage /></ProtectedRoute>} />
+          <Route path="/about"      element={<ProtectedRoute><CustomerAboutPage /></ProtectedRoute>} />
 
           {/* Shared — every role has a profile. */}
           <Route path="/profile"    element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />

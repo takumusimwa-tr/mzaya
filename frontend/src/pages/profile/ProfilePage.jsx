@@ -182,7 +182,8 @@ export default function ProfilePage() {
           <ProfileMenuItem icon="location" label="Saved Addresses" onClick={() => navigate('/addresses')} />
         )}
         <ProfileMenuItem icon="notify" label="Notifications" onClick={() => {}} badge="Coming soon" />
-        <ProfileMenuItem icon="help" label="Help & Support" onClick={() => {}} />
+        <ProfileMenuItem icon="help" label="Help & Support" onClick={() => navigate('/help')} />
+        <ProfileMenuItem icon="menu" label="About Mzaya" onClick={() => navigate('/about')} />
       </div>
 
       <p className="text-center text-xs text-gray-400 mt-6">Mzaya v1.0.0 · Built for Zimbabwe</p>
