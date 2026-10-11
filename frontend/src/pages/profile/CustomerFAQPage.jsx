@@ -45,7 +45,7 @@ export default function CustomerFAQPage() {
       query={query}
       entries={entries}
       expandedId={expandedId}
-      onBack={() => navigate('/help')}
+      onBack={() => navigate('/help', { replace: true })}
       onQueryChange={setQuery}
       onToggleEntry={(entry) => setExpandedId((current) => current === entry.id ? null : entry.id)}
     />

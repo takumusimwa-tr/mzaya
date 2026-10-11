@@ -45,7 +45,7 @@ export default function NotificationsPage() {
     <div className="min-h-screen pb-12">
       <header className="sticky top-0 z-10 border-b border-gray-100 bg-white px-4 pb-4 pt-12">
         <div className="flex items-center justify-between gap-3">
-          <button type="button" onClick={() => navigate(-1)}
+          <button type="button" onClick={() => navigate('/profile', { replace: true })}
             className="rounded-full bg-gray-100 px-3 py-2 text-sm font-semibold text-gray-700"
             aria-label="Go back">‹</button>
           <div className="min-w-0 flex-1">

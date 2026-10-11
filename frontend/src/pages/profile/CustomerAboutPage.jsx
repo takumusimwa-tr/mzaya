@@ -12,8 +12,8 @@ export default function CustomerAboutPage() {
   return (
     <AboutMzayaPage
       version="1.0.0"
-      onBack={() => navigate(-1)}
-      onOpenSupport={() => navigate('/help')}
+      onBack={() => navigate('/profile', { replace: true })}
+      onOpenSupport={() => navigate('/help', { replace: true })}
     />
   )
 }

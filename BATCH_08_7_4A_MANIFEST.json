@@ -1,0 +1,19 @@
+{
+  "batch": "08.7.4A",
+  "title": "Utility Navigation Repair",
+  "baseline": "d367c4f",
+  "branding_started": false,
+  "backend_change": false,
+  "database_change": false,
+  "finance_change": false,
+  "provider_change": false,
+  "files_to_stage": [
+    "frontend/src/pages/profile/CustomerSupportPage.jsx",
+    "frontend/src/pages/profile/CustomerFAQPage.jsx",
+    "frontend/src/pages/profile/CustomerAboutPage.jsx",
+    "frontend/src/pages/profile/NotificationsPage.jsx",
+    "BATCH_08_7_4A_INTEGRATION.md",
+    "BATCH_08_7_4A_MANIFEST.json"
+  ],
+  "one_time_apply_script": "scripts/apply-batch-08-7-4a.js (delete after applying; do not stage)"
+}

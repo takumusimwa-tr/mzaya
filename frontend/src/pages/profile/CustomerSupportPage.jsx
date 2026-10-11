@@ -55,7 +55,7 @@ export default function CustomerSupportPage() {
     <HelpCenterPage
       topics={topics}
       query={query}
-      onBack={() => navigate(-1)}
+      onBack={() => navigate('/profile', { replace: true })}
       onQueryChange={setQuery}
       onSearch={setQuery}
       onTopicSelect={(topic) => navigate(`/help/faq?topic=${encodeURIComponent(topic.id)}`)}
