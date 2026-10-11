@@ -6,19 +6,8 @@ import useAuthStore from '../../store/useAuthStore'
 import Button from '../../components/ui/Button'
 import Icon from '../../components/ui/Icon'
 
-const ROLE_HOME = {
-  customer: '/home',
-  rider:    '/rider',
-  vendor:   '/vendor',
-  admin:    '/admin',
-}
-
-const ROLE_COLOR = {
-  customer: 'bg-green-100 text-green-700',
-  rider:    'bg-green-100 text-green-700',
-  vendor:   'bg-green-100 text-green-700',
-  admin:    'bg-gray-100 text-gray-700',
-}
+const CUSTOMER_HOME = '/home'
+const CUSTOMER_ROLE_COLOR = 'bg-green-100 text-green-700'
 
 export default function ProfilePage() {
   const navigate = useNavigate()
@@ -67,8 +56,8 @@ export default function ProfilePage() {
     saveProfile.reset()
   }
 
-  const homeRoute = ROLE_HOME[user?.role] || '/home'
-  const roleColor = ROLE_COLOR[user?.role] || 'bg-gray-100 text-gray-700'
+  const homeRoute = CUSTOMER_HOME
+  const roleColor = CUSTOMER_ROLE_COLOR
 
   return (
     <div className="pb-24">
@@ -157,39 +146,13 @@ export default function ProfilePage() {
       )}
 
       <div className="px-4 mt-4 flex flex-col gap-3">
-        {user?.role === 'customer' && (
-          <ProfileMenuItem icon="parcel" label="My Orders" onClick={() => navigate('/orders')} />
-        )}
-        {user?.role === 'customer' && (
-          <ProfileMenuItem icon="favorite" label="Favorites" onClick={() => navigate('/favorites')} />
-        )}
-        {user?.role === 'customer' && (
-          <ProfileMenuItem icon="store" label="Sell on Mzaya" onClick={() => navigate('/sell')} />
-        )}
-        {user?.role === 'rider' && (
-          <ProfileMenuItem icon="rider" label="Vehicle & City" onClick={() => navigate('/rider/setup')} />
-        )}
-        {user?.role === 'rider' && (
-          <ProfileMenuItem icon="earnings" label="My Earnings" onClick={() => navigate('/rider/earnings')} />
-        )}
-        {user?.role === 'vendor' && (
-          <ProfileMenuItem icon="orders" label="My Orders" onClick={() => navigate('/vendor/orders')} />
-        )}
-        {user?.role === 'vendor' && (
-          <ProfileMenuItem icon="menu" label="My Menu" onClick={() => navigate('/vendor/menu')} />
-        )}
-        {user?.role === 'customer' && (
-          <ProfileMenuItem icon="location" label="Saved Addresses" onClick={() => navigate('/addresses')} />
-        )}
-        {user?.role === 'customer' && (
-          <ProfileMenuItem icon="notify" label="Notifications" onClick={() => navigate('/notifications')} />
-        )}
-        {user?.role === 'customer' && (
-          <ProfileMenuItem icon="help" label="Help & Support" onClick={() => navigate('/help')} />
-        )}
-        {user?.role === 'customer' && (
-          <ProfileMenuItem icon="menu" label="About Mzaya" onClick={() => navigate('/about')} />
-        )}
+        <ProfileMenuItem icon="parcel" label="My Orders" onClick={() => navigate('/orders')} />
+        <ProfileMenuItem icon="favorite" label="Favorites" onClick={() => navigate('/favorites')} />
+        <ProfileMenuItem icon="store" label="Sell on Mzaya" onClick={() => navigate('/sell')} />
+        <ProfileMenuItem icon="location" label="Saved Addresses" onClick={() => navigate('/addresses')} />
+        <ProfileMenuItem icon="notify" label="Notifications" onClick={() => navigate('/notifications')} />
+        <ProfileMenuItem icon="help" label="Help & Support" onClick={() => navigate('/help')} />
+        <ProfileMenuItem icon="menu" label="About Mzaya" onClick={() => navigate('/about')} />
       </div>
 
       <p className="text-center text-xs text-gray-400 mt-6">Mzaya v1.0.0 · Built for Zimbabwe</p>

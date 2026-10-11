@@ -198,10 +198,10 @@ function AppShell() {
 
           {/* Customer.
               NOTE: /vendor/:id is the CUSTOMER-facing store page — not the vendor
-              console — so it stays open to any signed-in user. The console lives
+              console — so it stays in the customer route family. The console lives
               at /vendor (no param) and is guarded in the vendor shell above. */}
           <Route path="/home"       element={<RoleRoute allow={['customer']}><HomePage /></RoleRoute>} />
-          <Route path="/vendor/:id" element={<ProtectedRoute><VendorPage /></ProtectedRoute>} />
+          <Route path="/vendor/:id" element={<RoleRoute allow={['customer']}><VendorPage /></RoleRoute>} />
           <Route path="/errand"     element={<RoleRoute allow={['customer']}><ErrandPage /></RoleRoute>} />
           <Route path="/cart"       element={<RoleRoute allow={['customer']}><CartPage /></RoleRoute>} />
           <Route path="/checkout"   element={<RoleRoute allow={['customer']}><CheckoutPage /></RoleRoute>} />
@@ -215,10 +215,10 @@ function AppShell() {
           <Route path="/about"      element={<RoleRoute allow={['customer']}><CustomerAboutPage /></RoleRoute>} />
           <Route path="/notifications" element={<RoleRoute allow={['customer']}><NotificationsPage /></RoleRoute>} />
 
-          {/* Shared — every role has a profile. */}
-          <Route path="/profile"    element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
-          {/* Any signed-in user can apply to become a vendor. */}
-          <Route path="/sell"       element={<ProtectedRoute><VendorOnboarding /></ProtectedRoute>} />
+          {/* Customer account hub. Rider/vendor account management has dedicated routes. */}
+          <Route path="/profile"    element={<RoleRoute allow={['customer']}><ProfilePage /></RoleRoute>} />
+          {/* Vendor application is a customer product action, not a cross-role utility. */}
+          <Route path="/sell"       element={<RoleRoute allow={['customer']}><VendorOnboarding /></RoleRoute>} />
 
           {/* Rider */}
           <Route path="/rider"              element={<RoleRoute allow={['rider']}><RiderHome /></RoleRoute>} />
