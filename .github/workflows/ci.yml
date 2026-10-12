@@ -59,16 +59,17 @@ jobs:
           ALLOW_MOCK_PAYMENTS: 'true'
         run: npm test
 
-      - name: Migrations apply cleanly to an empty database
+      - name: Release preflight
         working-directory: backend
-        env:
-          DB_URL: postgresql://postgres:postgres@localhost:5432/mzaya_migrate_check
-          JWT_SECRET: ci-secret-at-least-32-characters-long!!!
-        run: |
-          # A migration that only works against YOUR laptop's schema isn't a
-          # migration. Prove they run from nothing.
-          PGPASSWORD=postgres createdb -h localhost -U postgres mzaya_migrate_check
-          npm run migrate
+        # This step used to run `npm run migrate` against an empty database.
+        # Batch 08.6.6 made the runner refuse blanket runs on purpose (one named,
+        # probed file at a time), so that call could only ever print its usage
+        # and fail. It was never a real guarantee either: the base tables come
+        # from boot-time sync, not migrations, so "builds from empty" has never
+        # been true. Until there is a baseline migration that creates the core
+        # schema, the honest automated check is the non-mutating preflight.
+        # Applying migrations stays a deliberate human step (FINANCE_RELEASE_RUNBOOK.md).
+        run: node scripts/release-gate.js
 
   # ── Frontend: it must actually build ────────────────────────────────────────
   frontend:

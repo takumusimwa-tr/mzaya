@@ -2,10 +2,12 @@ import { useState, useEffect } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useNavigate } from 'react-router-dom'
 import { riderAPI, vehicleAPI, cityAPI } from '../../api/api'
+import useSignOut from '../../hooks/useSignOut'
 
 export default function RiderProfilePage() {
   const navigate    = useNavigate()
   const queryClient = useQueryClient()
+  const signOut     = useSignOut()
 
   const [vehicleType, setVehicleType] = useState('')
   const [cityId, setCityId]           = useState('')
@@ -79,7 +81,7 @@ export default function RiderProfilePage() {
             <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
           </svg>
         </button>
-        <h1 className="text-2xl font-bold text-white">Rider setup</h1>
+        <h1 className="text-2xl font-bold text-white">Mzaya setup</h1>
         <p className="text-white/60 mt-1 text-sm">
           Set your vehicle and city so we can match you with the right deliveries.
         </p>
@@ -193,6 +195,12 @@ export default function RiderProfilePage() {
           style={{ background: '#00A651' }}
         >
           {saveMut.isPending ? 'Saving…' : 'Save & continue'}
+        </button>
+        {/* Riders had no way to sign out once /profile became customer-only. */}
+        <button type="button" onClick={signOut}
+          className="mt-2 w-full py-3 rounded-2xl text-sm font-bold active:bg-gray-50"
+          style={{ color: '#C0392B' }}>
+          Sign out
         </button>
       </div>
     </div>

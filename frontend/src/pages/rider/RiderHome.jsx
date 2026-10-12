@@ -156,9 +156,10 @@ export default function RiderHome() {
               {online ? 'Online' : 'Go online'}
             </button>
 
-            {/* Profile avatar */}
+            {/* Profile avatar: /profile is customer-only, so riders go to their own profile. */}
             <button
-              onClick={() => navigate('/profile')}
+              onClick={() => navigate('/rider/setup')}
+              aria-label="Your Mzaya profile"
               className="w-9 h-9 rounded-full flex items-center justify-center font-black text-sm flex-shrink-0"
               style={{ background: 'rgba(255,255,255,0.1)', color: '#94A3B8' }}>
               {user?.name?.charAt(0)}

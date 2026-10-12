@@ -51,8 +51,10 @@ import VendorHoursEditor, {
   VENDOR_DAYS,
 } from '../../components/vendor/VendorHoursEditor'
 import VendorStatusBanner from '../../components/vendor/VendorStatusBanner'
+import useSignOut from '../../hooks/useSignOut'
 
 export default function VendorSettings() {
+  const signOut = useSignOut()
   const queryClient = useQueryClient()
   const navigate = useNavigate()
   const branchId = useActiveBranch((state) => state.branchId)
@@ -319,6 +321,17 @@ export default function VendorSettings() {
             style={{ background: 'var(--mzaya-primary)' }}
           >
             {saveMutation.isPending ? 'Saving settings…' : 'Save settings'}
+          </button>
+
+          {/* Vendors had no reachable sign-out: it lived in VendorSideRail, which
+              no screen renders, and /profile is now customer-only. */}
+          <button
+            type="button"
+            onClick={signOut}
+            className="w-full rounded-[16px] py-3 text-[12px] font-semibold outline-none focus-visible:[box-shadow:var(--mzaya-focus-ring)]"
+            style={{ color: '#C0392B' }}
+          >
+            Sign out
           </button>
         </div>
       </main>

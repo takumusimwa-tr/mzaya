@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useMutation } from '@tanstack/react-query'
 import { authAPI } from '../../api/api'
+import useSignOut from '../../hooks/useSignOut'
 import useAuthStore from '../../store/useAuthStore'
 import Button from '../../components/ui/Button'
 import Icon from '../../components/ui/Icon'
@@ -11,7 +12,7 @@ const CUSTOMER_ROLE_COLOR = 'bg-green-100 text-green-700'
 
 export default function ProfilePage() {
   const navigate = useNavigate()
-  const { user, logout, updateSession } = useAuthStore()
+  const { user, updateSession } = useAuthStore()
   const [editing, setEditing] = useState(false)
   const [form, setForm] = useState({ name: '', email: '', phone: '' })
 
@@ -31,10 +32,7 @@ export default function ProfilePage() {
     },
   })
 
-  const handleLogout = () => {
-    logout()
-    navigate('/login')
-  }
+  const handleLogout = useSignOut()
 
   const handleSave = (event) => {
     event.preventDefault()
@@ -159,7 +157,7 @@ export default function ProfilePage() {
 
       <div className="px-4 mt-4">
         <Button variant="danger" size="lg" onClick={handleLogout}>
-          Logout
+          Sign out
         </Button>
       </div>
     </div>

@@ -6,16 +6,15 @@ import api from '../../api/api'
 import useAuthStore from '../../store/useAuthStore'
 import LoadingScreen from '../../components/ui/LoadingScreen'
 import Icon from '../../components/ui/Icon'
+import useSignOut from '../../hooks/useSignOut'
 
 const TABS = ['Overview', 'Vendors', 'Mzayas', 'Promos', 'Live', 'Mzaya AI']
 
 export default function AdminHome() {
   const user     = useAuthStore((s) => s.user)
-  const logout   = useAuthStore((s) => s.logout)
-  const navigate = useNavigate()
   const [tab, setTab] = useState('Overview')
 
-  const handleLogout = () => { logout(); navigate('/login') }
+  const handleLogout = useSignOut()
 
   return (
     <div className="min-h-screen bg-gray-50 pb-10">
