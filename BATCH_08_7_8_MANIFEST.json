@@ -1,0 +1,19 @@
+{
+  "batch": "08.7.8",
+  "title": "Session Lifecycle Convergence",
+  "baseline": "b31667fa04ec1c480e0261c81226ba131a8a689f",
+  "branding_started": false,
+  "backend_change": false,
+  "database_change": false,
+  "finance_change": false,
+  "provider_change": false,
+  "dependency_change": false,
+  "files_to_stage": [
+    "frontend/src/store/useAuthStore.js",
+    "frontend/src/api/api.js",
+    "frontend/SESSION_LIFECYCLE_CONTRACT.md",
+    "BATCH_08_7_8_INTEGRATION.md",
+    "BATCH_08_7_8_MANIFEST.json"
+  ],
+  "one_time_apply_script": "scripts/apply-batch-08-7-8.js (delete after applying; do not stage)"
+}

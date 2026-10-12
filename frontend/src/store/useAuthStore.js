@@ -1,9 +1,15 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
+const SESSION_KEYS = ['mzaya_token', 'mzaya_user', 'mzaya_auth'];
+
 function persistSession(user, token) {
   localStorage.setItem('mzaya_token', token);
   localStorage.setItem('mzaya_user', JSON.stringify(user));
+}
+
+export function clearPersistedSession() {
+  SESSION_KEYS.forEach((key) => localStorage.removeItem(key));
 }
 
 const useAuthStore = create(
@@ -26,8 +32,7 @@ const useAuthStore = create(
       },
 
       logout: () => {
-        localStorage.removeItem('mzaya_token');
-        localStorage.removeItem('mzaya_user');
+        clearPersistedSession();
 
         if ('serviceWorker' in navigator) {
           navigator.serviceWorker.controller?.postMessage('purge-caches');

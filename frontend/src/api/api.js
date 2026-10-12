@@ -1,4 +1,5 @@
 import axios from 'axios';
+import useAuthStore, { clearPersistedSession } from '../store/useAuthStore';
 
 const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
@@ -15,14 +16,20 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
-// ─── Handle 401 globally ─────────────────────────────────────────────────────
+// ─── Handle expired/revoked sessions globally ───────────────────────────────
+// Keep Zustand and every persisted auth key in sync before redirecting. Without
+// this, the persisted store can rehydrate a stale token after the interceptor
+// removed only the legacy token/user keys.
 api.interceptors.response.use(
   (res) => res,
   (err) => {
     if (err.response?.status === 401) {
-      localStorage.removeItem('mzaya_token');
-      localStorage.removeItem('mzaya_user');
-      window.location.href = '/login';
+      clearPersistedSession();
+      useAuthStore.setState({ user: null, token: null });
+
+      if (window.location.pathname !== '/login') {
+        window.location.replace('/login');
+      }
     }
     return Promise.reject(err);
   }
