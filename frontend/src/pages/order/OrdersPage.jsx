@@ -1,7 +1,8 @@
 import { useNavigate } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { orderAPI } from '../../api/api'
-import LoadingScreen from '../../components/ui/LoadingScreen'
+import LoadingState from '../../components/common/LoadingState'
+import ErrorState from '../../components/common/ErrorState'
 import Badge from '../../components/ui/Badge'
 import useReorder from '../../hooks/useReorder'
 import Icon from '../../components/ui/Icon'
@@ -11,13 +12,13 @@ export default function OrdersPage() {
   const navigate = useNavigate()
   const reorder  = useReorder()
 
-  const { data: orders, isLoading } = useQuery({
+  const { data: orders = [], isLoading, isError, refetch } = useQuery({
     queryKey: ['my-orders'],
-    queryFn:  () => orderAPI.myOrders().then((r) => r.data.orders),
+    queryFn:  () => orderAPI.myOrders().then((r) => r.data.orders || []),
     refetchInterval: 30000,
   })
 
-  if (isLoading) return <LoadingScreen message="Loading orders..." />
+  if (isLoading) return <LoadingState label="Loading orders..." fullScreen />
 
   return (
     <div className="pb-24">
@@ -31,7 +32,11 @@ export default function OrdersPage() {
         <h1 className="text-xl font-bold text-gray-900">My Orders</h1>
       </div>
 
-      {!orders?.length ? (
+      {isError ? (
+        <div className="px-4">
+          <ErrorState title="Couldn’t load orders" description="Check your connection and try again." onRetry={() => refetch()} />
+        </div>
+      ) : !orders.length ? (
         <div className="flex flex-col items-center justify-center py-24 px-6">
           <img src={emptyOrders} alt="" aria-hidden="true" className="mx-auto w-56 max-w-full mb-5 select-none" draggable="false" />
           <p className="text-gray-600 font-semibold">No orders yet</p>

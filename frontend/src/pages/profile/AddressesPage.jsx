@@ -13,7 +13,8 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { addressAPI } from '../../api/api'
-import LoadingScreen from '../../components/ui/LoadingScreen'
+import LoadingState from '../../components/common/LoadingState'
+import ErrorState from '../../components/common/ErrorState'
 import Icon from '../../components/ui/Icon'
 import emptyAddresses from '../../assets/brand/illustrations/empty-states/mzaya-empty-addresses.svg'
 
@@ -90,7 +91,7 @@ export default function AddressesPage() {
     save.mutate(payload)
   }
 
-  if (isLoading) return <LoadingScreen message="Loading addresses..." />
+  if (isLoading) return <LoadingState label="Loading addresses..." fullScreen />
 
   return (
     <div className="min-h-screen pb-28" style={{ background: '#F8F8F8' }}>
@@ -110,17 +111,11 @@ export default function AddressesPage() {
 
       <div className="px-4 mt-4 flex flex-col gap-3">
         {isError ? (
-          <div className="text-center py-12 bg-white rounded-2xl border border-gray-100">
-            <p className="font-bold text-gray-800">Couldn’t load addresses</p>
-            <p className="text-gray-400 text-sm mt-1">Check your connection and try again.</p>
-            <button
-              type="button"
-              onClick={() => refetch()}
-              className="mt-4 px-5 py-2.5 rounded-xl bg-gray-900 text-white text-sm font-semibold"
-            >
-              Try again
-            </button>
-          </div>
+          <ErrorState
+            title="Couldn’t load addresses"
+            description="Check your connection and try again."
+            onRetry={() => refetch()}
+          />
         ) : addresses.length === 0 ? (
           <div className="text-center py-16 bg-white rounded-2xl" style={{ boxShadow: '0 1px 8px rgba(0,0,0,0.06)' }}>
             <img src={emptyAddresses} alt="" aria-hidden="true" className="mx-auto w-48 max-w-full mb-5 select-none" draggable="false" />

@@ -1,0 +1,14 @@
+{
+  "batch": "08.7.9",
+  "title": "Customer State Contract",
+  "baseline": "1923a6cfbd2ce2a146211e9275e283f986b799f0",
+  "branding_started": false,
+  "files_to_stage": [
+    "frontend/src/pages/order/OrdersPage.jsx",
+    "frontend/src/pages/profile/AddressesPage.jsx",
+    "frontend/CUSTOMER_STATE_CONTRACT.md",
+    "BATCH_08_7_9_INTEGRATION.md",
+    "BATCH_08_7_9_MANIFEST.json"
+  ],
+  "one_time_apply_script": "scripts/apply-batch-08-7-9.js"
+}
