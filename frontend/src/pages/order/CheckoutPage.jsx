@@ -95,7 +95,7 @@ export default function CheckoutPage() {
 
   // Live quote from the backend: the single source of truth for fee and vehicle,
   // computed exactly as at placement, so the price shown is the price charged.
-  const { data: quote, isLoading: quoteLoading, isError: quoteError } = useQuery({
+  const { data: quote, isLoading: quoteLoading, isError: quoteError, refetch: refetchQuote } = useQuery({
     queryKey: ['quote', cart.categoryType, subtotal, totalWeight, tip, promo?.discount_usd || 0],
     enabled: cart.items.length > 0,
     queryFn: () =>
@@ -229,6 +229,7 @@ export default function CheckoutPage() {
   }
 
   const handleSubmit = async () => {
+    if (loading) return
     setError('')
 
     if (!dropoff.trim()) return fail('Add your delivery address', { address: true })
@@ -288,7 +289,7 @@ export default function CheckoutPage() {
     <main className="min-h-screen bg-white pb-44" style={{ color: T.ink }}>
       <header className="sticky top-0 z-20 flex items-center gap-1 bg-white/95 px-2 backdrop-blur"
         style={{ paddingTop: 'env(safe-area-inset-top)' }}>
-        <button type="button" aria-label="Back" onClick={() => navigate(-1)} className="flex h-11 w-11 items-center justify-center rounded-full active:bg-black/5">
+        <button type="button" aria-label="Back" onClick={() => cart.vendorId ? navigate(`/vendor/${cart.vendorId}`, { replace: true }) : navigate('/cart', { replace: true })} className="flex h-11 w-11 items-center justify-center rounded-full active:bg-black/5">
           <ArrowLeft size={21} strokeWidth={2.2} />
         </button>
         <div className="flex h-14 min-w-0 flex-1 flex-col justify-center">
@@ -296,6 +297,13 @@ export default function CheckoutPage() {
           <p className="truncate text-[12px]" style={{ color: T.ink2 }}>{cart.vendorName}</p>
         </div>
       </header>
+
+      {quoteError ? (
+        <div className="mx-4 mt-3 rounded-xl px-4 py-3 text-[13px]" style={{ background: T.amberTint, color: T.amber }}>
+          <span className="font-bold">Couldn’t refresh delivery pricing.</span>
+          <button type="button" onClick={() => refetchQuote()} className="ml-2 underline font-bold">Try again</button>
+        </div>
+      ) : null}
 
       {/* ── When ─────────────────────────────────────────────────────────── */}
       <div className="px-4 pt-2">

@@ -1,0 +1,21 @@
+{
+  "batch": "08.7.12",
+  "baseline": "86ae0710e9eb8e9700defbe456734895cc428e33",
+  "files": [
+    "frontend/src/pages/order/CheckoutPage.jsx",
+    "frontend/src/hooks/useReorder.js",
+    "frontend/src/pages/order/OrderDetail.jsx",
+    "frontend/src/pages/order/OrdersPage.jsx",
+    "frontend/CUSTOMER_TRANSACTION_LIFECYCLE_CONTRACT.md",
+    "BATCH_08_7_12_INTEGRATION.md",
+    "BATCH_08_7_12_MANIFEST.json"
+  ],
+  "exclusions": [
+    "backend",
+    "database",
+    "finance",
+    "providers",
+    "dependencies",
+    "branding"
+  ]
+}

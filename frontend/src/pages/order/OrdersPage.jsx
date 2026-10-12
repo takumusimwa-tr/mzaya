@@ -70,7 +70,7 @@ export default function OrdersPage() {
               </button>
               {/* Quick reorder for finished orders */}
               {(order.status === 'delivered' || order.status === 'cancelled') && (
-                <button onClick={() => reorder(order)}
+                <button type="button" onClick={(e) => { e.stopPropagation(); reorder(order) }}
                   className="w-full mt-3 py-2.5 rounded-xl font-bold text-sm active:scale-98 transition-transform border"
                   style={{ borderColor: '#00A651', color: '#00A651' }}>
                   <Icon name="reorder" size={14} className="inline" /> Reorder

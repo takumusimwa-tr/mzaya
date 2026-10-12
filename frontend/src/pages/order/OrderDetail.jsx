@@ -229,6 +229,11 @@ export default function OrderDetail() {
       {/* ── Fare offers ──────────────────────────────────────────────────── */}
       {awaitingOffers && (
         <Block title="Mzaya offers" right={<>Your fare <Money usd={order.offered_fare_usd} /></>}>
+          {chooseOffer.isError && (
+            <p role="alert" className="mb-2 rounded-xl px-3 py-2 text-[13px] font-semibold" style={{ background: T.amberTint, color: T.red }}>
+              {chooseOffer.error?.response?.data?.error || 'Could not choose that offer. Please try again.'}
+            </p>
+          )}
           {!offers?.length ? (
             <p className="py-4 text-center text-[14px]" style={{ color: T.ink2 }}>
               Waiting for Mzayas to respond. They can accept your fare or suggest another price.

@@ -25,10 +25,16 @@ export default function useReorder() {
       return
     }
 
-    // Clear current cart and rebuild
+    const items = detail.items.filter((item) => item.menu_item_id || item.id)
+    if (!items.length) {
+      alert('This order has no reusable items to reorder')
+      return
+    }
+
+    // Only clear after the historic order has passed the reorder contract.
     cart.clearCart()
 
-    detail.items.forEach((item) => {
+    items.forEach((item) => {
       cart.addItem({
         id:                   item.menu_item_id || item.id,
         name:                 item.name,
@@ -40,6 +46,7 @@ export default function useReorder() {
         vendorId,
         vendorName,
         vendorAddress: order.pickup_address,
+        vendorCity:    order.city || null,
         categoryType:  order.category_type,
       })
     })
