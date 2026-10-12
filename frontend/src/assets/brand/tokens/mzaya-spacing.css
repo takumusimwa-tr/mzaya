@@ -13,4 +13,11 @@
   --mzaya-radius-lg: 1rem;
   --mzaya-radius-xl: 1.5rem;
   --mzaya-radius-pill: 999px;
+
+  /* Product geometry */
+  --mzaya-control-height-sm: 2.5rem;
+  --mzaya-control-height-md: 3rem;
+  --mzaya-control-height-lg: 3.5rem;
+  --mzaya-page-gutter: 1rem;
+  --mzaya-card-padding: 1rem;
 }

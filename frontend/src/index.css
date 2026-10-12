@@ -41,6 +41,32 @@ button {
   touch-action: manipulation;
 }
 
+button,
+a,
+input,
+textarea,
+select {
+  outline-color: var(--mzaya-primary);
+}
+
+:focus-visible {
+  outline: none;
+  box-shadow: var(--mzaya-focus-ring);
+}
+
+.mzaya-surface {
+  background: var(--mzaya-surface);
+  border: 1px solid var(--mzaya-border);
+  border-radius: var(--mzaya-radius-lg);
+  box-shadow: var(--mzaya-shadow-xs);
+}
+
+.mzaya-page {
+  min-height: 100%;
+  background: var(--mzaya-background);
+  color: var(--mzaya-text-primary);
+}
+
 img,
 svg {
   display: block;

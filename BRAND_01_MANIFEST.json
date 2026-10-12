@@ -1,0 +1,22 @@
+{
+  "phase": "BRAND_01",
+  "baseline": "2804691348f55de2b33661b572a69480f4fb9a9e",
+  "permanent_files": [
+    "frontend/src/assets/brand/tokens/mzaya-colors.css",
+    "frontend/src/assets/brand/tokens/mzaya-typography.css",
+    "frontend/src/assets/brand/tokens/mzaya-spacing.css",
+    "frontend/src/index.css",
+    "MZAYA_BRAND_IMPLEMENTATION_CONTRACT.md",
+    "BRAND_01_INTEGRATION.md",
+    "BRAND_01_MANIFEST.json"
+  ],
+  "exclusions": [
+    "backend",
+    "database",
+    "finance",
+    "provider behavior",
+    "routes",
+    "product flows",
+    "logo redraw"
+  ]
+}

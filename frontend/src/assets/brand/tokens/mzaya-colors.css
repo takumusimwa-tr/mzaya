@@ -47,7 +47,7 @@
   --mzaya-primary-soft: var(--mzaya-green-50);
   --mzaya-primary-surface: var(--mzaya-green-100);
 
-  --mzaya-background: #F6F8F6;
+  --mzaya-background: #F7F9F7;
   --mzaya-canvas: var(--mzaya-background);
   --mzaya-surface: var(--mzaya-neutral-0);
   --mzaya-surface-subtle: var(--mzaya-neutral-50);
@@ -60,6 +60,13 @@
   --mzaya-text-secondary: var(--mzaya-neutral-600);
   --mzaya-text-muted: var(--mzaya-neutral-500);
   --mzaya-text-inverse: var(--mzaya-neutral-0);
+
+  /* Premium interaction aliases */
+  --mzaya-interactive: var(--mzaya-primary);
+  --mzaya-interactive-hover: var(--mzaya-primary-hover);
+  --mzaya-interactive-pressed: var(--mzaya-primary-pressed);
+  --mzaya-on-primary: var(--mzaya-neutral-0);
+  --mzaya-overlay: rgba(5, 42, 37, 0.42);
 
   /* Compatibility aliases during migration */
   --mzaya-navy-950: var(--mzaya-green-950);
