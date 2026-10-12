@@ -63,6 +63,7 @@ export default function ErrandPage() {
 
   const handleSubmit = async (e) => {
     e.preventDefault()
+    if (loading) return
     setError('')
 
     if (!form.task_type) {
@@ -109,7 +110,7 @@ export default function ErrandPage() {
       }
 
       const { data } = await orderAPI.place(orderData)
-      navigate(`/orders/${data.order.id}`)
+      navigate(`/orders/${data.order.id}`, { replace: true })
     } catch (err) {
       setError(err.response?.data?.error || 'Could not place errand')
     } finally {

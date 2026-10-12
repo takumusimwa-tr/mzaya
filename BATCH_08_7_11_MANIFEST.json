@@ -1,0 +1,21 @@
+{
+  "batch": "08.7.11",
+  "title": "Customer Discovery & Transaction Reliability",
+  "baseline": "20e4bca4afb3805aa48c9c97669224e6518e7f05",
+  "branding_started": false,
+  "backend_change": false,
+  "database_change": false,
+  "finance_change": false,
+  "provider_change": false,
+  "dependency_change": false,
+  "files_to_stage": [
+    "frontend/src/pages/home/HomePage.jsx",
+    "frontend/src/pages/home/VendorPage.jsx",
+    "frontend/src/pages/order/CartPage.jsx",
+    "frontend/src/pages/home/ErrandPage.jsx",
+    "frontend/CUSTOMER_DISCOVERY_TRANSACTION_CONTRACT.md",
+    "BATCH_08_7_11_INTEGRATION.md",
+    "BATCH_08_7_11_MANIFEST.json"
+  ],
+  "one_time_apply_script": "scripts/apply-batch-08-7-11.js"
+}

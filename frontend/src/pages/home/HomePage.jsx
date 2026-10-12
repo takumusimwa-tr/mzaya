@@ -9,7 +9,8 @@ import { browseAPI, orderAPI } from '../../api/api'
 import useSocketEvent from '../../hooks/useSocketEvent'
 import useCartStore from '../../store/useCartStore'
 import useLocation from '../../hooks/useLocation'
-import LoadingScreen from '../../components/ui/LoadingScreen'
+import LoadingState from '../../components/common/LoadingState'
+import ErrorState from '../../components/common/ErrorState'
 import Icon from '../../components/ui/Icon'
 import Money from '../../components/ui/Money'
 import imageUrl from '../../utils/imageUrl'
@@ -84,14 +85,14 @@ export default function HomePage() {
 
   const copy = COPY[category] || COPY.food
 
-  const { data: brands = [], isLoading: brandsLoading } = useQuery({
+  const { data: brands = [], isLoading: brandsLoading, isError: brandsError, refetch: refetchBrands } = useQuery({
     queryKey: ['browse-brands', category, selectedCity?.id],
     queryFn: () => browseAPI.brands({ category, city_id: selectedCity?.id, lat: city?.lat, lng: city?.lng })
       .then((r) => r.data.brands || []),
     enabled: !!selectedCity,
   })
 
-  const { data: productData, isLoading: productsLoading } = useQuery({
+  const { data: productData, isLoading: productsLoading, isError: productsError, refetch: refetchProducts } = useQuery({
     queryKey: ['browse-products', category, selectedCity?.id, search],
     queryFn: () => browseAPI.products({ category, city_id: selectedCity?.id, q: search || undefined, lat: city?.lat, lng: city?.lng })
       .then((r) => r.data),
@@ -108,7 +109,7 @@ export default function HomePage() {
   useSocketEvent('order:status_changed', () => refetchOrders())
   const liveOrder = myOrders.find((o) => LIVE_STATUS[o.status])
 
-  if (locationLoading) return <LoadingScreen message="Preparing Mzaya..." />
+  if (locationLoading) return <LoadingState label="Preparing Mzaya..." fullScreen />
 
   const pickCategory = (id) => {
     if (id === 'errand') return navigate('/errand')
@@ -123,11 +124,25 @@ export default function HomePage() {
     if (q) saveRecent(q)
   }
 
+  const retryBrowse = () => {
+    if (brandsError) refetchBrands()
+    if (productsError) refetchProducts()
+  }
+
   const openStore = (brand) => navigate(`/vendor/${brand.branch_id}?brand=${brand.id}`)
   const openProduct = (p) => navigate(`/vendor/${p.branch_id}?highlight=${p.item_id}`)
 
   return (
     <main className="min-h-screen bg-white pb-36" style={{ color: T.ink }}>
+      {(brandsError || productsError) && selectedCity ? (
+        <div className="px-4 pt-4">
+          <ErrorState
+            title="Couldn’t load nearby stores"
+            description="Check your connection and try again."
+            onRetry={retryBrowse}
+          />
+        </div>
+      ) : null}
       {/* ── Top bar: where am I, who am I, what's in my bag ─────────────────── */}
       <header className="sticky top-0 z-40 bg-white/95 backdrop-blur" style={{ paddingTop: 'max(env(safe-area-inset-top), 12px)' }}>
         <div className="flex h-14 items-center justify-between px-4">

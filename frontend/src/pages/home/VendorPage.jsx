@@ -4,7 +4,8 @@ import { useQuery } from '@tanstack/react-query'
 import { ArrowLeft, Clock, Heart, Plus, Search, Share2, ShoppingBag, Star, X } from 'lucide-react'
 import { vendorAPI } from '../../api/api'
 import useCartStore from '../../store/useCartStore'
-import LoadingScreen from '../../components/ui/LoadingScreen'
+import LoadingState from '../../components/common/LoadingState'
+import ErrorState from '../../components/common/ErrorState'
 import ItemModal from '../../components/ItemModal'
 import Icon from '../../components/ui/Icon'
 import Money from '../../components/ui/Money'
@@ -60,7 +61,7 @@ export default function VendorPage() {
   const [searchParams] = useSearchParams()
   const highlightId = searchParams.get('highlight')
   const cart = useCartStore()
-  const { isFavorite, toggle } = useFavoriteIds()
+  const { isFavorite, toggle, toggleMutation } = useFavoriteIds()
 
   const [activeItem, setActiveItem] = useState(null)
   const [activeSection, setActiveSection] = useState(null)
@@ -72,7 +73,7 @@ export default function VendorPage() {
   const jumpLock = useRef(false)
   const [scrolled, setScrolled] = useState(false)
 
-  const { data: vendor, isLoading } = useQuery({
+  const { data: vendor, isLoading, isError, refetch } = useQuery({
     queryKey: ['vendor', id],
     queryFn: () => vendorAPI.getById(id).then((r) => r.data.vendor),
   })
@@ -132,7 +133,18 @@ export default function VendorPage() {
     return () => clearTimeout(t)
   }, [toast])
 
-  if (isLoading) return <LoadingScreen message="Loading menu..." />
+  if (isLoading) return <LoadingState label="Loading menu..." fullScreen />
+  if (isError) {
+    return (
+      <main className="min-h-screen bg-white px-4 pt-20">
+        <ErrorState
+          title="Couldn’t load this store"
+          description="Check your connection and try again."
+          onRetry={() => refetch()}
+        />
+      </main>
+    )
+  }
   if (!vendor) return <div className="p-6 text-center" style={{ color: T.ink2 }}>We couldn&apos;t find this store.</div>
 
   const open = !!vendor.is_open
@@ -179,6 +191,11 @@ export default function VendorPage() {
 
   return (
     <main className="min-h-screen bg-white pb-32" style={{ color: T.ink }}>
+      {toggleMutation.isError ? (
+        <p role="alert" className="mx-4 mt-3 rounded-xl bg-red-50 px-4 py-3 text-sm text-red-600">
+          We couldn’t update that favorite. Your previous selection was restored.
+        </p>
+      ) : null}
       {/* ── Cover with floating controls ─────────────────────────────────── */}
       <div className="relative h-[200px] overflow-hidden" style={{ background: `linear-gradient(135deg, ${T.greenDeep}, #13805A)` }}>
         {vendor.cover_url ? (

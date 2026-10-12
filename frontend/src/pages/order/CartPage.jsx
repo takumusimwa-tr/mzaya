@@ -15,6 +15,7 @@ export default function CartPage() {
   const { items } = cart
   const subtotal = cart.totalPrice()
   const totalItems = cart.totalItems()
+  const hasVendor = Boolean(cart.vendorId)
 
   if (items.length === 0) {
     return (
@@ -40,8 +41,8 @@ export default function CartPage() {
         action={<button type="button" onClick={() => cart.clearCart()} className="h-11 px-2 text-[14px] font-semibold" style={{ color: T.ink2 }}>Clear</button>} />
 
       {/* Which store this cart belongs to — one tap back to its menu */}
-      <button type="button" onClick={() => navigate(`/vendor/${cart.vendorId}`)}
-        className="mx-4 mt-2 flex w-[calc(100%-2rem)] items-center gap-3 rounded-2xl px-4 py-3 text-left active:opacity-80"
+      <button type="button" disabled={!hasVendor} onClick={() => hasVendor && navigate(`/vendor/${cart.vendorId}`)}
+        className="mx-4 mt-2 flex w-[calc(100%-2rem)] items-center gap-3 rounded-2xl px-4 py-3 text-left active:opacity-80 disabled:cursor-default"
         style={{ background: T.fill }}>
         <span className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full text-[16px] font-extrabold"
           style={{ background: T.greenTint, color: T.greenDeep }}>{cart.vendorName?.trim().charAt(0).toUpperCase()}</span>
