@@ -54,6 +54,15 @@ const LIVE_STATUS = {
   en_route: { title: 'Almost there', sub: 'Your Mzaya is nearly at your door' },
 }
 
+// Browse requests get more patience than the app default (1 retry). A sleeping
+// server (Render free tier) or a weak mobile signal can take 30-60s to answer;
+// with one retry the store list gave up after ~31s and showed an error. Three
+// retries with growing gaps cover that, and the skeletons stay up meanwhile.
+const BROWSE_RETRY = {
+  retry: 3,
+  retryDelay: (attempt) => Math.min(2000 * 2 ** attempt, 10000),
+}
+
 const RECENTS_KEY = 'mzaya_recent_searches'
 const readRecents = () => {
   try { return JSON.parse(localStorage.getItem(RECENTS_KEY) || '[]') } catch { return [] }
@@ -90,6 +99,7 @@ export default function HomePage() {
     queryFn: () => browseAPI.brands({ category, city_id: selectedCity?.id, lat: city?.lat, lng: city?.lng })
       .then((r) => r.data.brands || []),
     enabled: !!selectedCity,
+    ...BROWSE_RETRY,
   })
 
   const { data: productData, isLoading: productsLoading, isError: productsError, refetch: refetchProducts } = useQuery({
@@ -97,6 +107,7 @@ export default function HomePage() {
     queryFn: () => browseAPI.products({ category, city_id: selectedCity?.id, q: search || undefined, lat: city?.lat, lng: city?.lng })
       .then((r) => r.data),
     enabled: !!selectedCity,
+    ...BROWSE_RETRY,
   })
   const products = productData?.products || []
 
@@ -124,25 +135,12 @@ export default function HomePage() {
     if (q) saveRecent(q)
   }
 
-  const retryBrowse = () => {
-    if (brandsError) refetchBrands()
-    if (productsError) refetchProducts()
-  }
 
   const openStore = (brand) => navigate(`/vendor/${brand.branch_id}?brand=${brand.id}`)
   const openProduct = (p) => navigate(`/vendor/${p.branch_id}?highlight=${p.item_id}`)
 
   return (
     <main className="min-h-screen bg-white pb-36" style={{ color: T.ink }}>
-      {(brandsError || productsError) && selectedCity ? (
-        <div className="px-4 pt-4">
-          <ErrorState
-            title="Couldn’t load nearby stores"
-            description="Check your connection and try again."
-            onRetry={retryBrowse}
-          />
-        </div>
-      ) : null}
       {/* ── Top bar: where am I, who am I, what's in my bag ─────────────────── */}
       <header className="sticky top-0 z-40 bg-white/95 backdrop-blur" style={{ paddingTop: 'max(env(safe-area-inset-top), 12px)' }}>
         <div className="flex h-14 items-center justify-between px-4">
@@ -204,7 +202,15 @@ export default function HomePage() {
         })}
       </nav>
 
-      {search ? (
+      {search && productsError ? (
+        <div className="px-4 pt-4">
+          <ErrorState
+            title="Search didn’t go through"
+            description="Check your connection and try again."
+            onRetry={() => refetchProducts()}
+          />
+        </div>
+      ) : search ? (
         <SearchResults term={search} loading={productsLoading} products={products} brands={brands}
           onProduct={openProduct} onStore={openStore} />
       ) : (
@@ -230,7 +236,7 @@ export default function HomePage() {
           </section>
 
           {/* ── Popular items rail ─────────────────────────────────────────── */}
-          {(productsLoading || products.length > 0) && (
+          {!productsError && (productsLoading || products.length > 0) && (
             <section className="pt-6">
               <SectionHeader title={copy.popular} />
               <div className="flex gap-3 overflow-x-auto px-4 pb-1 no-scrollbar">
@@ -244,7 +250,15 @@ export default function HomePage() {
           {/* ── Stores ─────────────────────────────────────────────────────── */}
           <section className="pt-6">
             <SectionHeader title={copy.stores} count={brands.length} />
-            {brandsLoading ? (
+            {brandsError ? (
+              <div className="px-4">
+                <ErrorState
+                  title="Couldn’t load stores"
+                  description="Check your connection and try again."
+                  onRetry={() => refetchBrands()}
+                />
+              </div>
+            ) : brandsLoading ? (
               <div className="px-4">{[0, 1, 2].map((k) => <div key={k} className="my-3 h-16 animate-pulse rounded-xl" style={{ background: T.fill }} />)}</div>
             ) : brands.length === 0 ? (
               <div className="px-8 py-10 text-center">
