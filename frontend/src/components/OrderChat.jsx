@@ -17,7 +17,7 @@ export default function OrderChat({ orderId, onClose }) {
   const [text, setText] = useState('')
   const scrollRef = useRef(null)
 
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, isError, refetch } = useQuery({
     queryKey: ['chat', orderId],
     queryFn:  () => chatAPI.messages(orderId).then((r) => r.data),
     refetchInterval: 20000, // fallback; socket drives live
@@ -46,7 +46,7 @@ export default function OrderChat({ orderId, onClose }) {
     if (scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight
   }, [messages.length])
 
-  const submit = () => { if (text.trim()) send.mutate(text.trim()) }
+  const submit = () => { if (text.trim() && !send.isPending) send.mutate(text.trim()) }
 
   return (
     // Responsive.
@@ -92,6 +92,11 @@ export default function OrderChat({ orderId, onClose }) {
       <div ref={scrollRef} className="flex-1 overflow-y-auto px-4 py-3 flex flex-col gap-2">
         {isLoading ? (
           <p className="text-center text-sm text-gray-400 mt-8">Loading…</p>
+        ) : isError ? (
+          <div className="mt-8 text-center">
+            <p role="alert" className="text-sm font-semibold text-red-600">Couldn’t load messages.</p>
+            <button type="button" onClick={() => refetch()} className="mt-2 text-sm font-bold underline">Try again</button>
+          </div>
         ) : messages.length === 0 ? (
           <div className="text-center mt-10">
             <div className="mb-2 flex justify-center text-gray-300"><Icon name="chat" size={40} /></div>
@@ -122,6 +127,12 @@ export default function OrderChat({ orderId, onClose }) {
           })
         )}
       </div>
+
+      {send.isError && (
+        <p role="alert" className="border-t border-gray-100 px-4 py-2 text-xs font-semibold text-red-600">
+          {send.error?.response?.data?.error || 'Couldn’t send that message. Try again.'}
+        </p>
+      )}
 
       {/* Composer */}
       <div className="border-t border-gray-100 px-3 py-2 flex items-center gap-2 pb-6">

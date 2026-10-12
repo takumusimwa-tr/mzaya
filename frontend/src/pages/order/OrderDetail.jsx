@@ -91,7 +91,7 @@ export default function OrderDetail() {
   }, [id])
   const riderLoc = liveLoc || polledLoc || null
 
-  const { data: contactData } = useQuery({
+  const { data: contactData, isError: contactsError } = useQuery({
     queryKey: ['order-contacts', id],
     queryFn: () => chatAPI.contacts(id).then((r) => r.data),
     enabled: !!order?.rider_id && live,
@@ -203,6 +203,9 @@ export default function OrderDetail() {
             {(mzaya?.name || 'M').trim().charAt(0).toUpperCase()}
           </span>
           <span className="min-w-0 flex-1">
+            {contactsError && (
+              <span className="block text-[12px]" style={{ color: T.amber }}>Contact details are temporarily unavailable.</span>
+            )}
             <span className="block truncate text-[16px] font-bold">{mzaya?.name || 'Your Mzaya'}</span>
             <span className="block text-[13px]" style={{ color: T.ink2 }}>{riderLoc ? 'Sharing live location' : 'Location will appear shortly'}</span>
           </span>

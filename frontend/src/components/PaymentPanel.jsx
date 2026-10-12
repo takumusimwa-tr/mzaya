@@ -64,6 +64,7 @@ export default function PaymentPanel({ order, onPaid }) {
   }
 
   const pay = async () => {
+    if (['pushing', 'polling', 'redirecting'].includes(stage)) return
     setError('')
     if (isMobile && !phone.trim()) { setError('Enter your mobile money number'); return }
 
@@ -162,10 +163,10 @@ export default function PaymentPanel({ order, onPaid }) {
             </div>
           )}
 
-          {error && <p className="text-xs text-red-500 mb-2">{error}</p>}
+          {error && <p role="alert" className="text-xs text-red-500 mb-2">{error}</p>}
 
-          <button onClick={pay}
-            className="w-full py-3.5 rounded-xl text-white font-bold active:scale-98 transition-transform"
+          <button type="button" onClick={pay} disabled={['pushing', 'polling', 'redirecting'].includes(stage)}
+            className="w-full py-3.5 disabled:opacity-60 rounded-xl text-white font-bold active:scale-98 transition-transform"
             style={{ background: '#00A651' }}>
             Pay US${Number(order.total_usd).toFixed(2)}
           </button>

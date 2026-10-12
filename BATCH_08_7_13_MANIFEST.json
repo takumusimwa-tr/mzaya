@@ -1,0 +1,21 @@
+{
+  "batch": "08.7.13",
+  "baseline": "96b48e0791820d600daaf22b22dcc3116152e685",
+  "files": [
+    "frontend/src/components/PaymentPanel.jsx",
+    "frontend/src/components/OrderChat.jsx",
+    "frontend/src/pages/order/OrderDetail.jsx",
+    "frontend/CUSTOMER_PAYMENT_COMMUNICATION_CONTRACT.md",
+    "BATCH_08_7_13_INTEGRATION.md",
+    "BATCH_08_7_13_MANIFEST.json"
+  ],
+  "exclusions": [
+    "backend",
+    "database",
+    "finance",
+    "providers",
+    "dependencies",
+    "route ownership",
+    "branding"
+  ]
+}
