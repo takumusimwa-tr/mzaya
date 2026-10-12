@@ -5,7 +5,8 @@ import {
   ArrowLeft, Camera, Check, MapPin, MessageCircle, Phone, RotateCcw, Star, Store, X,
 } from 'lucide-react'
 import api, { chatAPI, negotiationAPI, orderAPI, paymentAPI } from '../../api/api'
-import LoadingScreen from '../../components/ui/LoadingScreen'
+import LoadingState from '../../components/common/LoadingState'
+import ErrorState from '../../components/common/ErrorState'
 import Money from '../../components/ui/Money'
 import PaymentPanel from '../../components/PaymentPanel'
 import OrderChat from '../../components/OrderChat'
@@ -68,7 +69,7 @@ export default function OrderDetail() {
   const [confirmCancel, setConfirmCancel] = useState(false)
   const [liveLoc, setLiveLoc] = useState(null)
 
-  const { data: order, isLoading } = useQuery({
+  const { data: order, isLoading, isError, refetch } = useQuery({
     queryKey: ['order', id],
     queryFn: () => orderAPI.getOrder(id).then((r) => r.data.order),
     refetchInterval: 20000, // fallback; sockets drive updates
@@ -129,7 +130,18 @@ export default function OrderDetail() {
     onSuccess: () => { setConfirmCancel(false); refresh() },
   })
 
-  if (isLoading) return <LoadingScreen message="Loading your order..." />
+  if (isLoading) return <LoadingState label="Loading your order..." fullScreen />
+  if (isError) {
+    return (
+      <main className="min-h-screen bg-white px-4 pt-20">
+        <ErrorState
+          title="Couldn’t load this order"
+          description="Check your connection and try again."
+          onRetry={() => refetch()}
+        />
+      </main>
+    )
+  }
   if (!order) return <div className="p-6 text-center" style={{ color: T.ink2 }}>We couldn&apos;t find this order.</div>
 
   const detail = order.foodDetail || order.groceryDetail || order.materialsDetail || order.errandDetail

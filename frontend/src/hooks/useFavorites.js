@@ -35,7 +35,7 @@ export function useFavoriteIds() {
     },
   })
 
-  return { ids, isFavorite: (id) => ids.includes(id), toggle: toggle.mutate }
+  return { ids, isFavorite: (id) => ids.includes(id), toggle: toggle.mutate, toggleMutation: toggle }
 }
 
 // The full favourited brand list (for the favourites page).

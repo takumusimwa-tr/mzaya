@@ -56,7 +56,7 @@ export default function CheckoutPage() {
   const cart = useCartStore()
   const dropoffRef = useRef(null)
 
-  const { data: savedAddresses } = useQuery({
+  const { data: savedAddresses, isError: savedAddressesError, refetch: refetchSavedAddresses } = useQuery({
     queryKey: ['addresses'],
     queryFn: () => addressAPI.list().then((r) => r.data.addresses || []),
   })
@@ -329,6 +329,12 @@ export default function CheckoutPage() {
 
       {/* ── Where ────────────────────────────────────────────────────────── */}
       <Section title="Deliver to">
+        {savedAddressesError && (
+          <div role="alert" className="mb-3 flex items-center justify-between gap-3 rounded-xl px-3 py-2.5 text-[12px]" style={{ background: T.amberTint, color: T.amber }}>
+            <span>Saved addresses couldn’t load. You can still type an address.</span>
+            <button type="button" onClick={() => refetchSavedAddresses()} className="font-extrabold underline underline-offset-2">Retry</button>
+          </div>
+        )}
         {savedAddresses?.length > 0 && (
           <div className="-mx-4 mb-3 flex gap-2 overflow-x-auto px-4 no-scrollbar">
             {savedAddresses.map((addr) => {

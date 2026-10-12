@@ -110,6 +110,11 @@ export default function AddressesPage() {
       </div>
 
       <div className="px-4 mt-4 flex flex-col gap-3">
+        {remove.isError ? (
+          <p role="alert" className="rounded-xl bg-red-50 px-4 py-3 text-sm text-red-600">
+            We couldn’t delete that address. Please try again.
+          </p>
+        ) : null}
         {isError ? (
           <ErrorState
             title="Couldn’t load addresses"
@@ -147,15 +152,19 @@ export default function AddressesPage() {
                 <div className="flex gap-2 ml-2">
                   <button
                     type="button"
+                    disabled={save.isPending || remove.isPending}
                     onClick={() => openEdit(addr)}
-                    className="text-xs bg-gray-100 text-gray-600 px-3 py-1.5 rounded-lg font-medium active:scale-95"
+                    className="text-xs bg-gray-100 text-gray-600 px-3 py-1.5 rounded-lg font-medium active:scale-95 disabled:opacity-50"
                   >
                     Edit
                   </button>
                   <button
                     type="button"
-                    disabled={remove.isPending}
-                    onClick={() => remove.mutate(addr.id)}
+                    disabled={save.isPending || remove.isPending}
+                    onClick={() => {
+                      remove.reset()
+                      remove.mutate(addr.id)
+                    }}
                     className="text-xs bg-red-50 text-red-500 px-3 py-1.5 rounded-lg font-medium active:scale-95 disabled:opacity-50"
                   >
                     Delete

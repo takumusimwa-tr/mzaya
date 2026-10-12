@@ -1,16 +1,17 @@
 import { useNavigate } from 'react-router-dom'
 import { useFavoriteBrands, useFavoriteIds } from '../../hooks/useFavorites'
 import imageUrl from '../../utils/imageUrl'
-import LoadingScreen from '../../components/ui/LoadingScreen'
+import LoadingState from '../../components/common/LoadingState'
+import ErrorState from '../../components/common/ErrorState'
 import Icon from '../../components/ui/Icon'
 import emptyFavorites from '../../assets/brand/illustrations/empty-states/mzaya-empty-favorites.svg'
 
 export default function FavoritesPage() {
   const navigate = useNavigate()
-  const { data: brands, isLoading } = useFavoriteBrands()
-  const { toggle } = useFavoriteIds()
+  const { data: brands, isLoading, isError, refetch } = useFavoriteBrands()
+  const { toggle, toggleMutation } = useFavoriteIds()
 
-  if (isLoading) return <LoadingScreen message="Loading favorites..." />
+  if (isLoading) return <LoadingState label="Loading favorites..." fullScreen />
 
   return (
     <div className="min-h-screen pb-28" style={{ background: '#F8F8F8' }}>
@@ -24,7 +25,15 @@ export default function FavoritesPage() {
         <h1 className="text-lg font-bold text-gray-900">Your favorites</h1>
       </div>
 
-      {!brands || brands.length === 0 ? (
+      {isError ? (
+        <div className="px-4 pt-8">
+          <ErrorState
+            title="Couldn’t load favorites"
+            description="Check your connection and try again."
+            onRetry={() => refetch()}
+          />
+        </div>
+      ) : !brands || brands.length === 0 ? (
         <div className="flex flex-col items-center justify-center px-6 pt-24">
           <img src={emptyFavorites} alt="" aria-hidden="true" className="mx-auto w-56 max-w-full mb-5 select-none" draggable="false" />
           <h2 className="text-lg font-bold text-gray-900 mb-1">No favorites yet</h2>
@@ -38,7 +47,13 @@ export default function FavoritesPage() {
           </button>
         </div>
       ) : (
-        <div className="px-4 mt-4 flex flex-col gap-4">
+        <>
+          {toggleMutation.isError ? (
+            <p role="alert" className="mx-4 mt-4 rounded-xl bg-red-50 px-4 py-3 text-sm text-red-600">
+              We couldn’t update that favorite. Your previous selection was restored.
+            </p>
+          ) : null}
+          <div className="px-4 mt-4 flex flex-col gap-4">
           {brands.map((vendor) => (
             <div key={vendor.id}
               role="button"
@@ -89,7 +104,8 @@ export default function FavoritesPage() {
               </div>
             </div>
           ))}
-        </div>
+          </div>
+        </>
       )}
     </div>
   )

@@ -1,0 +1,22 @@
+{
+  "batch": "08.7.10",
+  "title": "Customer Async-State & Mutation Reliability",
+  "baseline": "de52e6ae88725510e02aaa5316930a4209fd0cd8",
+  "branding_started": false,
+  "backend_change": false,
+  "database_change": false,
+  "finance_change": false,
+  "provider_change": false,
+  "dependency_change": false,
+  "files_to_stage": [
+    "frontend/src/pages/order/OrderDetail.jsx",
+    "frontend/src/pages/order/CheckoutPage.jsx",
+    "frontend/src/pages/profile/FavoritesPage.jsx",
+    "frontend/src/pages/profile/AddressesPage.jsx",
+    "frontend/src/hooks/useFavorites.js",
+    "frontend/CUSTOMER_ASYNC_STATE_CONTRACT.md",
+    "BATCH_08_7_10_INTEGRATION.md",
+    "BATCH_08_7_10_MANIFEST.json"
+  ],
+  "one_time_apply_script": "scripts/apply-batch-08-7-10.js"
+}
