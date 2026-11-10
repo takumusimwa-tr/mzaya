@@ -50,6 +50,7 @@ const adminRoutes     = require('./routes/admin.routes');
 const browseRoutes    = require('./routes/browse.routes');
 const negotiationRoutes = require('./routes/negotiation.routes');
 const chatRoutes      = require('./routes/chat.routes');
+const notificationRoutes = require('./routes/notification.routes');
 const orderChatRoutes = require('./routes/orderChat.routes');
 
 // Finance event engine and operational-finance integrations.
@@ -156,6 +157,7 @@ app.use('/api/orders',    negotiationRoutes);
 app.use('/api/orders',    orderChatRoutes);
 app.use('/api/orders',    orderRoutes);
 app.use('/api/chat',      chatRoutes);
+app.use('/api/notifications', notificationRoutes);
 app.use('/api/vendors',   vendorRoutes);
 app.use('/api/riders',    riderRoutes);
 app.use('/api/cities',    cityRoutes);
