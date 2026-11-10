@@ -107,7 +107,7 @@ export default function HelpCenterPage({
           </h2>
 
           {loading ? (
-            <div className="grid gap-4 sm:grid-cols-2">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               {[1, 2, 3, 4].map((item) => (
                 <div
                   key={item}
@@ -142,7 +142,7 @@ export default function HelpCenterPage({
               )}
             </div>
           ) : topics.length ? (
-            <div className="grid gap-4 sm:grid-cols-2">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               {topics.map((topic) => (
                 <SupportTopicCard
                   key={topic.id}
