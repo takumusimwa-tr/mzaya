@@ -1,26 +1,26 @@
 import lockupPrimary from '../../assets/brand/logos/mzaya-lockup-horizontal-primary.svg'
 import lockupWhite from '../../assets/brand/logos/mzaya-lockup-horizontal-white.svg'
+import stackedPrimary from '../../assets/brand/logos/mzaya-lockup-stacked-primary.svg'
+import stackedWhite from '../../assets/brand/logos/mzaya-lockup-stacked-white.svg'
 import wordmarkPrimary from '../../assets/brand/logos/mzaya-wordmark-primary.svg'
 import wordmarkWhite from '../../assets/brand/logos/mzaya-wordmark-white.svg'
-import markGreen from '../../assets/brand/logos/mzaya-mark-green.svg'
-import markWhite from '../../assets/brand/logos/mzaya-mark-white.svg'
 
 export function MzayaWordmark({ color, className = '', onDark = false }) {
-  const src = onDark || color === '#FFFFFF' ? wordmarkWhite : wordmarkPrimary
-  return <img src={src} alt="Mzaya" className={`h-7 w-auto ${className}`} />
+  const isWhite = onDark || color?.toLowerCase() === '#ffffff'
+  return <img src={isWhite ? wordmarkWhite : wordmarkPrimary} alt="Mzaya" className={`h-7 w-auto ${className}`} />
 }
 
+/** The approved lockups already contain the vector lettering; never overlay a font substitute. */
 export function MzayaLockup({ iconSize = 64, stacked = false, tagline = true, onDark = false, className = '' }) {
-  if (stacked) {
-    return (
-      <div className={`flex flex-col items-center ${className}`}>
-        <img src={onDark ? markWhite : markGreen} alt="" aria-hidden="true" style={{ width: iconSize, height: iconSize }} />
-        <img src={onDark ? wordmarkWhite : wordmarkPrimary} alt="Mzaya" className="h-10 w-auto mt-2" />
-        {tagline && <span className={`text-sm font-semibold mt-1 ${onDark ? 'text-white/80' : 'text-green-700'}`}>Tumai Mzaya.</span>}
-      </div>
-    )
-  }
-  return <img src={onDark ? lockupWhite : lockupPrimary} alt="Mzaya. Tumai Mzaya" className={`w-auto ${className}`} style={{ height: Math.max(iconSize, 42) }} />
+  const src = stacked
+    ? (onDark ? stackedWhite : stackedPrimary)
+    : (onDark ? lockupWhite : lockupPrimary)
+  return (
+    <div className={`inline-flex flex-col items-center ${className}`}>
+      <img src={src} alt="Mzaya" className="w-auto max-w-full" style={{ height: stacked ? Math.max(iconSize * 2.3, 90) : Math.max(iconSize, 42) }} />
+      {tagline && <span className="mt-1 text-sm font-medium" style={{ color: onDark ? '#FFFFFF' : 'var(--mzaya-green-950)' }}>Tumai Mzaya.</span>}
+    </div>
+  )
 }
 
 export default MzayaLockup
