@@ -17,6 +17,8 @@ const PaymentEvent = require('./paymentEventModel');
 const ProviderCallbackReceipt = require('./providerCallbackReceiptModel');
 const Favorite = require('./favoriteModel');
 const Address = require('./addressModel');
+const Notification = require('./notificationModel');
+const NotificationDelivery = require('./notificationDeliveryModel');
 
 // Existing finance/payment core.
 const PaymentAccount = require('./paymentAccountModel');
@@ -117,6 +119,11 @@ User.hasMany(Favorite, { foreignKey: 'customer_id', as: 'favorites' });
 Favorite.belongsTo(User, { foreignKey: 'customer_id', as: 'customer' });
 Brand.hasMany(Favorite, { foreignKey: 'brand_id', as: 'favoritedBy' });
 Favorite.belongsTo(Brand, { foreignKey: 'brand_id', as: 'brand' });
+
+User.hasMany(Notification, { foreignKey: 'user_id', as: 'notifications' });
+Notification.belongsTo(User, { foreignKey: 'user_id', as: 'user' });
+Notification.hasMany(NotificationDelivery, { foreignKey: 'notification_id', as: 'deliveries' });
+NotificationDelivery.belongsTo(Notification, { foreignKey: 'notification_id', as: 'notification' });
 
 User.hasMany(Address, { foreignKey: 'customer_id', as: 'addresses' });
 Address.belongsTo(User, { foreignKey: 'customer_id', as: 'customer' });
@@ -313,6 +320,8 @@ FinanceCrossDomainReconciliationException.belongsTo(
 module.exports = {
   Favorite,
   Address,
+  Notification,
+  NotificationDelivery,
   User,
   Order,
   OrderFood,
