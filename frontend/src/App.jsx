@@ -247,7 +247,7 @@ export default function App() {
   }, [token])
 
   return (
-    <BrowserRouter>
+    <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
       <AppShell />
     </BrowserRouter>
   )
