@@ -1,11 +1,12 @@
+
 {
-  "version": "1.0.0",
-  "status": "core-brand-foundation",
-  "primaryColor": "#00A651",
+  "version": "1.1.0",
+  "status": "approved-brand-integration",
+  "primaryColor": "#052A25",
   "assets": {
-    "symbol": "logos/mzaya-symbol-green.svg",
-    "wordmark": "logos/mzaya-wordmark-green.svg",
-    "horizontalLockup": "logos/mzaya-lockup-horizontal.svg",
+    "symbol": "logos/mzaya-symbol-primary.svg",
+    "wordmark": "logos/mzaya-wordmark-primary.svg",
+    "horizontalLockup": "logos/mzaya-lockup-horizontal-primary.svg",
     "appIcon": "app-icons/mzaya-app-icon-1024.png",
     "favicon": "favicons/favicon-32x32.png",
     "splashLight": "splash/mzaya-splash-light-1290x2796.png",
