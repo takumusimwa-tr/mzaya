@@ -9,8 +9,6 @@ export default function useSocket(token) {
 
   useEffect(() => {
     if (!socket) return undefined
-    if (!socket.connected) socket.connect()
-
     const onConnect = () => {
       setConnected(true)
       setConnectionError(null)
@@ -24,6 +22,7 @@ export default function useSocket(token) {
     socket.on('connect', onConnect)
     socket.on('disconnect', onDisconnect)
     socket.on('connect_error', onConnectError)
+    if (!socket.connected) socket.connect()
 
     if (socket.connected) setConnected(true)
 
