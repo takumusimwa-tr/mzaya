@@ -19,7 +19,8 @@ export function getSocket(token) {
   if (!socket) {
     socket = io(apiOrigin(), {
       autoConnect: false,
-      transports: ['websocket', 'polling'],
+      transports: ['polling', 'websocket'],
+      upgrade: true,
       auth: { token },
     })
     attachPending(socket)
