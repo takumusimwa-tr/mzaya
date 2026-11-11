@@ -22,9 +22,9 @@ import emptyProducts from '../../assets/brand/illustrations/empty-states/mzaya-e
 // One calm white canvas, one confident green, charcoal text. Colour is reserved
 // for actions and state so the eye goes to stores and food, not chrome.
 const T = {
-  green: '#00A651',      // brand primary — CTAs, badges, active state
-  greenDeep: '#0B4A3F',  // headings on tinted surfaces
-  greenTint: '#E9F7EF',  // soft fills behind icons
+  green: '#086C55',      // approved deep emerald action color
+  greenDeep: '#052A25',  // primary deep emerald
+  greenTint: '#E7F3EE',  // restrained emerald tint
   ink: '#16191A',
   ink2: '#5F6B66',
   ink3: '#8C9692',
@@ -285,22 +285,22 @@ export default function HomePage() {
             <button type="button" onClick={() => navigate(`/track/${liveOrder.id}`)}
               className="mx-auto flex h-16 w-full max-w-md items-center gap-3 rounded-2xl px-4 text-left text-white shadow-[0_10px_28px_rgba(0,0,0,0.25)] transition-transform active:scale-[0.99]"
               style={{ background: T.ink }}>
-              <span className="relative flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full" style={{ background: 'rgba(0,166,81,0.18)', color: '#3DDC84' }}>
+              <span className="relative flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full" style={{ background: 'rgba(5,42,37,0.18)', color: '#BCE8D3' }}>
                 <Bike size={20} strokeWidth={2.2} />
-                <span className="absolute right-0 top-0 h-2.5 w-2.5 animate-pulse rounded-full ring-2" style={{ background: '#3DDC84', '--tw-ring-color': T.ink }} />
+                <span className="absolute right-0 top-0 h-2.5 w-2.5 animate-pulse rounded-full ring-2" style={{ background: '#BCE8D3', '--tw-ring-color': T.ink }} />
               </span>
               <span className="min-w-0 flex-1 leading-tight">
                 <span className="block truncate text-[15px] font-bold">{LIVE_STATUS[liveOrder.status].title}</span>
                 <span className="mt-0.5 block truncate text-[12px] text-white/70">{LIVE_STATUS[liveOrder.status].sub}</span>
               </span>
-              <span className="flex items-center gap-0.5 text-[13px] font-bold" style={{ color: '#3DDC84' }}>
+              <span className="flex items-center gap-0.5 text-[13px] font-bold" style={{ color: '#BCE8D3' }}>
                 Track <ChevronRight size={16} strokeWidth={2.6} />
               </span>
             </button>
           )}
           {totalItems > 0 && (
             <button type="button" onClick={() => navigate('/cart')}
-              className="mx-auto flex h-14 w-full max-w-md items-center gap-3 rounded-full px-5 text-white shadow-[0_10px_28px_rgba(0,166,81,0.35)] transition-transform active:scale-[0.99]"
+              className="mx-auto flex h-14 w-full max-w-md items-center gap-3 rounded-full px-5 text-white shadow-[0_10px_28px_rgba(5,42,37,0.35)] transition-transform active:scale-[0.99]"
               style={{ background: T.green }}>
               <ShoppingBag size={20} strokeWidth={2.2} />
               <span className="flex-1 text-left leading-tight">
