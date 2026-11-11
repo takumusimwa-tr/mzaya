@@ -12,6 +12,7 @@ import Money from '../../components/ui/Money'
 import imageUrl from '../../utils/imageUrl'
 import cartVendor from '../../utils/cartVendor'
 import { useFavoriteIds } from '../../hooks/useFavorites'
+import emptyProducts from '../../assets/brand/illustrations/empty-states/mzaya-empty-products.svg'
 
 const T = {
   green: '#086C55',
@@ -292,9 +293,22 @@ export default function VendorPage() {
           </div>
         )}
         {sections.length === 0 ? (
-          <p className="py-16 text-center text-[14px]" style={{ color: T.ink2 }}>
-            {menuSearch ? 'Nothing on the menu matches that.' : 'This vendor hasn\u2019t added any items yet. Please check back later.'}
-          </p>
+          <div className="mx-auto flex max-w-[320px] flex-col items-center px-5 py-12 text-center" role="status">
+            <img src={emptyProducts} alt="" aria-hidden="true" draggable="false" className="mb-5 h-32 w-40 object-contain" />
+            <h2 className="text-[17px] font-semibold tracking-[-0.02em]" style={{ color: T.ink }}>
+              {menuSearch ? 'No matching items' : 'No items available yet'}
+            </h2>
+            <p className="mt-2 text-[13px] leading-6" style={{ color: T.ink2 }}>
+              {menuSearch ? 'Try a different search or browse the full menu.' : 'This vendor hasn\u2019t added any items yet. Check back soon.'}
+            </p>
+            {menuSearch && (
+              <button type="button" onClick={() => setMenuSearch('')}
+                className="mt-5 min-h-11 rounded-full px-5 text-[13px] font-semibold text-white"
+                style={{ background: T.green }}>
+                Clear search
+              </button>
+            )}
+          </div>
         ) : sections.map(([name, items]) => (
           <section key={name} data-section={name} ref={(el) => { sectionRefs.current[name] = el }} className="pt-6">
             <h2 className="mb-1 text-[20px] font-extrabold tracking-[-0.02em]">{name}</h2>
