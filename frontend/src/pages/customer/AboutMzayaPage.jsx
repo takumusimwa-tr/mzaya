@@ -27,16 +27,17 @@
  * ============================================================================
  */
 
-import { ArrowUpRight, ShieldCheck, Sparkles, Truck } from 'lucide-react'
+import { ArrowUpRight, ShieldCheck, Truck } from 'lucide-react'
 import AppHeader from '../../components/layout/AppHeader'
 import PageShell from '../../components/layout/PageShell'
 import Button from '../../components/ui/Button'
+import MzayaIcon from '../../components/brand/MzayaIcon'
 
 export default function AboutMzayaPage({
   version,
   buildLabel,
   companyName = 'Mzaya',
-  supportText = 'Mzaya connects customers, merchants and mzayas through one trusted commerce and delivery platform.',
+  supportText = 'Mzaya connects customers, vendors and mzayas through one trusted commerce and delivery platform.',
   onBack,
   onOpenLegal,
   onOpenSupport,
@@ -67,7 +68,7 @@ export default function AboutMzayaPage({
               color: 'white',
             }}
           >
-            <Sparkles aria-hidden="true" size={27} strokeWidth={1.7} />
+            <MzayaIcon size={42} color="white" />
           </div>
 
           <p
@@ -78,7 +79,7 @@ export default function AboutMzayaPage({
           </p>
 
           <h1
-            className="mt-2 text-[30px] font-semibold tracking-[-0.04em] sm:text-[38px]"
+            className="mt-2 max-w-[19ch] text-[clamp(1.75rem,5vw,2.4rem)] font-semibold leading-[1.18] tracking-[-0.035em]"
             style={{ color: 'var(--mzaya-text-primary)' }}
           >
             One trusted platform for everyday commerce.
@@ -92,7 +93,7 @@ export default function AboutMzayaPage({
           </p>
         </section>
 
-        <section className="mt-5 grid gap-4 sm:grid-cols-2">
+        <section className="mt-5 grid grid-cols-1 gap-4 min-[460px]:grid-cols-2">
           <article
             className="rounded-[22px] border bg-white p-5"
             style={{
