@@ -34,7 +34,7 @@
 
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import {
   ArrowLeft,
   Building2,
@@ -57,6 +57,7 @@ const CATEGORIES = [
 
 export default function VendorOnboarding() {
   const navigate = useNavigate()
+  const queryClient = useQueryClient()
   const user = useAuthStore((state) => state.user)
   const setAuth = useAuthStore((state) => state.setAuth)
 
@@ -97,6 +98,8 @@ export default function VendorOnboarding() {
     setStatus('submitting')
     try {
       await vendorAPI.register(form)
+      await queryClient.invalidateQueries({ queryKey: ['vendor-onboarding-branches'] })
+      await queryClient.invalidateQueries({ queryKey: ['my-branches'] })
       if (user && setAuth) {
         setAuth(
           { ...user, role: 'vendor' },
@@ -140,7 +143,7 @@ export default function VendorOnboarding() {
         <div className="mx-auto max-w-4xl px-5 py-6 sm:px-8">
           <button
             type="button"
-            onClick={() => navigate(-1)}
+            onClick={() => navigate('/vendor')}
             className="inline-flex items-center gap-2 rounded-[12px] px-2 py-2 text-[11px] font-semibold outline-none focus-visible:[box-shadow:var(--mzaya-focus-ring)]"
             style={{ color: 'var(--mzaya-text-secondary)' }}
           >
