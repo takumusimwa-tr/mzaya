@@ -87,10 +87,8 @@ export default function MerchantCard({
             <Star aria-hidden="true" size={12} strokeWidth={1.8} fill="var(--mzaya-gold-500)" color="var(--mzaya-gold-500)" />
             {Number(merchant.rating || 0).toFixed(1)}
           </span>
-          <span aria-hidden="true" style={{ color: 'var(--mzaya-neutral-300)' }}>•</span>
-          <span>15–25 min</span>
-          <span aria-hidden="true" style={{ color: 'var(--mzaya-neutral-300)' }}>•</span>
-          <span>US$2–4 delivery</span>
+          {merchant.delivery_eta && <><span aria-hidden="true">•</span><span>{merchant.delivery_eta}</span></>}
+          {merchant.delivery_fee_label && <><span aria-hidden="true">•</span><span>{merchant.delivery_fee_label}</span></>}
         </div>
 
         {merchant.branch_count > 1 && (
