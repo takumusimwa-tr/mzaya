@@ -162,12 +162,12 @@ function AppShell() {
         <main className="flex-1 min-w-0 h-screen overflow-hidden">
           <Suspense fallback={<LoadingScreen message="Loading..." />}>
             <Routes>
-              <Route path="/vendor"              element={<RoleRoute allow={['vendor']}><VendorBusinessGate><VendorHome /></RoleRoute></VendorBusinessGate>} />
-              <Route path="/vendor/orders"       element={<RoleRoute allow={['vendor']}><VendorBusinessGate><VendorOrders /></RoleRoute></VendorBusinessGate>} />
-              <Route path="/vendor/menu"         element={<RoleRoute allow={['vendor']}><VendorBusinessGate><VendorMenu /></RoleRoute></VendorBusinessGate>} />
-              <Route path="/vendor/settings"     element={<RoleRoute allow={['vendor']}><VendorBusinessGate><VendorSettings /></RoleRoute></VendorBusinessGate>} />
-              <Route path="/vendor/analytics"    element={<RoleRoute allow={['vendor']}><VendorBusinessGate><VendorAnalytics /></RoleRoute></VendorBusinessGate>} />
-              <Route path="/vendor/branches/new" element={<RoleRoute allow={['vendor']}><VendorBusinessGate><VendorAddBranch /></RoleRoute></VendorBusinessGate>} />
+              <Route path="/vendor"              element={<RoleRoute allow={['vendor']}><VendorBusinessGate><VendorHome /></VendorBusinessGate></RoleRoute>} />
+              <Route path="/vendor/orders"       element={<RoleRoute allow={['vendor']}><VendorBusinessGate><VendorOrders /></VendorBusinessGate></RoleRoute>} />
+              <Route path="/vendor/menu"         element={<RoleRoute allow={['vendor']}><VendorBusinessGate><VendorMenu /></VendorBusinessGate></RoleRoute>} />
+              <Route path="/vendor/settings"     element={<RoleRoute allow={['vendor']}><VendorBusinessGate><VendorSettings /></VendorBusinessGate></RoleRoute>} />
+              <Route path="/vendor/analytics"    element={<RoleRoute allow={['vendor']}><VendorBusinessGate><VendorAnalytics /></VendorBusinessGate></RoleRoute>} />
+              <Route path="/vendor/branches/new" element={<RoleRoute allow={['vendor']}><VendorBusinessGate><VendorAddBranch /></VendorBusinessGate></RoleRoute>} />
               <Route path="*" element={<Navigate to="/vendor" replace />} />
             </Routes>
           </Suspense>
