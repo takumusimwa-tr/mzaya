@@ -12,11 +12,12 @@ import Money from '../../components/ui/Money'
 import imageUrl from '../../utils/imageUrl'
 import cartVendor from '../../utils/cartVendor'
 import { useFavoriteIds } from '../../hooks/useFavorites'
+import emptyProducts from '../../assets/brand/illustrations/empty-states/mzaya-empty-products.svg'
 
 const T = {
-  green: '#00A651',
-  greenDeep: '#0B4A3F',
-  greenTint: '#E9F7EF',
+  green: '#086C55',
+  greenDeep: '#052A25',
+  greenTint: '#E7F3EE',
   ink: '#16191A',
   ink2: '#5F6B66',
   ink3: '#8C9692',
@@ -197,7 +198,7 @@ export default function VendorPage() {
         </p>
       ) : null}
       {/* ── Cover with floating controls ─────────────────────────────────── */}
-      <div className="relative h-[200px] overflow-hidden" style={{ background: `linear-gradient(135deg, ${T.greenDeep}, #13805A)` }}>
+      <div className="relative h-[200px] overflow-hidden" style={{ background: `linear-gradient(135deg, ${T.greenDeep}, #086C55)` }}>
         {vendor.cover_url ? (
           <img src={imageUrl(vendor.cover_url, 900)} alt="" className="h-full w-full object-cover" />
         ) : (
@@ -292,9 +293,22 @@ export default function VendorPage() {
           </div>
         )}
         {sections.length === 0 ? (
-          <p className="py-16 text-center text-[14px]" style={{ color: T.ink2 }}>
-            {menuSearch ? 'Nothing on the menu matches that.' : 'This store hasn\u2019t added its menu yet.'}
-          </p>
+          <div className="mx-auto flex max-w-[320px] flex-col items-center px-5 py-12 text-center" role="status">
+            <img src={emptyProducts} alt="" aria-hidden="true" draggable="false" className="mb-5 h-32 w-40 object-contain" />
+            <h2 className="text-[17px] font-semibold tracking-[-0.02em]" style={{ color: T.ink }}>
+              {menuSearch ? 'No matching items' : 'No items available yet'}
+            </h2>
+            <p className="mt-2 text-[13px] leading-6" style={{ color: T.ink2 }}>
+              {menuSearch ? 'Try a different search or browse the full menu.' : 'This vendor hasn\u2019t added any items yet. Check back soon.'}
+            </p>
+            {menuSearch && (
+              <button type="button" onClick={() => setMenuSearch('')}
+                className="mt-5 min-h-11 rounded-full px-5 text-[13px] font-semibold text-white"
+                style={{ background: T.green }}>
+                Clear search
+              </button>
+            )}
+          </div>
         ) : sections.map(([name, items]) => (
           <section key={name} data-section={name} ref={(el) => { sectionRefs.current[name] = el }} className="pt-6">
             <h2 className="mb-1 text-[20px] font-extrabold tracking-[-0.02em]">{name}</h2>
@@ -319,7 +333,7 @@ export default function VendorPage() {
       {cartCount > 0 && (
         <div className="fixed inset-x-0 z-40 px-4" style={{ bottom: 'calc(16px + env(safe-area-inset-bottom))' }}>
           <button type="button" onClick={() => navigate('/cart')}
-            className="mx-auto flex h-14 w-full max-w-md items-center gap-3 rounded-full px-5 text-white shadow-[0_10px_28px_rgba(0,166,81,0.35)] transition-transform active:scale-[0.99]"
+            className="mx-auto flex h-14 w-full max-w-md items-center gap-3 rounded-full px-5 text-white shadow-[0_10px_28px_rgba(5,42,37,0.28)] transition-transform active:scale-[0.99]"
             style={{ background: T.green }}>
             <ShoppingBag size={20} strokeWidth={2.2} />
             <span className="flex-1 text-left leading-tight">
@@ -354,7 +368,7 @@ function FloatingButton({ label, onClick, children }) {
 }
 
 function InfoTile({ title, sub, tone, icon }) {
-  const color = tone === 'green' ? '#0A7A3D' : tone === 'muted' ? T.ink2 : T.ink
+  const color = tone === 'green' ? T.greenDeep : tone === 'muted' ? T.ink2 : T.ink
   return (
     <div className="rounded-xl border px-3 py-2.5" style={{ borderColor: T.line }}>
       <p className="flex items-center gap-1.5 text-[14px] font-bold" style={{ color }}>
@@ -377,7 +391,7 @@ function MenuRow({ item, category, open, count, onOpen, onQuickAdd }) {
           )}
           <span className="mt-1.5 flex items-center gap-1.5 text-[14px]">
             <span className="font-bold"><Money usd={item.price_usd} /></span>
-            {count > 0 && <span className="rounded-md px-1.5 py-0.5 text-[11px] font-bold" style={{ background: T.greenTint, color: '#0A7A3D' }}>{count} in cart</span>}
+            {count > 0 && <span className="rounded-md px-1.5 py-0.5 text-[11px] font-bold" style={{ background: T.greenTint, color: T.greenDeep }}>{count} in cart</span>}
           </span>
         </button>
         <div className="relative h-[104px] w-[104px] flex-shrink-0">

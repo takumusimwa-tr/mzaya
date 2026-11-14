@@ -35,20 +35,23 @@
  * ============================================================================
  */
 
-import { ChevronRight, CircleHelp } from 'lucide-react'
+import { ChevronRight, CircleHelp, Package, CreditCard, UserRound, Store } from 'lucide-react'
+
+const TOPIC_ICONS = { parcel: Package, card: CreditCard, user: UserRound, store: Store }
 
 export default function SupportTopicCard({
   title,
   description,
   articleCount,
-  icon: Icon = CircleHelp,
+  icon = CircleHelp,
   onSelect,
 }) {
+  const Icon = typeof icon === 'string' ? (TOPIC_ICONS[icon] || CircleHelp) : (icon || CircleHelp)
   return (
     <button
       type="button"
       onClick={onSelect}
-      className="flex w-full items-center gap-3 rounded-[20px] border bg-white p-4 text-left outline-none transition-transform active:scale-[0.99] focus-visible:[box-shadow:var(--mzaya-focus-ring)]"
+      className="flex h-full w-full items-start gap-3 rounded-[20px] border bg-white p-4 text-left outline-none transition-transform active:scale-[0.99] focus-visible:[box-shadow:var(--mzaya-focus-ring)]"
       style={{
         borderColor: 'var(--mzaya-border)',
         boxShadow: 'var(--mzaya-shadow-xs)',

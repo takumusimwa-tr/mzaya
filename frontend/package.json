@@ -1,3 +1,4 @@
+
 {
   "name": "frontend",
   "private": true,
@@ -7,7 +8,8 @@
     "dev": "vite",
     "build": "vite build",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "brand:check": "node scripts/check-brand-assets.mjs"
   },
   "dependencies": {
     "@tanstack/react-query": "^5.97.0",

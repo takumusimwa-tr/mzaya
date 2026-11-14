@@ -48,7 +48,9 @@ export default function useNotifications({ token, initialLimit = 20 }) {
   }, [initialLimit])
 
   useEffect(() => {
-    load()
+    load().catch(() => {
+      // The error state is already captured by load; avoid an unhandled rejection.
+    })
   }, [load])
 
   useEffect(() => {
@@ -137,7 +139,7 @@ export default function useNotifications({ token, initialLimit = 20 }) {
     markRead,
     markAllRead,
     archive,
-    refresh: () => load(),
+    refresh: () => load().catch(() => {}),
   }), [
     notifications,
     loading,

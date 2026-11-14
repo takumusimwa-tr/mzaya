@@ -4,6 +4,7 @@ import { authAPI } from '../../api/api'
 import useAuthStore from '../../store/useAuthStore'
 import Input from '../../components/ui/Input'
 import Button from '../../components/ui/Button'
+import { MzayaLockup } from '../../components/brand/MzayaLockup'
 
 const ROLE_LABELS = {
   customer: 'Customer account',
@@ -12,9 +13,9 @@ const ROLE_LABELS = {
 }
 
 const ROLE_COLORS = {
-  customer: 'bg-green-600',
-  rider:    'bg-[#00A651]',
-  vendor:   'bg-[#00A651]',
+  customer: 'bg-[#052A25]',
+  rider:    'bg-[#052A25]',
+  vendor:   'bg-[#052A25]',
 }
 
 export default function RegisterPage() {
@@ -48,7 +49,7 @@ export default function RegisterPage() {
     }
   }
 
-  const headerColor = ROLE_COLORS[role] || 'bg-green-600'
+  const headerColor = ROLE_COLORS[role] || 'bg-[#052A25]'
 
   return (
     <div className="min-h-screen flex flex-col bg-white">
@@ -56,7 +57,7 @@ export default function RegisterPage() {
         <button onClick={() => navigate(-1)} className="bg-white/20 p-2 rounded-full mb-4 inline-block">
           <BackIcon />
         </button>
-        <h1 className="text-3xl font-bold text-white">Mzaya</h1>
+        <MzayaLockup iconSize={44} onDark className="h-12" />
         <p className="text-white/80 mt-1 text-sm">{ROLE_LABELS[role]}</p>
       </div>
 
@@ -106,7 +107,7 @@ export default function RegisterPage() {
 
         <p className="text-center text-sm text-gray-500 mt-6">
           Already have an account?{' '}
-          <Link to="/login" className="text-green-600 font-semibold">Login</Link>
+          <Link to="/login" className="text-[#086C55] font-semibold">Login</Link>
         </p>
       </div>
     </div>

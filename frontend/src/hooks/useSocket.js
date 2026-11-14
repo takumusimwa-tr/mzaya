@@ -1,15 +1,14 @@
-import { useEffect, useMemo, useState } from 'react'
-import { connectSocket } from '../realtime/socket'
+import { useEffect, useState } from 'react'
+import { getSocket } from '../realtime/socket'
 
 export default function useSocket(token) {
   const [connected, setConnected] = useState(false)
   const [connectionError, setConnectionError] = useState(null)
 
-  const socket = useMemo(() => (token ? connectSocket(token) : null), [token])
+  const socket = token ? getSocket(token) : null
 
   useEffect(() => {
     if (!socket) return undefined
-
     const onConnect = () => {
       setConnected(true)
       setConnectionError(null)
@@ -23,6 +22,7 @@ export default function useSocket(token) {
     socket.on('connect', onConnect)
     socket.on('disconnect', onDisconnect)
     socket.on('connect_error', onConnectError)
+    if (!socket.connected) socket.connect()
 
     if (socket.connected) setConnected(true)
 

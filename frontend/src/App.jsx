@@ -1,5 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import { useEffect, lazy, Suspense } from 'react'
+import { useQuery } from '@tanstack/react-query'
+import { vendorAPI } from './api/api'
 import useAuthStore from './store/useAuthStore'
 import { connectSocket, disconnectSocket } from './realtime/socket'
 import LoadingScreen from './components/ui/LoadingScreen'
@@ -117,6 +119,25 @@ function RootRedirect() {
   return <Navigate to="/home" replace />
 }
 
+// Check business ownership before mounting any vendor dashboard queries.
+function VendorBusinessGate({ children }) {
+  const { data, isLoading, isError, refetch } = useQuery({
+    queryKey: ['vendor-onboarding-branches'],
+    queryFn: () => vendorAPI.branches().then((response) => response.data.branches),
+    retry: 1,
+  })
+  if (isLoading) return <LoadingScreen message="Checking your business..." />
+  if (isError) return (
+    <div className="mx-auto mt-20 max-w-md rounded-3xl bg-white p-8 text-center shadow-sm">
+      <h1 className="text-xl font-semibold text-[#052A25]">Could not load your business</h1>
+      <p className="mt-3 text-sm text-gray-600">Check your connection and try again.</p>
+      <button type="button" onClick={() => refetch()} className="mt-6 rounded-xl bg-[#052A25] px-6 py-3 font-semibold text-white">Try again</button>
+    </div>
+  )
+  if (!Array.isArray(data) || data.length === 0) return <Navigate to="/vendor/setup" replace />
+  return children
+}
+
 // Vendor pages render full-width (tablet); everything else stays phone-width.
 function AppShell() {
   const user  = useAuthStore((s) => s.user)
@@ -128,18 +149,25 @@ function AppShell() {
 
   // Vendor console: full-width tablet layout with a left side rail.
   if (token && isVendorArea) {
+    if (location.pathname === '/vendor/setup') return (
+      <div className="min-h-screen bg-[#F7FAF8]">
+        <Suspense fallback={<LoadingScreen message="Loading business setup..." />}>
+          <RoleRoute allow={['vendor']}><VendorOnboarding /></RoleRoute>
+        </Suspense>
+      </div>
+    )
     return (
       <div className="min-h-screen bg-gray-100 flex">
-        <VendorSideRail />
+        <VendorBusinessGate><VendorSideRail /></VendorBusinessGate>
         <main className="flex-1 min-w-0 h-screen overflow-hidden">
           <Suspense fallback={<LoadingScreen message="Loading..." />}>
             <Routes>
-              <Route path="/vendor"              element={<RoleRoute allow={['vendor']}><VendorHome /></RoleRoute>} />
-              <Route path="/vendor/orders"       element={<RoleRoute allow={['vendor']}><VendorOrders /></RoleRoute>} />
-              <Route path="/vendor/menu"         element={<RoleRoute allow={['vendor']}><VendorMenu /></RoleRoute>} />
-              <Route path="/vendor/settings"     element={<RoleRoute allow={['vendor']}><VendorSettings /></RoleRoute>} />
-              <Route path="/vendor/analytics"    element={<RoleRoute allow={['vendor']}><VendorAnalytics /></RoleRoute>} />
-              <Route path="/vendor/branches/new" element={<RoleRoute allow={['vendor']}><VendorAddBranch /></RoleRoute>} />
+              <Route path="/vendor"              element={<RoleRoute allow={['vendor']}><VendorBusinessGate><VendorHome /></VendorBusinessGate></RoleRoute>} />
+              <Route path="/vendor/orders"       element={<RoleRoute allow={['vendor']}><VendorBusinessGate><VendorOrders /></VendorBusinessGate></RoleRoute>} />
+              <Route path="/vendor/menu"         element={<RoleRoute allow={['vendor']}><VendorBusinessGate><VendorMenu /></VendorBusinessGate></RoleRoute>} />
+              <Route path="/vendor/settings"     element={<RoleRoute allow={['vendor']}><VendorBusinessGate><VendorSettings /></VendorBusinessGate></RoleRoute>} />
+              <Route path="/vendor/analytics"    element={<RoleRoute allow={['vendor']}><VendorBusinessGate><VendorAnalytics /></VendorBusinessGate></RoleRoute>} />
+              <Route path="/vendor/branches/new" element={<RoleRoute allow={['vendor']}><VendorBusinessGate><VendorAddBranch /></VendorBusinessGate></RoleRoute>} />
               <Route path="*" element={<Navigate to="/vendor" replace />} />
             </Routes>
           </Suspense>
@@ -247,7 +275,7 @@ export default function App() {
   }, [token])
 
   return (
-    <BrowserRouter>
+    <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
       <AppShell />
     </BrowserRouter>
   )
