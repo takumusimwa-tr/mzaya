@@ -15,7 +15,7 @@ import Icon from '../../components/ui/Icon'
 import Money from '../../components/ui/Money'
 import imageUrl from '../../utils/imageUrl'
 import { useFavoriteIds } from '../../hooks/useFavorites'
-import errandsIllustration from '../../assets/brand/illustrations/onboarding/mzaya-onboarding-errands-02.svg'
+import PromotionalCarousel from '../../components/home/PromotionalCarousel'
 import emptyProducts from '../../assets/brand/illustrations/empty-states/mzaya-empty-products.svg'
 
 // ─── Mzaya design tokens (home) ───────────────────────────────────────────────
@@ -215,25 +215,8 @@ export default function HomePage() {
           onProduct={openProduct} onStore={openStore} />
       ) : (
         <>
-          {/* ── Promo: Mzaya's differentiator, with our illustration ──────── */}
-          {/* The illustration is a full scene with its own light background, so it
-              gets its own column instead of sitting behind the headline. */}
-          <section className="px-4 pt-4">
-            <button type="button" onClick={() => navigate('/errand')}
-              className="flex w-full items-stretch overflow-hidden rounded-2xl text-left transition-transform active:scale-[0.99]"
-              style={{ background: T.greenTint }}>
-              <div className="flex flex-1 flex-col justify-center py-4 pl-4 pr-2">
-                <p className="text-[11px] font-bold uppercase tracking-[0.08em]" style={{ color: '#0A7A3D' }}>Only on Mzaya</p>
-                <p className="mt-1 text-[19px] font-extrabold leading-tight" style={{ color: T.greenDeep }}>Skip the queue.</p>
-                <p className="mt-1 text-[13px] leading-snug" style={{ color: T.ink2 }}>ZIMRA, banks, document drop-offs. A Mzaya stands in line for you.</p>
-                <span className="mt-3 inline-flex h-8 w-fit items-center rounded-full px-3.5 text-[13px] font-bold text-white" style={{ background: T.green }}>
-                  Book an errand
-                </span>
-              </div>
-              <img src={errandsIllustration} alt="" aria-hidden="true" draggable="false"
-                className="w-[44%] flex-shrink-0 select-none object-cover object-center" />
-            </button>
-          </section>
+          {/* Approved campaigns will be connected here when the campaign API is ready. */}
+          <PromotionalCarousel onNavigate={navigate} />
 
           {/* ── Popular items rail ─────────────────────────────────────────── */}
           {!productsError && (productsLoading || products.length > 0) && (
