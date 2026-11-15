@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { adCampaignAPI } from '../../api/api'
+import CampaignMetrics from '../../components/advertising/CampaignMetrics'
 
 export default function AdminCampaigns() {
   const qc = useQueryClient()
@@ -11,6 +12,7 @@ export default function AdminCampaigns() {
   return <div className="min-h-screen bg-[#F7FAF8] p-5 md:p-10"><div className="mx-auto max-w-4xl space-y-6">
     <Link to="/admin" className="text-sm font-semibold text-[#087B60]">← Admin home</Link>
     <div><p className="text-xs font-bold uppercase tracking-[.18em] text-[#087B60]">Advertising operations</p><h1 className="mt-2 text-3xl font-bold text-[#123E33]">Campaign approvals</h1><p className="mt-2 text-sm text-[#5B7169]">Review vendor campaigns before they appear in customer discovery.</p></div>
+    <CampaignMetrics title="Advertising performance" />
     {message && <p role="status" className="rounded-xl bg-white p-3 text-sm">{message}</p>}
     {isLoading && <p>Loading campaigns…</p>}{error && <p role="alert">Could not load campaigns.</p>}
     {!isLoading && !data?.campaigns?.length && <p>No campaigns to review.</p>}

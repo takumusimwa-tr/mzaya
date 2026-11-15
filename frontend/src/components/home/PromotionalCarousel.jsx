@@ -1,4 +1,5 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
+import { adAnalyticsAPI } from '../../api/api'
 import { ChevronLeft, ChevronRight, Megaphone } from 'lucide-react'
 import errandsIllustration from '../../assets/brand/illustrations/onboarding/mzaya-onboarding-errands-02.svg'
 
@@ -26,6 +27,21 @@ export default function PromotionalCarousel({ campaigns = [], onNavigate }) {
   const activeIndex = Math.min(index, slides.length - 1)
   const slide = slides[activeIndex]
   const sponsored = slide.type !== 'first_party'
+  const seen = useRef(new Set())
+  useEffect(() => {
+    if (!sponsored || !slide.id || seen.current.has(slide.id)) return
+    seen.current.add(slide.id)
+    // An impression is counted when a campaign becomes the active slide.
+    // Analytics failure must never interrupt the shopping experience.
+    if (typeof crypto === 'undefined' || !crypto.randomUUID) return
+    adAnalyticsAPI.record({ campaign_id: slide.id, event_type: 'impression', event_key: crypto.randomUUID() }).catch(() => {})
+  }, [slide.id, sponsored])
+  const visit = () => {
+    if (sponsored && typeof crypto !== 'undefined' && crypto.randomUUID) {
+      adAnalyticsAPI.record({ campaign_id: slide.id, event_type: 'click', event_key: crypto.randomUUID() }).catch(() => {})
+    }
+    onNavigate(slide.href)
+  }
   const move = (direction) => setIndex((current) => (current + direction + slides.length) % slides.length)
 
   return (
@@ -39,7 +55,7 @@ export default function PromotionalCarousel({ campaigns = [], onNavigate }) {
             </div>
             <h2 className="text-[20px] font-extrabold leading-tight tracking-tight text-[#052A25]">{slide.title}</h2>
             {slide.description && <p className="mt-1.5 text-[12px] leading-relaxed text-[#46665C]">{slide.description}</p>}
-            <button type="button" onClick={() => onNavigate(slide.href)}
+            <button type="button" onClick={visit}
               className="mt-3 w-fit rounded-full bg-[#086C55] px-4 py-2 text-[12px] font-bold text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#052A25]">
               {slide.cta || 'Explore'}
             </button>

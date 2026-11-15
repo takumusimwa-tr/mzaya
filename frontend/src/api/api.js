@@ -134,6 +134,12 @@ export const adCampaignAPI = {
   setStatus: (id, status) => api.patch(`/ad-campaigns/${id}/status`, { status }),
 }
 
+// ─── Advertising analytics (separate from checkout promos) ─────────────
+export const adAnalyticsAPI = {
+  record: (data) => api.post('/ad-analytics/events', data),
+  summary: () => api.get('/ad-analytics/summary'),
+}
+
 // ─── Admin ────────────────────────────────────────────────────────────────────
 export const adminAPI = {
   overview:      () => api.get('/admin/overview'),
