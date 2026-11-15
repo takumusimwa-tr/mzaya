@@ -122,6 +122,18 @@ export const promoAPI = {
   remove:   (id) => api.delete(`/promos/${id}`),
 }
 
+// ─── Approved advertising placements (separate from discount codes) ──────────
+export const adCampaignAPI = {
+  discover: ({ city_id, category }) => api.get('/ad-campaigns/discover', { params: { city_id, category } }),
+  list: () => api.get('/ad-campaigns'),
+  mine: () => api.get('/ad-campaigns/mine'),
+  createMine: (data) => api.post('/ad-campaigns/mine', data),
+  submitMine: (id) => api.post(`/ad-campaigns/mine/${id}/submit`),
+  create: (data) => api.post('/ad-campaigns', data),
+  update: (id, data) => api.patch(`/ad-campaigns/${id}`, data),
+  setStatus: (id, status) => api.patch(`/ad-campaigns/${id}/status`, { status }),
+}
+
 // ─── Admin ────────────────────────────────────────────────────────────────────
 export const adminAPI = {
   overview:      () => api.get('/admin/overview'),

@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { Link } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useNavigate } from 'react-router-dom'
 import { adminAPI, promoAPI } from '../../api/api'
@@ -30,6 +31,7 @@ export default function AdminHome() {
             Logout
           </button>
         </div>
+        <Link to="/admin/campaigns" className="mb-3 inline-block rounded-lg bg-white/10 px-3 py-2 text-xs font-semibold text-white">Advertising campaigns →</Link>
         {/* Tabs */}
         <div className="flex gap-1 overflow-x-auto">
           {TABS.map((t) => (

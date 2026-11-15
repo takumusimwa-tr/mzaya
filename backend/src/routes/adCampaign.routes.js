@@ -1,0 +1,15 @@
+const router = require('express').Router();
+const { authenticate, requireRole } = require('../middleware/auth.middleware');
+const { USER_ROLE } = require('../config/constants');
+const ads = require('../controllers/adCampaign.controller');
+router.use(authenticate);
+router.get('/discover', ads.discover);
+router.get('/mine', requireRole(USER_ROLE.VENDOR), ads.myCampaigns);
+router.post('/mine', requireRole(USER_ROLE.VENDOR), ads.createMine);
+router.post('/mine/:id/submit', requireRole(USER_ROLE.VENDOR), ads.submitMine);
+router.use(requireRole(USER_ROLE.ADMIN));
+router.get('/', ads.list);
+router.post('/', ads.create);
+router.patch('/:id', ads.update);
+router.patch('/:id/status', ads.setStatus);
+module.exports = router;

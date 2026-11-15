@@ -5,7 +5,7 @@ import {
   ArrowLeft, ChevronDown, ChevronRight, Clock, Heart, MapPin, Search, ShoppingBag, Star, UserRound, X,
   Bike,
 } from 'lucide-react'
-import { browseAPI, orderAPI } from '../../api/api'
+import { adCampaignAPI, browseAPI, orderAPI } from '../../api/api'
 import useSocketEvent from '../../hooks/useSocketEvent'
 import useCartStore from '../../store/useCartStore'
 import useLocation from '../../hooks/useLocation'
@@ -15,7 +15,8 @@ import Icon from '../../components/ui/Icon'
 import Money from '../../components/ui/Money'
 import imageUrl from '../../utils/imageUrl'
 import { useFavoriteIds } from '../../hooks/useFavorites'
-import errandsIllustration from '../../assets/brand/illustrations/onboarding/mzaya-onboarding-errands-02.svg'
+import PromotionalCarousel from '../../components/home/PromotionalCarousel'
+import { DiscoveryProductCard, DiscoveryVendorCard } from '../../components/home/DiscoveryCards'
 import emptyProducts from '../../assets/brand/illustrations/empty-states/mzaya-empty-products.svg'
 
 // ─── Mzaya design tokens (home) ───────────────────────────────────────────────
@@ -110,6 +111,15 @@ export default function HomePage() {
     ...BROWSE_RETRY,
   })
   const products = productData?.products || []
+
+  // Advertising is optional. A failed campaign feed must never break shopping.
+  const { data: campaignData } = useQuery({
+    queryKey: ['ad-campaigns', category, selectedCity?.id],
+    queryFn: () => adCampaignAPI.discover({ city_id: selectedCity.id, category }).then((r) => r.data),
+    enabled: !!selectedCity?.id,
+    retry: 1,
+    staleTime: 60_000,
+  })
 
   // Orders no longer has a tab, so an order in progress surfaces right here.
   const { data: myOrders = [], refetch: refetchOrders } = useQuery({
@@ -215,63 +225,36 @@ export default function HomePage() {
           onProduct={openProduct} onStore={openStore} />
       ) : (
         <>
-          {/* ── Promo: Mzaya's differentiator, with our illustration ──────── */}
-          {/* The illustration is a full scene with its own light background, so it
-              gets its own column instead of sitting behind the headline. */}
-          <section className="px-4 pt-4">
-            <button type="button" onClick={() => navigate('/errand')}
-              className="flex w-full items-stretch overflow-hidden rounded-2xl text-left transition-transform active:scale-[0.99]"
-              style={{ background: T.greenTint }}>
-              <div className="flex flex-1 flex-col justify-center py-4 pl-4 pr-2">
-                <p className="text-[11px] font-bold uppercase tracking-[0.08em]" style={{ color: '#0A7A3D' }}>Only on Mzaya</p>
-                <p className="mt-1 text-[19px] font-extrabold leading-tight" style={{ color: T.greenDeep }}>Skip the queue.</p>
-                <p className="mt-1 text-[13px] leading-snug" style={{ color: T.ink2 }}>ZIMRA, banks, document drop-offs. A Mzaya stands in line for you.</p>
-                <span className="mt-3 inline-flex h-8 w-fit items-center rounded-full px-3.5 text-[13px] font-bold text-white" style={{ background: T.green }}>
-                  Book an errand
-                </span>
-              </div>
-              <img src={errandsIllustration} alt="" aria-hidden="true" draggable="false"
-                className="w-[44%] flex-shrink-0 select-none object-cover object-center" />
-            </button>
-          </section>
+          {/* Campaign-ready first-party promotion; vendor ads require an approved API. */}
+          <PromotionalCarousel campaigns={campaignData?.campaigns || []} onNavigate={navigate} />
 
-          {/* ── Popular items rail ─────────────────────────────────────────── */}
+          {/* Image-led discovery: real catalogue records only, never demo inventory. */}
           {!productsError && (productsLoading || products.length > 0) && (
-            <section className="pt-6">
+            <section className="pt-7">
               <SectionHeader title={copy.popular} />
-              <div className="flex gap-3 overflow-x-auto px-4 pb-1 no-scrollbar">
+              <div className="grid grid-cols-2 gap-3 px-4 sm:grid-cols-3">
                 {productsLoading
-                  ? [0, 1, 2].map((k) => <div key={k} className="h-[188px] w-[148px] flex-shrink-0 animate-pulse rounded-xl" style={{ background: T.fill }} />)
-                  : products.slice(0, 10).map((p) => <ProductCard key={`${p.branch_id}-${p.item_id}`} product={p} category={category} onClick={() => openProduct(p)} />)}
+                  ? [0, 1, 2, 3].map((k) => <div key={k} className="aspect-[0.76] animate-pulse rounded-[20px]" style={{ background: T.fill }} />)
+                  : products.slice(0, 6).map((p) => <DiscoveryProductCard key={`${p.branch_id}-${p.item_id}`} product={p} category={category} onClick={() => openProduct(p)} />)}
               </div>
             </section>
           )}
 
-          {/* ── Stores ─────────────────────────────────────────────────────── */}
-          <section className="pt-6">
+          <section className="pt-7">
             <SectionHeader title={copy.stores} count={brands.length} />
             {brandsError ? (
-              <div className="px-4">
-                <ErrorState
-                  title="Couldn’t load stores"
-                  description="Check your connection and try again."
-                  onRetry={() => refetchBrands()}
-                />
-              </div>
+              <div className="px-4"><ErrorState title="Couldn’t load vendors" description="Check your connection and try again." onRetry={() => refetchBrands()} /></div>
             ) : brandsLoading ? (
-              <div className="px-4">{[0, 1, 2].map((k) => <div key={k} className="my-3 h-16 animate-pulse rounded-xl" style={{ background: T.fill }} />)}</div>
+              <div className="grid grid-cols-2 gap-3 px-4">{[0, 1, 2, 3].map((k) => <div key={k} className="h-56 animate-pulse rounded-[22px]" style={{ background: T.fill }} />)}</div>
             ) : brands.length === 0 ? (
-              <div className="px-8 py-10 text-center">
-                <img src={emptyProducts} alt="" aria-hidden="true" className="mx-auto w-44 select-none" draggable="false" />
-                <p className="mt-3 font-bold">Nothing here yet</p>
-                <p className="mt-1 text-[13px]" style={{ color: T.ink2 }}>We&apos;re signing up stores in {selectedCity?.name || 'your city'}. Check back soon.</p>
+              <div className="mx-4 rounded-[24px] border border-[#E7EEE9] bg-[#F8FAF8] px-5 py-8 text-center">
+                <img src={emptyProducts} alt="" aria-hidden="true" className="mx-auto w-36 select-none" draggable="false" />
+                <p className="mt-3 text-[16px] font-extrabold text-[#052A25]">{category === 'food' ? 'Restaurants are on their way' : category === 'grocery' ? 'Groceries are coming to Mzaya' : 'Hardware suppliers are coming soon'}</p>
+                <p className="mx-auto mt-2 max-w-xs text-[13px] leading-relaxed" style={{ color: T.ink2 }}>We’re welcoming {category === 'food' ? 'restaurants' : category === 'grocery' ? 'grocery vendors' : 'hardware vendors'} in {selectedCity?.name || 'your city'}. Real vendors and their products will appear here as they join.</p>
               </div>
             ) : (
-              <ul className="px-4">
-                {brands.map((b) => (
-                  <StoreRow key={b.id} brand={b} onClick={() => openStore(b)}
-                    favorite={isFavorite(b.id)} onFavorite={() => toggle(b.id)} />
-                ))}
+              <ul className="grid grid-cols-2 gap-3 px-4 sm:grid-cols-3">
+                {brands.map((b) => <DiscoveryVendorCard key={b.id} brand={b} onClick={() => openStore(b)} favorite={isFavorite(b.id)} onFavorite={() => toggle(b.id)} />)}
               </ul>
             )}
           </section>
@@ -385,25 +368,6 @@ function StoreRow({ brand, onClick, favorite, onFavorite }) {
         )}
       </div>
     </li>
-  )
-}
-
-function ProductCard({ product, category, onClick }) {
-  return (
-    <button type="button" onClick={onClick} className="w-[148px] flex-shrink-0 text-left transition-transform active:scale-[0.98]">
-      <span className="relative block h-[120px] overflow-hidden rounded-xl" style={{ background: T.fill }}>
-        {product.image_url ? (
-          <img src={imageUrl(product.image_url, 320)} alt="" className="h-full w-full object-cover" />
-        ) : (
-          <span className="flex h-full w-full items-center justify-center" style={{ color: '#B9C2BE' }}>
-            <Icon name={category} size={34} />
-          </span>
-        )}
-      </span>
-      <span className="mt-2 block line-clamp-2 text-[13px] font-semibold leading-snug">{product.name}</span>
-      <span className="mt-0.5 block truncate text-[12px]" style={{ color: T.ink2 }}>{product.brand_name}</span>
-      <span className="mt-0.5 block text-[13px] font-bold"><Money usd={product.price_usd} /></span>
-    </button>
   )
 }
 

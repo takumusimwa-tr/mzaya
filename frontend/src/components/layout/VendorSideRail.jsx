@@ -41,6 +41,7 @@ import { useQuery } from '@tanstack/react-query'
 import { NavLink, useNavigate } from 'react-router-dom'
 import {
   BarChart3,
+  Megaphone,
   ChevronDown,
   CirclePlus,
   LayoutDashboard,
@@ -60,6 +61,7 @@ const TABS = [
   { to: '/vendor/orders', label: 'Orders', icon: ListOrdered },
   { to: '/vendor/menu', label: 'Menu', icon: UtensilsCrossed },
   { to: '/vendor/analytics', label: 'Analytics', icon: BarChart3 },
+  { to: '/vendor/campaigns', label: 'Campaigns', icon: Megaphone },
   { to: '/vendor/settings', label: 'Settings', icon: Settings },
 ]
 

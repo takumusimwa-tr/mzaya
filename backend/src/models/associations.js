@@ -9,6 +9,7 @@ const MenuItem = require('./menuItemModel');
 const Rider = require('./riderModel');
 const City = require('./cityModel');
 const Promo = require('./promoModel');
+const AdCampaign = require('./adCampaignModel');
 const Brand = require('./brandModel');
 const OrderOffer = require('./orderOfferModel');
 const OrderMessage = require('./orderMessageModel');

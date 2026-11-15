@@ -42,6 +42,8 @@ const RiderEarnings    = lazy(() => import('./pages/rider/RiderEarnings'))
 const RiderProfilePage = lazy(() => import('./pages/rider/RiderProfilePage'))
 
 // Vendor (tablet console)
+const VendorCampaigns = lazy(() => import('./pages/vendor/VendorCampaigns'))
+const AdminCampaigns = lazy(() => import('./pages/admin/AdminCampaigns'))
 const VendorHome       = lazy(() => import('./pages/vendor/VendorHome'))
 const VendorOrders     = lazy(() => import('./pages/vendor/VendorOrders'))
 const VendorMenu       = lazy(() => import('./pages/vendor/VendorMenu'))
@@ -166,6 +168,7 @@ function AppShell() {
               <Route path="/vendor/orders"       element={<RoleRoute allow={['vendor']}><VendorBusinessGate><VendorOrders /></VendorBusinessGate></RoleRoute>} />
               <Route path="/vendor/menu"         element={<RoleRoute allow={['vendor']}><VendorBusinessGate><VendorMenu /></VendorBusinessGate></RoleRoute>} />
               <Route path="/vendor/settings"     element={<RoleRoute allow={['vendor']}><VendorBusinessGate><VendorSettings /></VendorBusinessGate></RoleRoute>} />
+              <Route path="/vendor/campaigns"  element={<RoleRoute allow={['vendor']}><VendorBusinessGate><VendorCampaigns /></VendorBusinessGate></RoleRoute>} />
               <Route path="/vendor/analytics"    element={<RoleRoute allow={['vendor']}><VendorBusinessGate><VendorAnalytics /></VendorBusinessGate></RoleRoute>} />
               <Route path="/vendor/branches/new" element={<RoleRoute allow={['vendor']}><VendorBusinessGate><VendorAddBranch /></VendorBusinessGate></RoleRoute>} />
               <Route path="*" element={<Navigate to="/vendor" replace />} />
@@ -187,6 +190,7 @@ function AppShell() {
         <Suspense fallback={<LoadingScreen message="Loading..." />}>
           <Routes>
             <Route path="/admin" element={<RoleRoute allow={['admin']}><AdminHome /></RoleRoute>} />
+            <Route path="/admin/campaigns" element={<RoleRoute allow={['admin']}><AdminCampaigns /></RoleRoute>} />
             <Route path="/admin/finance/events" element={<RoleRoute allow={['admin']}><FinanceEventEngine /></RoleRoute>} />
             <Route path="/admin/finance/posting" element={<RoleRoute allow={['admin']}><FinancePostingCenter /></RoleRoute>} />
             <Route path="/admin/finance/delivery" element={<RoleRoute allow={['admin']}><FinanceDeliveryMonitor /></RoleRoute>} />
