@@ -18,7 +18,7 @@ import illoConfirmed from '../../assets/brand/illustrations/status/mzaya-order-c
 import illoCompleted from '../../assets/brand/illustrations/status/mzaya-order-completed.svg'
 
 const T = {
-  green: '#00A651', greenDeep: '#0B4A3F', greenTint: '#E9F7EF',
+  green: '#086C55', greenDeep: '#052A25', greenTint: '#E7F3EE',
   ink: '#16191A', ink2: '#5F6B66', ink3: '#8C9692', line: '#ECEFED', fill: '#F4F6F5',
   red: '#C0392B', amber: '#9A6200', amberTint: '#FFF6E6',
 }
@@ -249,7 +249,7 @@ export default function OrderDetail() {
                     <span className="flex items-center gap-2">
                       <span className="truncate text-[15px] font-bold">{o.rider?.name || 'Mzaya'}</span>
                       <span className="rounded-md px-1.5 py-0.5 text-[11px] font-bold"
-                        style={o.type === 'counter' ? { background: T.amberTint, color: T.amber } : { background: T.greenTint, color: '#0A7A3D' }}>
+                        style={o.type === 'counter' ? { background: T.amberTint, color: T.amber } : { background: T.greenTint, color: T.greenDeep }}>
                         {o.type === 'counter' ? 'Counter offer' : 'Accepts your fare'}
                       </span>
                     </span>
@@ -316,7 +316,7 @@ export default function OrderDetail() {
           </div>
           {order.total_zig && <p className="mt-0.5 text-right text-[12px]" style={{ color: T.ink3 }}>About ZiG {Number(order.total_zig).toFixed(2)}</p>}
           {/* The method is a placeholder until the customer pays, so only show it once paid. */}
-          <p className="mt-2 flex items-center gap-1.5 text-[13px] font-semibold" style={{ color: unpaid ? T.amber : '#0A7A3D' }}>
+          <p className="mt-2 flex items-center gap-1.5 text-[13px] font-semibold" style={{ color: unpaid ? T.amber : T.greenDeep }}>
             {unpaid ? 'Not paid yet' : <><Check size={15} strokeWidth={2.6} /> Paid with {String(order.payment_method).replace('_', ' ')}</>}
           </p>
         </div>

@@ -60,7 +60,7 @@ export default function OrdersPage() {
                 </div>
                 <div className="flex items-center justify-between mt-3">
                   <p className="text-xs text-gray-500">{order.pickup_address}</p>
-                  <p className="font-bold text-green-600">US${Number(order.total_usd).toFixed(2)}</p>
+                  <p className="font-bold" style={{ color: '#086C55' }}>US${Number(order.total_usd).toFixed(2)}</p>
                 </div>
                 <p className="text-xs text-gray-400 mt-1">
                   {new Date(order.createdAt).toLocaleDateString('en-ZW', {
@@ -72,7 +72,7 @@ export default function OrdersPage() {
               {(order.status === 'delivered' || order.status === 'cancelled') && (
                 <button type="button" onClick={(e) => { e.stopPropagation(); reorder(order) }}
                   className="w-full mt-3 py-2.5 rounded-xl font-bold text-sm active:scale-98 transition-transform border"
-                  style={{ borderColor: '#00A651', color: '#00A651' }}>
+                  style={{ borderColor: '#086C55', color: '#086C55' }}>
                   <Icon name="reorder" size={14} className="inline" /> Reorder
                 </button>
               )}
