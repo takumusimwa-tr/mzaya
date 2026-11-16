@@ -40,7 +40,7 @@ async function placeOrder(req, res) {
 // Uses the same logic as placement so the quote matches the final charge.
 async function quote(req, res) {
   try {
-    const result = quoteOrder(req.body);
+    const result = await quoteOrder(req.body);
     return res.status(200).json({ quote: result });
   } catch (err) {
     logger.error('quote_error', { error: err.message });

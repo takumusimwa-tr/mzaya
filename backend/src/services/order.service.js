@@ -1,5 +1,5 @@
 const { CATEGORY_TYPE, ORDER_STATUS } = require('../config/constants');
-const { Order, OrderFood, OrderGrocery, OrderMaterials, OrderErrand, Promo } = require('../models/associations');
+const { Order, OrderFood, OrderGrocery, OrderMaterials, OrderErrand, Promo, MenuItem } = require('../models/associations');
 const { dispatchOrder, assignVehicleType, calculateDistanceKm } = require('./orderDispatch.service');
 const { calculateFees, convertToZig } = require('../utils/feeCalculator');
 const { evaluatePromo } = require('../utils/promoEval');
@@ -24,16 +24,50 @@ const {
   upsertOrderEconomics,
 } = require('./orderEconomicsIntegration.service');
 
+// Resolve customer cart items against the active vendor catalog. Never use
+// client-provided prices, availability or weight for monetary calculations.
+async function resolveCatalogDetail(categoryType, detail) {
+  if (categoryType === CATEGORY_TYPE.ERRAND) return detail;
+  const vendorId = categoryType === CATEGORY_TYPE.FOOD ? detail?.restaurant_id
+    : categoryType === CATEGORY_TYPE.GROCERY ? detail?.store_id
+    : categoryType === CATEGORY_TYPE.MATERIALS ? detail?.supplier_id : null;
+  if (!vendorId || !Array.isArray(detail?.items) || !detail.items.length) {
+    throw new Error('A vendor and at least one catalog item are required');
+  }
+  const ids = detail.items.map((item) => item?.menu_item_id);
+  if (ids.some((id) => typeof id !== 'string' || !id.trim()) || new Set(ids).size !== ids.length) {
+    throw new Error('Invalid or duplicate catalog items');
+  }
+  const catalog = await MenuItem.findAll({ where: { id: ids, vendor_id: vendorId, is_available: true } });
+  if (catalog.length !== ids.length) throw new Error('Some items are unavailable or do not belong to this vendor');
+  const byId = new Map(catalog.map((item) => [String(item.id), item]));
+  const items = detail.items.map((item) => {
+    const stored = byId.get(item.menu_item_id);
+    const qty = Number(item.qty);
+    const price = Number(stored?.price_usd);
+    const weight = Number(stored?.weight_kg || 0);
+    if (!Number.isSafeInteger(qty) || qty <= 0 || !Number.isFinite(price) || price < 0 ||
+        !Number.isFinite(weight) || weight < 0) {
+      throw new Error('Invalid catalog price, weight or item quantity');
+    }
+    return { ...item, name: stored.name, unit_price_usd: price, weight_kg: weight, qty };
+  });
+  const totalWeight = items.reduce((sum, item) => sum + item.qty * item.weight_kg, 0);
+  if (!Number.isFinite(totalWeight)) throw new Error('Invalid order weight');
+  return { ...detail, items, total_weight_kg: totalWeight };
+}
+
 // ─── Quote an order (no persistence) ──────────────────────────────────────────
 // Shared by POST /api/orders/quote and createOrder so the fee the customer sees
 // is exactly the fee that gets stored. Pure computation, no DB writes.
-function quoteOrder({ category_type, detail, pickup_location, dropoff_location, tip_usd, discount_usd }) {
+async function quoteOrder({ category_type, detail, pickup_location, dropoff_location, tip_usd, discount_usd }) {
   if (!Object.values(CATEGORY_TYPE).includes(category_type)) {
     throw new Error(`Invalid category_type: ${category_type}`);
   }
 
-  const subtotalUsd = calculateSubtotal(category_type, detail);
-  const weightKg    = Number(detail?.total_weight_kg) || 0;
+  const catalogDetail = await resolveCatalogDetail(category_type, detail);
+  const subtotalUsd = calculateSubtotal(category_type, catalogDetail);
+  const weightKg    = Number(catalogDetail?.total_weight_kg) || 0;
   const vehicleType = assignVehicleType(category_type, weightKg);
   const distanceKm  = calculateDistanceKm(pickup_location, dropoff_location);
   const zigRate     = getCurrentRate();
@@ -103,7 +137,8 @@ async function createOrder(customerId, orderData) {
     throw new Error(`Invalid category_type: ${category_type}`);
   }
 
-  const subtotalUsd = calculateSubtotal(category_type, detail);
+  const verifiedDetail = await resolveCatalogDetail(category_type, detail);
+  const subtotalUsd = calculateSubtotal(category_type, verifiedDetail);
 
   // Validate scheduling window if this is a scheduled order.
   let scheduledFor = null;
@@ -137,9 +172,9 @@ async function createOrder(customerId, orderData) {
     offered_fare_usd: is_negotiable ? Number(offered_fare_usd) || 0 : null,
   });
 
-  await createDetailRecord(category_type, order.id, detail);
+  await createDetailRecord(category_type, order.id, verifiedDetail);
 
-  const weightKg = Number(detail?.total_weight_kg) || 0;
+  const weightKg = Number(verifiedDetail?.total_weight_kg) || 0;
   const zigRate  = getCurrentRate();
 
   const dispatch = await dispatchOrder({
