@@ -9,7 +9,7 @@ import useCartStore from '../../store/useCartStore'
 import Money from '../../components/ui/Money'
 
 const T = {
-  green: '#00A651', greenDeep: '#0B4A3F', greenTint: '#E9F7EF',
+  green: '#086C55', greenDeep: '#052A25', greenTint: '#E7F3EE',
   ink: '#16191A', ink2: '#5F6B66', ink3: '#8C9692', line: '#ECEFED', fill: '#F4F6F5',
   red: '#C0392B', amber: '#9A6200', amberTint: '#FFF6E6',
 }
@@ -55,6 +55,7 @@ export default function CheckoutPage() {
   const navigate = useNavigate()
   const cart = useCartStore()
   const dropoffRef = useRef(null)
+  const submittingRef = useRef(false)
 
   const { data: savedAddresses, isError: savedAddressesError, refetch: refetchSavedAddresses } = useQuery({
     queryKey: ['addresses'],
@@ -229,7 +230,7 @@ export default function CheckoutPage() {
   }
 
   const handleSubmit = async () => {
-    if (loading) return
+    if (submittingRef.current) return
     setError('')
 
     if (!dropoff.trim()) return fail('Add your delivery address', { address: true })
@@ -245,6 +246,11 @@ export default function CheckoutPage() {
       }
     }
 
+    if (quoteLoading || quoteError || !quote || !Number.isFinite(Number(quote.total_usd))) {
+      return fail('We could not confirm your total. Refresh the delivery quote and try again.')
+    }
+
+    submittingRef.current = true
     setLoading(true)
     try {
       const useNegotiation = canNegotiate && nameYourFare
@@ -274,6 +280,7 @@ export default function CheckoutPage() {
     } catch (err) {
       setError(err.response?.data?.error || 'Could not place your order. Please try again.')
     } finally {
+      submittingRef.current = false
       setLoading(false)
     }
     return undefined

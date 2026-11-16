@@ -5,7 +5,7 @@ import Money from '../../components/ui/Money'
 import emptyCart from '../../assets/brand/illustrations/empty-states/mzaya-empty-cart.svg'
 
 const T = {
-  green: '#00A651', greenDeep: '#0B4A3F', greenTint: '#E9F7EF',
+  green: '#086C55', greenDeep: '#052A25', greenTint: '#E7F3EE',
   ink: '#16191A', ink2: '#5F6B66', ink3: '#8C9692', line: '#ECEFED', fill: '#F4F6F5',
 }
 
