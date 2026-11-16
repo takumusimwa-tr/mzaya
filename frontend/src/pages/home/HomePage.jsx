@@ -182,14 +182,7 @@ export default function HomePage() {
             <span className={`flex-1 truncate text-[14px] ${search ? 'font-semibold' : ''}`} style={{ color: search ? T.ink : T.ink3 }}>
               {search || copy.search}
             </span>
-            {search && (
-              <span role="button" tabIndex={0} aria-label="Clear search"
-                onClick={(e) => { e.stopPropagation(); setSearch('') }}
-                onKeyDown={(e) => { if (e.key === 'Enter') { e.stopPropagation(); setSearch('') } }}
-                className="flex h-6 w-6 items-center justify-center rounded-full" style={{ background: '#DDE2DF' }}>
-                <X size={13} strokeWidth={2.6} />
-              </span>
-            )}
+            {search && <X size={16} strokeWidth={2.2} aria-hidden="true" style={{ color: T.ink2 }} />}
           </button>
         </div>
       </header>
@@ -525,7 +518,7 @@ function CitySheet({ cities, current, onClose, onPick }) {
 function Chip({ children, tone }) {
   return (
     <span className="inline-flex h-[22px] items-center rounded-md px-2 text-[11px] font-semibold"
-      style={tone === 'green' ? { background: T.greenTint, color: '#0A7A3D' } : { background: T.fill, color: T.ink2 }}>
+      style={tone === 'green' ? { background: T.greenTint, color: T.greenDeep } : { background: T.fill, color: T.ink2 }}>
       {children}
     </span>
   )

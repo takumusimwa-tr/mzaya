@@ -124,8 +124,9 @@ export default function VendorPage() {
 
   // Keep the active tab visible in the horizontally scrolling bar.
   useEffect(() => {
-    tabsRef.current?.querySelector(`[data-tab="${CSS.escape(activeSection || '')}"]`)
-      ?.scrollIntoView({ inline: 'center', block: 'nearest', behavior: 'smooth' })
+    const tabs = tabsRef.current?.querySelectorAll('[data-tab]')
+    const activeTab = Array.from(tabs || []).find((tab) => tab.dataset.tab === activeSection)
+    activeTab?.scrollIntoView({ inline: 'center', block: 'nearest', behavior: 'smooth' })
   }, [activeSection])
 
   useEffect(() => {
@@ -324,7 +325,7 @@ export default function VendorPage() {
 
       {/* ── Toast ────────────────────────────────────────────────────────── */}
       {toast && (
-        <div role="status" className="fixed inset-x-0 z-50 flex justify-center px-4" style={{ bottom: `calc(${cartCount > 0 ? 88 : 24}px + env(safe-area-inset-bottom))` }}>
+        <div role="status" aria-live="polite" className="fixed inset-x-0 z-50 flex justify-center px-4" style={{ bottom: `calc(${cartCount > 0 ? 88 : 24}px + env(safe-area-inset-bottom))` }}>
           <span className="rounded-full px-4 py-2.5 text-[13px] font-semibold text-white shadow-lg" style={{ background: T.ink }}>{toast}</span>
         </div>
       )}
