@@ -434,8 +434,29 @@ async function cancelOrder(orderId, customerId, reason) {
 
 function calculateSubtotal(categoryType, detail) {
   if (categoryType === CATEGORY_TYPE.ERRAND) return 0;
-  if (!detail?.items?.length) return 0;
-  return detail.items.reduce((sum, item) => sum + (item.unit_price_usd || 0) * (item.qty || 1), 0);
+  if (!Array.isArray(detail?.items) || detail.items.length === 0) {
+    throw new Error('An order must contain at least one item');
+  }
+
+  // Reject malformed totals before either quote or order creation. This does
+  // not replace server-side catalog price verification (tracked separately).
+  const subtotal = detail.items.reduce((sum, item) => {
+    const quantity = Number(item?.qty);
+    const unitPrice = Number(item?.unit_price_usd);
+    if (!Number.isSafeInteger(quantity) || quantity <= 0) {
+      throw new Error('Each item must have a positive whole-number quantity');
+    }
+    if (item?.unit_price_usd == null || !Number.isFinite(unitPrice) || unitPrice < 0) {
+      throw new Error('Each item must have a valid non-negative unit price');
+    }
+    const lineTotal = quantity * unitPrice;
+    if (!Number.isFinite(lineTotal)) {
+      throw new Error('Order subtotal is invalid');
+    }
+    return sum + lineTotal;
+  }, 0);
+  if (!Number.isFinite(subtotal)) throw new Error('Order subtotal is invalid');
+  return subtotal;
 }
 
 async function createDetailRecord(categoryType, orderId, detail) {
