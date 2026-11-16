@@ -42,7 +42,7 @@ export default function FavoritesPage() {
           </p>
           <button onClick={() => navigate('/home')}
             className="px-8 py-3 rounded-2xl text-white font-bold active:scale-95"
-            style={{ background: '#00A651' }}>
+            style={{ background: '#086C55' }}>
             Browse vendors
           </button>
         </div>
@@ -76,7 +76,7 @@ export default function FavoritesPage() {
                   aria-label="Remove from favourites"
                   onClick={(e) => { e.stopPropagation(); toggle(vendor.id) }}
                   className="absolute top-3 right-3 w-8 h-8 rounded-full bg-white/90 flex items-center justify-center shadow-sm active:scale-90">
-                  <Icon name="favorite" size={16} style={{ fill: '#00A651', color: '#00A651' }} />
+                  <Icon name="favorite" size={16} style={{ fill: '#086C55', color: '#086C55' }} />
                 </button>
                 <div className="absolute bottom-3 left-3 w-11 h-11 bg-white rounded-xl shadow-md flex items-center justify-center border border-gray-100">
                   {vendor.logo_url
@@ -89,14 +89,15 @@ export default function FavoritesPage() {
                 <div className="flex items-center justify-between">
                   <h3 className="font-black text-gray-900">{vendor.name}</h3>
                   {vendor.is_open
-                    ? <span className="text-xs font-semibold text-green-600 bg-green-50 px-2 py-0.5 rounded-full">Open</span>
+                    ? <span className="text-xs font-semibold text-[#052A25] bg-[#E7F3EE] px-2 py-0.5 rounded-full">Open</span>
                     : <span className="text-xs font-semibold text-gray-400 bg-gray-50 px-2 py-0.5 rounded-full">Closed</span>
                   }
                 </div>
                 <div className="flex items-center gap-2 mt-1">
                   <span className="text-xs font-semibold text-gray-600">⭐ {Number(vendor.rating || 0).toFixed(1)}</span>
-                  <span className="text-gray-200">·</span>
-                  <span className="text-xs text-gray-500">15–25 min</span>
+                  {vendor.branch_count > 1 && (
+                    <span className="text-xs text-gray-500">Multiple locations</span>
+                  )}
                 </div>
                 {vendor.branch_count > 1 && (
                   <p className="text-xs text-gray-400 mt-1">{vendor.branch_count} branches near you</p>

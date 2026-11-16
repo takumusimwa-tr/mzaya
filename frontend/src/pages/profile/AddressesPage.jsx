@@ -139,7 +139,7 @@ export default function AddressesPage() {
                   <div className="flex items-center gap-2">
                     <span className="font-bold text-gray-900">{addr.label}</span>
                     {addr.is_default && (
-                      <span className="text-xs font-semibold text-green-600 bg-green-50 px-2 py-0.5 rounded-full">Default</span>
+                      <span className="text-xs font-semibold text-[#052A25] bg-[#E7F3EE] px-2 py-0.5 rounded-full">Default</span>
                     )}
                   </div>
                   <p className="text-sm text-gray-600 mt-1 break-words">{addr.address}</p>
@@ -181,7 +181,7 @@ export default function AddressesPage() {
           type="button"
           onClick={openCreate}
           className="w-full py-4 rounded-2xl text-white font-bold active:scale-98 transition-transform"
-          style={{ background: '#00A651', boxShadow: '0 8px 24px #00A65150' }}
+          style={{ background: '#086C55', boxShadow: '0 8px 24px #086C5530' }}
         >
           + Add new address
         </button>
@@ -238,7 +238,7 @@ export default function AddressesPage() {
                   type="checkbox"
                   checked={form.is_default}
                   onChange={(event) => setForm({ ...form, is_default: event.target.checked })}
-                  style={{ accentColor: '#00A651' }}
+                  style={{ accentColor: '#086C55' }}
                 />
                 <span className="text-sm text-gray-600">Set as default address</span>
               </label>
@@ -253,7 +253,7 @@ export default function AddressesPage() {
                 type="submit"
                 disabled={save.isPending || !form.label.trim() || !form.address.trim()}
                 className="mt-3 py-3.5 rounded-2xl text-white font-bold active:scale-98 transition-transform disabled:opacity-70"
-                style={{ background: '#00A651' }}
+                style={{ background: '#086C55' }}
               >
                 {save.isPending ? 'Saving...' : editId ? 'Save changes' : 'Add address'}
               </button>

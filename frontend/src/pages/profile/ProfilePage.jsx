@@ -8,7 +8,7 @@ import Button from '../../components/ui/Button'
 import Icon from '../../components/ui/Icon'
 
 const CUSTOMER_HOME = '/home'
-const CUSTOMER_ROLE_COLOR = 'bg-green-100 text-green-700'
+const CUSTOMER_ROLE_COLOR = 'bg-[#E7F3EE] text-[#052A25]'
 
 export default function ProfilePage() {
   const navigate = useNavigate()
@@ -72,7 +72,7 @@ export default function ProfilePage() {
       </div>
 
       <div className="flex flex-col items-center py-6 bg-white border-b border-gray-100">
-        <div className="w-20 h-20 rounded-full bg-green-100 flex items-center justify-center text-3xl mb-3">
+        <div className="w-20 h-20 rounded-full bg-[#E7F3EE] text-[#052A25] flex items-center justify-center text-3xl mb-3">
           {user?.name?.charAt(0)?.toUpperCase() || '?'}
         </div>
         <p className="text-lg font-bold text-gray-900">{user?.name}</p>
@@ -135,7 +135,7 @@ export default function ProfilePage() {
               type="submit"
               disabled={saveProfile.isPending || !form.name.trim() || !form.phone.trim()}
               className="py-3 rounded-xl text-white text-sm font-bold disabled:opacity-60"
-              style={{ background: '#00A651' }}
+              style={{ background: '#086C55' }}
             >
               {saveProfile.isPending ? 'Saving...' : 'Save'}
             </button>
@@ -189,7 +189,7 @@ function ProfileMenuItem({ icon, label, onClick, badge }) {
     >
       <div className="flex items-center gap-3">
         <span className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0"
-          style={{ background: '#EDFAF3', color: '#00A651' }}>
+          style={{ background: '#E7F3EE', color: '#052A25' }}>
           <Icon name={icon} size={18} />
         </span>
         <span className="text-sm font-medium text-gray-800">{label}</span>
