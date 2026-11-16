@@ -1,6 +1,7 @@
 const { Op } = require('sequelize');
 const AdCampaign = require('../models/adCampaignModel');
 const { Brand, Vendor } = require('../models/associations');
+const { campaignPhase, canTransition } = require('../utils/adCampaignLifecycle');
 
 const CATEGORIES = new Set(['food', 'grocery', 'materials']);
 const FIELDS = ['brand_id', 'city_id', 'category', 'title', 'description', 'image_url', 'cta', 'starts_at', 'ends_at'];
@@ -40,7 +41,7 @@ async function myCampaigns(req, res) {
     const ids = brands.map((brand) => brand.id);
     if (!ids.length) return res.json({ campaigns: [], brands: [] });
     const campaigns = await AdCampaign.findAll({ where: { brand_id: { [Op.in]: ids } }, order: [['createdAt', 'DESC']], limit: 100 });
-    return res.json({ campaigns, brands });
+    return res.json({ campaigns: campaigns.map(c => ({ ...c.toJSON(), phase: campaignPhase(c) })), brands });
   } catch (error) { return res.status(500).json({ error: 'Could not load your campaigns' }); }
 }
 async function createMine(req, res) {
@@ -66,7 +67,7 @@ async function submitMine(req, res) {
   } catch (error) { return res.status(500).json({ error: 'Could not submit campaign' }); }
 }
 async function list(req, res) {
-  try { return res.json({ campaigns: await AdCampaign.findAll({ order: [['createdAt', 'DESC']], limit: 100 }) }); }
+  try { const campaigns = await AdCampaign.findAll({ order: [['createdAt', 'DESC']], limit: 100 }); return res.json({ campaigns: campaigns.map(c => ({ ...c.toJSON(), phase: campaignPhase(c) })) }); }
   catch (error) { return res.status(500).json({ error: 'Could not load campaigns' }); }
 }
 async function create(req, res) {
@@ -95,7 +96,11 @@ async function setStatus(req, res) {
     if (!['pending', 'approved', 'rejected', 'paused'].includes(status)) return res.status(400).json({ error: 'Invalid status' });
     const campaign = await AdCampaign.findByPk(req.params.id);
     if (!campaign) return res.status(404).json({ error: 'Campaign not found' });
-    if (status === 'approved' && !(await eligible(campaign))) return res.status(400).json({ error: 'Vendor not eligible' });
+    if (!canTransition(campaign.status, status)) return res.status(409).json({ error: 'Invalid campaign status transition' });
+    if (status === 'approved') {
+      if (!(await eligible(campaign))) return res.status(400).json({ error: 'Vendor not eligible' });
+      if (new Date(campaign.ends_at).getTime() <= Date.now()) return res.status(409).json({ error: 'Campaign end date has passed. Edit and resubmit the campaign.' });
+    }
     await campaign.update({ status });
     return res.json({ campaign });
   } catch (error) { return res.status(500).json({ error: 'Could not update campaign status' }); }
