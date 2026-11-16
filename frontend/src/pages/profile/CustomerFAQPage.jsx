@@ -11,7 +11,7 @@ const FAQS = [
   { id:'order-status', topic:'orders', question:'Where can I see my order status?', answer:'Open My Orders, choose the order, then use its tracking and status information.' },
   { id:'order-change', topic:'orders', question:'Can I change an order after placing it?', answer:'Changes depend on the order stage. Use the order details and support options before fulfillment is completed.' },
   { id:'delivery-address', topic:'orders', question:'Which address will my order use?', answer:'The delivery address confirmed during checkout is the address used for that order.' },
-  { id:'tracking', topic:'orders', question:'How do I track an active delivery?', answer:'Open the active order from My Orders and select its tracking view when tracking is available.' },
+  { id:'tracking', topic:'orders', question:'How do I track an active delivery?', answer:'Open My Orders and select the active order to see its latest status and live location when available.' },
   { id:'payment-status', topic:'payments', question:'Where can I confirm whether payment succeeded?', answer:'Use the order details and payment status shown for that order. Do not retry repeatedly while a payment is still processing.' },
   { id:'refund', topic:'payments', question:'How do refunds work?', answer:'Refund eligibility and timing depend on the order and payment state. Keep the affected order available when contacting support.' },
   { id:'failed-payment', topic:'payments', question:'What should I do after a failed payment?', answer:'Confirm the failure state first, then retry from the supported checkout flow rather than creating duplicate payments.' },

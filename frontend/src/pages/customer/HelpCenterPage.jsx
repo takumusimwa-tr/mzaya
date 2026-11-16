@@ -166,7 +166,7 @@ export default function HelpCenterPage({
                 color: 'var(--mzaya-text-muted)',
               }}
             >
-              No help topics are available right now.
+              {query.trim() ? "No topics match your search. Try a different keyword." : "No help topics are available right now."}
             </p>
           )}
         </section>

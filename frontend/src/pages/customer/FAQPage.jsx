@@ -90,6 +90,7 @@ export default function FAQPage({
             value={query}
             onChange={(event) => onQueryChange?.(event.target.value)}
             placeholder="Search questions"
+            aria-label="Search frequently asked questions"
             className="h-12 w-full rounded-[17px] border bg-white pl-12 pr-4 text-[13px] outline-none focus-visible:[box-shadow:var(--mzaya-focus-ring)]"
             style={{
               borderColor: 'var(--mzaya-border)',
@@ -162,7 +163,7 @@ export default function FAQPage({
                     onClick={() => onToggleEntry?.(entry)}
                     className="flex w-full items-center justify-between gap-4 px-5 py-4 text-left outline-none focus-visible:[box-shadow:var(--mzaya-focus-ring)]"
                     aria-expanded={expanded}
-                    aria-controls={`faq-answer-${entry.id}`}
+                    aria-controls={expanded ? `faq-answer-${entry.id}` : undefined}
                   >
                     <span
                       className="text-[13px] font-semibold"
