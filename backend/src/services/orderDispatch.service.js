@@ -38,7 +38,7 @@ function rankOf(vehicle) {
 // Respects (1) required vehicle class, (2) the order's city, (3) rider online +
 // approved status. Eligible riders have vehicle rank >= required rank; among
 // them, pick the smallest sufficient vehicle (don't send a 10t to a burrito).
-async function findAvailableRider(city, vehicleType) {
+async function findAvailableRider(city, vehicleType, transaction = null) {
   const requiredRank = rankOf(vehicleType);
 
   const busyUserIds = await Order.findAll({
@@ -48,24 +48,28 @@ async function findAvailableRider(city, vehicleType) {
     },
     attributes: ['rider_id'],
     raw: true,
+    transaction,
   }).then((rows) => rows.map((r) => r.rider_id));
 
-  // Resolve order city string → city_id to match rider.city_id.
-  let cityId = null;
-  if (city && City) {
-    try {
-      const cityRow = await City.findOne({ where: { name: { [Op.iLike]: city } } });
-      if (cityRow) cityId = cityRow.id;
-    } catch (e) {
-      cityId = null;
-    }
-  }
+  // Orders normally store a city slug, while older records may use the name.
+  // Fail closed: an unresolved city must NEVER select a Mzaya in another city.
+  if (!city || !City) return null;
+  const cityRow = await City.findOne({
+    where: { [Op.or]: [{ slug: String(city).trim().toLowerCase() }, { name: { [Op.iLike]: String(city).trim() } }] },
+    transaction,
+  });
+  if (!cityRow) return null;
 
-  const riderWhere = { is_online: true, is_approved: true };
-  if (cityId) riderWhere.city_id = cityId;
+  const riderWhere = { is_online: true, is_approved: true, city_id: cityRow.id };
   if (busyUserIds.length) riderWhere.user_id = { [Op.notIn]: busyUserIds };
 
-  const candidates = await Rider.findAll({ where: riderWhere });
+  // Lock the candidate rows so concurrent checkouts cannot select the same
+  // Mzaya before the first order commits. SKIP LOCKED avoids blocking.
+  const candidates = await Rider.findAll({
+    where: riderWhere,
+    transaction,
+    ...(transaction ? { lock: transaction.LOCK.UPDATE, skipLocked: true } : {}),
+  });
 
   const eligible = candidates
     .filter((r) => rankOf(r.vehicle_type) >= requiredRank)
@@ -74,8 +78,18 @@ async function findAvailableRider(city, vehicleType) {
   if (!eligible.length) return null;
 
   // rider_id on orders references users(id), so return the linked user.
-  const user = await User.findByPk(eligible[0].user_id);
-  return user || null;
+  // Re-check the busy state while holding the rider row lock.
+  for (const candidate of eligible) {
+    const busy = await Order.findOne({
+      where: {
+        rider_id: candidate.user_id,
+        status: { [Op.in]: [ORDER_STATUS.ACCEPTED, ORDER_STATUS.PICKED_UP, ORDER_STATUS.EN_ROUTE] },
+      },
+      transaction,
+    });
+    if (!busy) return User.findByPk(candidate.user_id, { transaction });
+  }
+  return null;
 }
 
 function calculateDistanceKm(pickup, dropoff) {
@@ -104,6 +118,7 @@ async function dispatchOrder({
   estimatedDurationMinutes,
   zigRate,
   deferDispatch = false, // scheduled orders: compute fees but don't assign a rider yet
+  transaction = null,
 }) {
   const vehicleType = assignVehicleType(categoryType, weightKg);
   const distanceKm  = calculateDistanceKm(pickupLocation, dropoffLocation);
@@ -129,7 +144,7 @@ async function dispatchOrder({
       total_usd:         fees.total_usd,
       zig_rate_snapshot: zigRate || null,
       total_zig:         totalZig,
-    });
+    }, { transaction });
     return {
       vehicleType,
       distanceKm: parseFloat(distanceKm.toFixed(2)),
@@ -141,7 +156,7 @@ async function dispatchOrder({
     };
   }
 
-  const rider = await findAvailableRider(order.city, vehicleType);
+  const rider = await findAvailableRider(order.city, vehicleType, transaction);
 
   await order.update({
     vehicle_type:      vehicleType,
@@ -153,7 +168,7 @@ async function dispatchOrder({
     zig_rate_snapshot: zigRate || null,
     total_zig:         totalZig,
     accepted_at:       rider ? new Date() : null,
-  });
+  }, { transaction });
 
   return {
     vehicleType,

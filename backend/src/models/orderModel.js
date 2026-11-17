@@ -9,6 +9,14 @@ const Order = sequelize.define('Order', {
     primaryKey: true,
   },
 
+  // Stable customer request key; DB uniqueness prevents duplicate inserts.
+  client_request_id: {
+    type: DataTypes.UUID,
+    allowNull: true,
+    unique: 'orders_customer_request_unique',
+  },
+    request_fingerprint: { type: DataTypes.STRING(64), allowNull: true },
+
   // Who placed the order
   customer_id: {
     type: DataTypes.UUID,

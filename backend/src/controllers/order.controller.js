@@ -25,14 +25,15 @@ function orderRankOf(vehicle) {
 async function placeOrder(req, res) {
   try {
     const result = await createOrder(req.user.id, req.body);
-    return res.status(201).json({
-      message:  'Order placed successfully',
+    return res.status(result.replayed ? 200 : 201).json({
+      message:  result.replayed ? 'Existing order returned' : 'Order placed successfully',
       order:    result.order,
       dispatch: result.dispatch,
     });
   } catch (err) {
     logger.error('placeorder_error', { error: err.message });
-    return res.status(400).json({ error: err.message });
+    const status = err.status === 409 || err.statusCode === 409 ? 409 : 400;
+    return res.status(status).json({ error: err.message });
   }
 }
 
@@ -131,57 +132,18 @@ async function availableOrders(req, res) {
 // rider take a heavy order.
 async function claimOrder(req, res) {
   try {
-    const { Order, Rider } = require('../models/associations');
-
-    const order = await Order.findByPk(req.params.id);
-    if (!order) return res.status(404).json({ error: 'Order not found' });
-
-    if (order.rider_id) {
-      return res.status(409).json({ error: 'This order was already taken by another rider' });
-    }
-    if (order.status !== 'pending') {
-      return res.status(400).json({ error: 'This order is no longer available' });
-    }
-
-    const rider = await Rider.findOne({ where: { user_id: req.user.id } });
-    if (!rider) return res.status(404).json({ error: 'Rider profile not found' });
-
-    if (riderRankOf(rider.vehicle_type) < orderRankOf(order.vehicle_type)) {
-      return res.status(403).json({
-        error: 'This order needs a larger vehicle than your registered one',
-      });
-    }
-
-    // Atomic claim: only succeeds if the order is STILL unclaimed. Without the
-    // rider_id: null guard in the WHERE clause, two riders tapping Accept at the
-    // same moment can both pass the check above and both write — one silently
-    // stealing the other's order. The DB decides the winner, not the race.
-    const [updatedCount] = await Order.update(
-      { rider_id: req.user.id, status: 'accepted', accepted_at: new Date() },
-      { where: { id: order.id, rider_id: null, status: 'pending' } },
-    );
-
-    if (updatedCount === 0) {
-      return res.status(409).json({ error: 'This order was already taken by another rider' });
-    }
-
-    const claimed = await Order.findByPk(order.id);
-
-    // Tell everyone on the order that a Mzaya accepted it: the customer sees
-    // "on the way", the vendor knows who is coming, and other Mzayas' job boards
-    // drop it. Best-effort — the claim already committed, so a failed emit must
-    // never turn a successful claim into an error response.
+    const { claimOrderForRider } = require('../services/orderClaim.service');
+    const claimed = await claimOrderForRider(req.params.id, req.user.id);
     try {
-      const vendorId = await resolveVendorId(order.id);
+      const vendorId = await resolveVendorId(claimed.id);
       publishOrderStatusChanged(claimed, { vendorId, fromStatus: 'pending' });
     } catch (emitErr) {
       logger.error('realtime_emit_claim_failed_error', { error: emitErr.message });
     }
-
     return res.status(200).json({ message: 'Order claimed', order: claimed });
   } catch (err) {
     logger.error('claimorder_error', { error: err.message });
-    return res.status(500).json({ error: 'Failed to claim order' });
+    return res.status(err.status || 500).json({ error: err.status ? err.message : 'Failed to claim order' });
   }
 }
 
@@ -284,16 +246,11 @@ async function updateStatus(req, res) {
       return res.status(400).json({ error: 'A delivery proof photo is required' });
     }
 
-    const order = await updateOrderStatus(req.params.id, status, req.user.id);
-
-    // Persist the proof photo on the order.
-    if (status === 'delivered' && delivery_proof_url) {
-      await order.update({ delivery_proof_url });
-    }
+    const order = await updateOrderStatus(req.params.id, status, req.user.id, delivery_proof_url);
 
     return res.status(200).json({ message: 'Status updated', order });
   } catch (err) {
-    const code = err.message === 'Access denied' ? 403 : 400;
+    const code = err.message === 'Access denied' ? 403 : err.status === 409 ? 409 : 400;
     return res.status(code).json({ error: err.message });
   }
 }
@@ -302,6 +259,14 @@ async function updateStatus(req, res) {
 async function cancel(req, res) {
   try {
     const order = await cancelOrder(req.params.id, req.user.id, req.body.reason);
+    // cancelOrder commits the order and finance cancellation before returning.
+    // Realtime delivery is best-effort and must not change a successful response.
+    try {
+      const vendorId = await resolveVendorId(order.id);
+      publishOrderStatusChanged(order, { vendorId });
+    } catch (emitErr) {
+      logger.error('realtime_emit_cancel_failed_error', { error: emitErr.message });
+    }
     return res.status(200).json({ message: 'Order cancelled', order });
   } catch (err) {
     const code = err.message === 'Access denied' ? 403 : 400;

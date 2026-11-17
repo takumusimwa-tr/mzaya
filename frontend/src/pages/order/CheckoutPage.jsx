@@ -56,6 +56,9 @@ export default function CheckoutPage() {
   const cart = useCartStore()
   const dropoffRef = useRef(null)
   const submittingRef = useRef(false)
+  // Retain the key after a timeout: retrying the same checkout must not
+  // create a second order if the first response was lost.
+  const requestIdRef = useRef(null)
 
   const { data: savedAddresses, isError: savedAddressesError, refetch: refetchSavedAddresses } = useQuery({
     queryKey: ['addresses'],
@@ -256,6 +259,7 @@ export default function CheckoutPage() {
       const useNegotiation = canNegotiate && nameYourFare
       const orderData = {
         category_type: cart.categoryType,
+        client_request_id: requestIdRef.current || (requestIdRef.current = crypto.randomUUID()),
         city: cart.vendorCity || 'harare', // the order belongs to the vendor's city
         pickup_address: cart.vendorAddress,
         dropoff_address: dropoff,
@@ -278,7 +282,7 @@ export default function CheckoutPage() {
       navigate(`/orders/${data.order.id}`, { replace: true })
       cart.clearCart()
     } catch (err) {
-      setError(err.response?.data?.error || 'Could not place your order. Please try again.')
+      setError(err.response?.data?.error || 'Could not confirm your order. Retry to check the same request before placing another.')
     } finally {
       submittingRef.current = false
       setLoading(false)
