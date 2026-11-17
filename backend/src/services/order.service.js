@@ -126,7 +126,7 @@ function canonicalJson(value) {
 }
 
 function checkoutFingerprint(orderData) {
-  const { client_request_id: ignored, ...payload } = orderData;
+  const { client_request_id: _ignored, ...payload } = orderData;
   return createHash('sha256').update(JSON.stringify(canonicalJson(payload))).digest('hex');
 }
 
