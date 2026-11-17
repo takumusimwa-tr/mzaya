@@ -32,8 +32,8 @@ export default function RiderDelivery() {
     mutationFn: (status) => api.patch(`/orders/${id}/status`,
       status === 'delivered' ? { status, delivery_proof_url: proofUrl } : { status }),
     onSuccess: (_, status) => {
-      queryClient.invalidateQueries(['rider-order', id])
-      queryClient.invalidateQueries(['rider-orders'])
+      queryClient.invalidateQueries({ queryKey: ['rider-order', id] })
+      queryClient.invalidateQueries({ queryKey: ['rider-orders'] })
       if (status === 'delivered') navigate('/rider')
     },
   })

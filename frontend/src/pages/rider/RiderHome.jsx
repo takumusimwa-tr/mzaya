@@ -62,14 +62,25 @@ export default function RiderHome() {
     queryFn:  () => api.get('/orders/available').then((r) => r.data.orders),
     refetchInterval: online ? 12000 : false,
     enabled:  online,
-    onSuccess: (data) => {
-      const count = data?.length || 0
-      if (count > prevOrders.current.length) {
-        sendNotification('📦 New delivery available', 'A new order is waiting. Tap to accept.', () => navigate('/rider'))
-      }
-      prevOrders.current = data || []
-    },
   })
+
+  // TanStack Query v5: query success callbacks were removed. Only notify
+  // about additions after the first successful board fetch, while online.
+  const availableInitialized = useRef(false)
+  useEffect(() => {
+    if (!online || !Array.isArray(available)) {
+      availableInitialized.current = false
+      prevOrders.current = []
+      return
+    }
+    const previous = new Set(prevOrders.current.map((order) => order.id))
+    const hasNewOrder = available.some((order) => !previous.has(order.id))
+    if (availableInitialized.current && hasNewOrder) {
+      sendNotification('📦 New delivery available', 'A new order is waiting. Tap to accept.', () => navigate('/rider'))
+    }
+    prevOrders.current = available
+    availableInitialized.current = true
+  }, [available, online, navigate])
 
   // Real-time: join my city room while online; refetch board on new orders.
   const cityId = riderProfile?.city_id
@@ -80,18 +91,18 @@ export default function RiderHome() {
   }, [online, cityId])
 
   useSocketEvent('order:new', () => {
-    queryClient.invalidateQueries(['available-orders'])
+    queryClient.invalidateQueries({ queryKey: ['available-orders'] })
   }, [])
   useSocketEvent('order:assigned', () => {
-    queryClient.invalidateQueries(['rider-orders'])
-    queryClient.invalidateQueries(['available-orders'])
+    queryClient.invalidateQueries({ queryKey: ['rider-orders'] })
+    queryClient.invalidateQueries({ queryKey: ['available-orders'] })
   }, [])
 
   const toggleOnline = useMutation({
     mutationFn: () => api.patch('/riders/online', { is_online: !online }),
     onSuccess:  () => {
       setOnline((p) => !p)
-      queryClient.invalidateQueries(['rider-profile'])
+      queryClient.invalidateQueries({ queryKey: ['rider-profile'] })
     },
     onError: (err) => {
       const msg = err.response?.data?.error || 'Could not update status'
@@ -107,13 +118,13 @@ export default function RiderHome() {
   const acceptOrder = useMutation({
     mutationFn: (id) => api.post(`/orders/${id}/claim`),
     onSuccess:  () => {
-      queryClient.invalidateQueries(['rider-orders'])
-      queryClient.invalidateQueries(['available-orders'])
+      queryClient.invalidateQueries({ queryKey: ['rider-orders'] })
+      queryClient.invalidateQueries({ queryKey: ['available-orders'] })
       sendNotification('✅ Order accepted', 'Head to the pickup now.')
     },
     onError: (err) => {
       alert(err.response?.data?.error || 'Could not claim order')
-      queryClient.invalidateQueries(['available-orders'])
+      queryClient.invalidateQueries({ queryKey: ['available-orders'] })
     },
   })
 
