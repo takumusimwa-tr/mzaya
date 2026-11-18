@@ -44,10 +44,12 @@ test('delivery completion emits order and delivery events and persists economics
     total_usd: 13,
   });
 
+  const deliveryProofUrl = `fixture://delivery-finance/${order.id}/proof`;
   await updateOrderStatus(
     order.id,
     'delivered',
-    riderUser.id
+    riderUser.id,
+    deliveryProofUrl
   );
 
   await drain();
