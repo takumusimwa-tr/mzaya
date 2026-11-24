@@ -1,5 +1,7 @@
 const User = require('./userModel');
 const Order = require('./orderModel');
+const DeliveryProof = require('./deliveryProofModel');
+const OrderTimeline = require('./orderTimelineModel');
 const OrderFood = require('./orderFoodModel');
 const OrderGrocery = require('./orderGroceryModel');
 const OrderMaterials = require('./orderMaterialsModel');
@@ -135,6 +137,13 @@ User.hasMany(Order, { foreignKey: 'customer_id', as: 'orders' });
 Order.belongsTo(User, { foreignKey: 'customer_id', as: 'customer' });
 User.hasMany(Order, { foreignKey: 'rider_id', as: 'deliveries' });
 Order.belongsTo(User, { foreignKey: 'rider_id', as: 'rider' });
+
+Order.hasOne(DeliveryProof, { foreignKey: 'order_id', as: 'deliveryProof', onDelete: 'CASCADE' });
+DeliveryProof.belongsTo(Order, { foreignKey: 'order_id', as: 'order', onDelete: 'CASCADE' });
+DeliveryProof.belongsTo(User, { foreignKey: 'rider_id', as: 'rider', onDelete: 'RESTRICT' });
+Order.hasMany(OrderTimeline, { foreignKey: 'order_id', as: 'timeline', onDelete: 'CASCADE' });
+OrderTimeline.belongsTo(Order, { foreignKey: 'order_id', as: 'order', onDelete: 'CASCADE' });
+OrderTimeline.belongsTo(User, { foreignKey: 'actor_id', as: 'actor', onDelete: 'SET NULL' });
 
 Order.hasOne(OrderFood, { foreignKey: 'order_id', as: 'foodDetail' });
 Order.hasOne(OrderGrocery, { foreignKey: 'order_id', as: 'groceryDetail' });
@@ -318,6 +327,8 @@ FinanceCrossDomainReconciliationException.belongsTo(
 );
 
 module.exports = {
+  DeliveryProof,
+  OrderTimeline,
   Favorite,
   Address,
   Notification,

@@ -17,7 +17,8 @@ const DeliveryProof = sequelize.define('DeliveryProof', {
     allowNull: false,
   },
   proof_type: {
-    type: DataTypes.ENUM('otp', 'photo', 'signature', 'recipient_confirmation'),
+    type: DataTypes.STRING(24),
+    validate: { isIn: [['otp', 'photo', 'signature', 'recipient_confirmation']] },
     allowNull: false,
   },
   recipient_name: {
