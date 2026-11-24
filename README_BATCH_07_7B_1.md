@@ -1,0 +1,2 @@
+Batch 07.7B.1 — PostgreSQL RESTRICT assertion compatibility
+Replace the probe only. PostgreSQL 18 can report SQLSTATE 23001 for RESTRICT; accept 23001 or 23503 only for the named rider foreign key. No SQL changes. Run npm run lint and node scripts/probe-delivery-lifecycle-schema.js with TEST_DB_URL targeting localhost/mzaya_integration_test. Do not start the server or run migrations on development databases.
