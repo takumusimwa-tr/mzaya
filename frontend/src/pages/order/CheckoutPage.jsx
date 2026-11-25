@@ -1,4 +1,5 @@
 import { useRef, useState } from 'react'
+import { flushSync } from 'react-dom'
 import { useQuery } from '@tanstack/react-query'
 import { Navigate, useNavigate } from 'react-router-dom'
 import {
@@ -86,6 +87,7 @@ export default function CheckoutPage() {
   const [scheduledFor, setScheduledFor] = useState('')
   const [summaryOpen, setSummaryOpen] = useState(false)
   const [loading, setLoading] = useState(false)
+  const [completedOrderId, setCompletedOrderId] = useState(null)
   const [error, setError] = useState('')
   const [addressInvalid, setAddressInvalid] = useState(false)
 
@@ -277,9 +279,9 @@ export default function CheckoutPage() {
       }
 
       const { data } = await orderAPI.place(orderData)
-      // Leave the page BEFORE emptying the cart: an empty cart redirects this
-      // page to Home, which would race the move to the new order.
-      navigate(`/orders/${data.order.id}`, { replace: true })
+      // Commit the successful destination before the external cart store
+      // notifies subscribers, so an empty cart cannot redirect to Home.
+      flushSync(() => setCompletedOrderId(data.order.id))
       cart.clearCart()
     } catch (err) {
       setError(err.response?.data?.error || 'Could not confirm your order. Retry to check the same request before placing another.')
@@ -290,6 +292,7 @@ export default function CheckoutPage() {
     return undefined
   }
 
+  if (completedOrderId) return <Navigate to={`/orders/${completedOrderId}`} replace />
   if (cart.items.length === 0) return <Navigate to="/home" replace />
 
   // Only worth mentioning for a real (non-light) vehicle.
