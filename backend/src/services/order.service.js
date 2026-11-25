@@ -14,16 +14,7 @@ const {
 const { logger } = require('../utils/logger');
 const { sequelize } = require('../config/db');
 const { createHash } = require('node:crypto');
-const {
-  emitOrderCompleted,
-  emitOrderCancelled,
-} = require('./orderFinanceEvents.service');
-const {
-  emitDeliveryCompleted,
-} = require('./deliveryFinanceEvents.service');
-const {
-  upsertOrderEconomics,
-} = require('./orderEconomicsIntegration.service');
+const { emitOrderCancelled } = require('./orderFinanceEvents.service');
 
 // Resolve customer cart items against the active vendor catalog. Never use
 // client-provided prices, availability or weight for monetary calculations.
@@ -411,23 +402,8 @@ async function updateOrderStatus(orderId, newStatus, riderId, deliveryProofUrl =
     await order.update({ status: newStatus, ...timestamps[newStatus] }, { transaction });
 
     if (newStatus === ORDER_STATUS.DELIVERED) {
-      await emitOrderCompleted({ order, transaction });
-      await emitDeliveryCompleted({ order, deliveredAt: order.delivered_at, transaction });
-      await upsertOrderEconomics({ order, transaction });
-
-      // Earnings are part of the same commit as delivery and finance events.
-      // A failure rolls back all of them, rather than silently losing earnings.
-      const { Rider } = require('../models/associations');
-      const rider = await Rider.findOne({
-        where: { user_id: order.rider_id }, transaction,
-        lock: transaction.LOCK.UPDATE,
-      });
-      if (!rider) throw new Error('Mzaya profile not found for delivery earnings');
-      const earned = Number(order.delivery_fee_usd || 0) + Number(order.tip_usd || 0);
-      await rider.update({
-        total_earnings_usd: parseFloat((Number(rider.total_earnings_usd || 0) + earned).toFixed(2)),
-        total_deliveries: Number(rider.total_deliveries || 0) + 1,
-      }, { transaction });
+      const { applyDeliveryCompletionEffects } = require('./deliveryCompletion.service');
+      await applyDeliveryCompletionEffects({ order, transaction });
     }
     return { order, changed: true };
   });

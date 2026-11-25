@@ -5,15 +5,7 @@ const {
   OrderTimeline,
 } = require('../models/associations');
 const { orderEvents, ORDER_EVENT } = require('../events/order.events');
-const {
-  emitOrderCompleted,
-} = require('./orderFinanceEvents.service');
-const {
-  emitDeliveryCompleted,
-} = require('./deliveryFinanceEvents.service');
-const {
-  upsertOrderEconomics,
-} = require('./orderEconomicsIntegration.service');
+const { applyDeliveryCompletionEffects } = require('./deliveryCompletion.service');
 
 function serviceError(message, status = 400, code = 'DELIVERY_PROOF_ERROR') {
   const error = new Error(message);
@@ -25,14 +17,7 @@ function serviceError(message, status = 400, code = 'DELIVERY_PROOF_ERROR') {
 function validateProofPayload(payload) {
   switch (payload.proofType) {
     case 'otp':
-      if (!payload.otpVerified) {
-        throw serviceError(
-          'OTP must be verified before completing delivery',
-          422,
-          'OTP_NOT_VERIFIED'
-        );
-      }
-      break;
+      throw serviceError('OTP must be verified by a trusted server; OTP proof is disabled', 422, 'OTP_DISABLED');
     case 'photo':
       if (!payload.photoUrl) {
         throw serviceError(
@@ -129,7 +114,7 @@ async function submitDeliveryProof({
       proof_type: proofType,
       recipient_name: recipientName || null,
       recipient_phone: recipientPhone || null,
-      otp_verified: Boolean(otpVerified),
+      otp_verified: false,
       photo_url: photoUrl || null,
       signature_url: signatureUrl || null,
       notes: notes || null,
@@ -142,23 +127,10 @@ async function submitDeliveryProof({
     await order.update({
       status: 'delivered',
       delivered_at: new Date(),
+      delivery_proof_url: proof.photo_url || null,
     }, { transaction });
 
-    await emitOrderCompleted({
-      order,
-      transaction,
-    });
-
-    await emitDeliveryCompleted({
-      order,
-      deliveredAt: order.delivered_at,
-      transaction,
-    });
-
-    await upsertOrderEconomics({
-      order,
-      transaction,
-    });
+    await applyDeliveryCompletionEffects({ order, transaction });
 
     await OrderTimeline.create({
       order_id: order.id,

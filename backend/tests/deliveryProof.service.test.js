@@ -3,13 +3,13 @@ const {
 } = require('../src/services/deliveryProof.service');
 
 describe('delivery proof validation', () => {
-  test('accepts verified OTP proof', () => {
+  test('rejects client-asserted OTP proof', () => {
     expect(() =>
       validateProofPayload({
         proofType: 'otp',
         otpVerified: true,
       })
-    ).not.toThrow();
+    ).toThrow('OTP must be verified');
   });
 
   test('rejects unverified OTP proof', () => {

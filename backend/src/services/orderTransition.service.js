@@ -16,9 +16,9 @@ async function transitionOrder({ orderId, toStatus, actorId, actorRole, note, me
     const fromStatus = order.status;
     assertTransitionAllowed({ from: fromStatus, to: toStatus, role: actorRole });
 
-    if (toStatus === 'delivered' && !deliveryProofUrl) {
-      const error = new Error('A delivery proof photo is required');
-      error.status = 400;
+    if (toStatus === 'delivered') {
+      const error = new Error('Use the delivery completion pathway');
+      error.status = 409;
       throw error;
     }
 
