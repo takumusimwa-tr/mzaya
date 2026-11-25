@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import {
-  ArrowLeft, Camera, Check, MapPin, MessageCircle, Phone, RotateCcw, Star, Store, X,
+  ArrowLeft, Check, MapPin, MessageCircle, Phone, RotateCcw, Star, Store, X,
 } from 'lucide-react'
 import api, { chatAPI, negotiationAPI, orderAPI, paymentAPI } from '../../api/api'
 import LoadingState from '../../components/common/LoadingState'
@@ -12,7 +12,7 @@ import PaymentPanel from '../../components/PaymentPanel'
 import OrderChat from '../../components/OrderChat'
 import useReorder from '../../hooks/useReorder'
 import useSocketEvent from '../../hooks/useSocketEvent'
-import imageUrl from '../../utils/imageUrl'
+import CustomerDeliveryHistory from '../../components/delivery/CustomerDeliveryHistory'
 import illoSearching from '../../assets/brand/illustrations/status/mzaya-searching-rider.svg'
 import illoConfirmed from '../../assets/brand/illustrations/status/mzaya-order-confirmed.svg'
 import illoCompleted from '../../assets/brand/illustrations/status/mzaya-order-completed.svg'
@@ -274,12 +274,7 @@ export default function OrderDetail() {
       )}
 
       {/* ── Delivered: proof, rating, reorder ────────────────────────────── */}
-      {delivered && order.delivery_proof_url && (
-        <Block title="Proof of delivery" icon={<Camera size={16} strokeWidth={2.2} />}>
-          <img src={imageUrl(order.delivery_proof_url, 800)} alt="Your order at the drop-off" className="max-h-72 w-full rounded-xl object-cover" />
-          <p className="mt-2 text-[12px]" style={{ color: T.ink3 }}>Photo taken by your Mzaya at drop-off.</p>
-        </Block>
-      )}
+      <CustomerDeliveryHistory key={id} orderId={id} status={order.status} />
       {delivered && <RateOrder order={order} onRated={refresh} />}
 
       {/* ── Route ────────────────────────────────────────────────────────── */}
