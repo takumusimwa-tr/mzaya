@@ -56,33 +56,10 @@ function getSafeDatabaseTarget() {
  * regression cannot silently expose staging or production data.
  */
 function assertSafeTestDatabase() {
-  const rawUrl = process.env.DB_URL || '';
-
-  if (!rawUrl) {
-    throw new Error(
-      'Refusing to reset database because DB_URL is not configured.'
-    );
-  }
-
-  let parsed;
-
-  try {
-    parsed = new URL(rawUrl);
-  } catch {
-    throw new Error(
-      'Refusing to reset database because DB_URL is not a valid connection URL.'
-    );
-  }
-
-  const databaseName = parsed.pathname.replace(/^\//, '');
-
-  if (!/test/i.test(databaseName)) {
-    throw new Error(
-      `Refusing to run destructive tests against non-test database ` +
-      `"${parsed.hostname}/${databaseName}". ` +
-      'The database name must contain "test". Set TEST_DB_URL.'
-    );
-  }
+  const { assertIntegrationUrl } = require('./integrationDatabaseGuard');
+  assertIntegrationUrl(process.env.DB_URL);
+  assertIntegrationUrl(process.env.TEST_DB_URL);
+  if (process.env.DB_URL !== process.env.TEST_DB_URL) throw new Error('STOP: Database URLs differ');
 
   if (process.env.NODE_ENV !== 'test') {
     throw new Error(
@@ -107,6 +84,8 @@ async function resetDatabase() {
 
   try {
     await sequelize.authenticate();
+    const [rows] = await sequelize.query('SELECT current_database() AS name');
+    if (rows[0]?.name !== 'mzaya_integration_test') throw new Error('STOP: Connected database is not isolated');
     await sequelize.sync({ force: true });
   } catch (err) {
     // Surface the useful database error while NEVER including DB_URL itself.
