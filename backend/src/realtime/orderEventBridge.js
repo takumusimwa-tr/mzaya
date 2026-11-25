@@ -7,6 +7,7 @@
 const { ORDER_EVENT, orderEvents } = require('../events/order.events');
 const { Order } = require('../models/associations');
 const { publishOrderStatusChanged } = require('./orderPublisher');
+const { resolveOrderVendorId } = require('../middleware/ownership.middleware');
 const { logger } = require('../utils/logger');
 
 let started = false;
@@ -23,7 +24,8 @@ function startOrderEventBridge() {
         logger.warn('realtime_order_missing', { orderId: event.orderId });
         return;
       }
-      publishOrderStatusChanged(order, event);
+      const vendorId = await resolveOrderVendorId(order.id);
+      publishOrderStatusChanged(order, { ...event, vendorId });
     } catch (error) {
       logger.error('order_event_bridge_error', {
         orderId: event.orderId,

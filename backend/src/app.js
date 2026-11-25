@@ -34,6 +34,7 @@ require('./models/associations');
 
 const authRoutes      = require('./routes/auth.routes');
 const orderRoutes     = require('./routes/order.routes');
+const deliveryProofRoutes = require('./routes/deliveryProof.routes');
 const vendorRoutes    = require('./routes/vendor.routes');
 const riderRoutes     = require('./routes/rider.routes');
 const cityRoutes      = require('./routes/city.routes');
@@ -159,6 +160,7 @@ app.use('/api/orders',    negotiationRoutes);
 // killing the whole order flow. It belongs at /api/chat, which is what useChat calls.
 app.use('/api/orders',    orderChatRoutes);
 app.use('/api/orders',    orderRoutes);
+app.use('/api/delivery-proof', deliveryProofRoutes);
 app.use('/api/chat',      chatRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/vendors',   vendorRoutes);
