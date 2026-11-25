@@ -1,0 +1,2 @@
+# Batch 07.7E.4
+Vendor selected-order history and admin Delivery tab with full UUID lookup. Existing API authorization remains authoritative. Vendor renders summary only; admin renders recipient name and notes, never auto-loads media. Polling at 15 seconds for active/unknown status; vendor terminal status stops polling. No backend changes. Apply at repo root. Run frontend payload tests, lint and build. Browser/API validation pending. Keep backend stopped until controlled rollout or isolated runtime setup.

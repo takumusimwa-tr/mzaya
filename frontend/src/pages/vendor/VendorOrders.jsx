@@ -28,6 +28,7 @@
  */
 
 import { useState, useEffect, useRef, useMemo } from 'react'
+import OperationalDeliveryHistory from '../../components/delivery/OperationalDeliveryHistory'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import api from '../../api/api'
 import useActiveBranch from '../../store/useActiveBranch'
@@ -330,6 +331,8 @@ function OrderDetailPane({ order, onAccept, accepting, onChat, vehicles, onUpgra
           <Row label="Method" value={order.payment_method} />
         </div>
       </div>
+
+      <OperationalDeliveryHistory orderId={order.id} status={order.status} />
 
       {/* Message the customer & rider */}
       <button onClick={onChat}

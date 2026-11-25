@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import AdminDeliveryInspection from '../../components/delivery/AdminDeliveryInspection'
 import { Link } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useNavigate } from 'react-router-dom'
@@ -9,7 +10,7 @@ import LoadingScreen from '../../components/ui/LoadingScreen'
 import Icon from '../../components/ui/Icon'
 import useSignOut from '../../hooks/useSignOut'
 
-const TABS = ['Overview', 'Vendors', 'Mzayas', 'Promos', 'Live', 'Mzaya AI']
+const TABS = ['Overview', 'Vendors', 'Mzayas', 'Promos', 'Live', 'Delivery', 'Mzaya AI']
 
 export default function AdminHome() {
   const user     = useAuthStore((s) => s.user)
@@ -53,6 +54,7 @@ export default function AdminHome() {
         {tab === 'Mzayas'   && <RidersQueue />}
         {tab === 'Promos'   && <PromosManager />}
         {tab === 'Live'     && <LiveOrders />}
+        {tab === 'Delivery' && <AdminDeliveryInspection />}
         {tab === 'Mzaya AI' && <MzayaAI />}
       </div>
     </div>
