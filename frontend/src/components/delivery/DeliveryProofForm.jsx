@@ -1,10 +1,10 @@
 import { useState } from 'react'
+import { buildDeliveryProofPayload } from '../../api/deliveryProofPayload'
 
 const OPTIONS = [
   { value: 'recipient_confirmation', label: 'Recipient confirmation' },
   { value: 'photo', label: 'Delivery photo' },
   { value: 'signature', label: 'Recipient signature' },
-  { value: 'otp', label: 'Verified delivery code' },
 ]
 
 export default function DeliveryProofForm({
@@ -15,24 +15,23 @@ export default function DeliveryProofForm({
   const [proofType, setProofType] = useState('recipient_confirmation')
   const [recipientName, setRecipientName] = useState('')
   const [assetUrl, setAssetUrl] = useState('')
-  const [otpVerified, setOtpVerified] = useState(false)
+  const [error, setError] = useState('')
   const [notes, setNotes] = useState('')
 
-  function submit(event) {
+  async function submit(event) {
     event.preventDefault()
-
-    onSubmit?.({
-      proof_type: proofType,
-      recipient_name: recipientName || undefined,
-      photo_url: proofType === 'photo' ? assetUrl : undefined,
-      signature_url: proofType === 'signature' ? assetUrl : undefined,
-      otp_verified: proofType === 'otp' ? otpVerified : false,
-      notes: notes || undefined,
-    })
+    if (submitting) return
+    setError('')
+    try {
+      await onSubmit?.(buildDeliveryProofPayload({ proofType, recipientName, assetUrl, notes }))
+    } catch (err) {
+      setError(err.response?.status === 409 ? 'Delivery already recorded with different evidence. Refresh the order before retrying.' : err.response ? 'Unable to complete delivery. Check the order and try again.' : err.message || 'Unable to complete delivery.')
+    }
   }
 
   return (
     <form onSubmit={submit} className="space-y-5">
+      {error && <p role="alert" className="text-sm text-[var(--mzaya-error)]">{error}</p>}
       <div>
         <label className="text-sm font-semibold text-slate-900">
           Proof method
@@ -57,6 +56,7 @@ export default function DeliveryProofForm({
           </label>
           <input
             required
+            maxLength={120}
             value={recipientName}
             onChange={(event) => setRecipientName(event.target.value)}
             className="mt-2 w-full rounded-xl border border-slate-300 px-3 py-3"
@@ -73,23 +73,13 @@ export default function DeliveryProofForm({
           <input
             required
             type="url"
+            maxLength={4096}
             value={assetUrl}
             onChange={(event) => setAssetUrl(event.target.value)}
             className="mt-2 w-full rounded-xl border border-slate-300 px-3 py-3"
-            placeholder="Secure upload URL"
+            placeholder="HTTPS evidence URL"
           />
         </div>
-      ) : null}
-
-      {proofType === 'otp' ? (
-        <label className="flex items-center gap-3 rounded-xl bg-slate-50 p-4 text-sm font-medium text-slate-800">
-          <input
-            type="checkbox"
-            checked={otpVerified}
-            onChange={(event) => setOtpVerified(event.target.checked)}
-          />
-          I verified the recipient’s delivery code
-        </label>
       ) : null}
 
       <div>
@@ -97,6 +87,7 @@ export default function DeliveryProofForm({
           Delivery notes
         </label>
         <textarea
+          maxLength={500}
           value={notes}
           onChange={(event) => setNotes(event.target.value)}
           className="mt-2 min-h-24 w-full rounded-xl border border-slate-300 px-3 py-3"
@@ -108,6 +99,7 @@ export default function DeliveryProofForm({
         <button
           type="button"
           onClick={onCancel}
+          disabled={submitting}
           className="rounded-xl border border-slate-300 px-4 py-3 font-semibold text-slate-700"
         >
           Cancel
@@ -115,7 +107,7 @@ export default function DeliveryProofForm({
         <button
           type="submit"
           disabled={submitting}
-          className="rounded-xl bg-emerald-800 px-4 py-3 font-semibold text-white disabled:opacity-50"
+          className="rounded-xl bg-[var(--mzaya-primary)] px-4 py-3 font-semibold text-white disabled:opacity-50"
         >
           {submitting ? 'Completing…' : 'Complete delivery'}
         </button>

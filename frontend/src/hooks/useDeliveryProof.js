@@ -1,5 +1,5 @@
 import { useCallback, useState } from 'react'
-import api from '../api/api'
+import { deliveryProofAPI } from '../api/deliveryProof'
 
 export default function useDeliveryProof(orderId) {
   const [submitting, setSubmitting] = useState(false)
@@ -12,10 +12,7 @@ export default function useDeliveryProof(orderId) {
     setError(null)
 
     try {
-      const { data } = await api.post(
-        `/delivery-proof/orders/${orderId}`,
-        payload
-      )
+      const { data } = await deliveryProofAPI.submit(orderId, payload)
       setProof(data.proof)
       return data
     } catch (requestError) {
