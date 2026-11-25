@@ -1,0 +1,2 @@
+# 07.7C.2
+Requires 07.7A, B and C.1. Legacy rider status updates now persist timeline and photo proof in the same transaction. Structured submissions replay matching evidence only; changed evidence conflicts. OTP remains disabled. Evidence references are not authenticated uploads. Legacy replay semantics remain unchanged. Other lifecycle paths and notification parity remain out of scope. Do not start the development server or apply migrations to protected databases. Run lint and guarded isolated tests before committing. Production rollout requires schema installation first.

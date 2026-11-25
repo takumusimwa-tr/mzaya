@@ -19,7 +19,7 @@ async function submit(req, res, next) {
       longitude: req.body.longitude,
     });
 
-    return res.status(201).json({
+    return res.status(result.replayed ? 200 : 201).json({
       message: 'Delivery completed',
       order: result.order,
       proof: result.proof,

@@ -1,5 +1,5 @@
 const { CATEGORY_TYPE, ORDER_STATUS } = require('../config/constants');
-const { Order, OrderFood, OrderGrocery, OrderMaterials, OrderErrand, Promo, MenuItem } = require('../models/associations');
+const { Order, OrderFood, OrderGrocery, OrderMaterials, OrderErrand, Promo, MenuItem, DeliveryProof, OrderTimeline } = require('../models/associations');
 const { dispatchOrder, assignVehicleType, calculateDistanceKm } = require('./orderDispatch.service');
 const { calculateFees, convertToZig } = require('../utils/feeCalculator');
 const { evaluatePromo } = require('../utils/promoEval');
@@ -375,7 +375,7 @@ async function updateOrderStatus(orderId, newStatus, riderId, deliveryProofUrl =
       lock: transaction.LOCK.UPDATE,
     });
     if (!order) throw new Error('Order not found');
-    if (order.rider_id !== riderId) throw new Error('Access denied');
+    if (!riderId || !order.rider_id || order.rider_id !== riderId) throw new Error('Access denied');
 
     // Idempotent delivery replay: no duplicate finance or earnings.
     if (newStatus === ORDER_STATUS.DELIVERED && order.status === ORDER_STATUS.DELIVERED) {
@@ -391,6 +391,7 @@ async function updateOrderStatus(orderId, newStatus, riderId, deliveryProofUrl =
       throw new Error('A delivery proof photo is required');
     }
 
+    const previousStatus = order.status;
     const timestamps = {
       [ORDER_STATUS.PICKED_UP]: { picked_up_at: new Date() },
       [ORDER_STATUS.EN_ROUTE]: {},
@@ -401,10 +402,16 @@ async function updateOrderStatus(orderId, newStatus, riderId, deliveryProofUrl =
     };
     await order.update({ status: newStatus, ...timestamps[newStatus] }, { transaction });
 
+    let proof;
     if (newStatus === ORDER_STATUS.DELIVERED) {
+      proof = await DeliveryProof.create({ order_id: order.id, rider_id: riderId,
+        proof_type: 'photo', photo_url: deliveryProofUrl.trim(), otp_verified: false }, { transaction });
       const { applyDeliveryCompletionEffects } = require('./deliveryCompletion.service');
       await applyDeliveryCompletionEffects({ order, transaction });
     }
+    await OrderTimeline.create({ order_id: order.id, from_status: previousStatus,
+      to_status: newStatus, actor_id: riderId, actor_role: 'rider',
+      metadata: proof ? { delivery_proof_id: proof.id, proof_type: 'photo' } : {} }, { transaction });
     return { order, changed: true };
   });
 

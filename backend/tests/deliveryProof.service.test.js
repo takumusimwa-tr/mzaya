@@ -38,4 +38,13 @@ describe('delivery proof validation', () => {
       })
     ).toThrow('Recipient name is required');
   });
+  test('rejects malformed evidence and coordinates', () => {
+    for (const payload of [
+      { photoUrl: '   ' }, { photoUrl: {} }, { photoUrl: 'proof', latitude: 91, longitude: 0 },
+      { photoUrl: 'proof', latitude: 0 }, { photoUrl: 'proof', notes: 'x'.repeat(501) },
+    ]) expect(() => validateProofPayload({ proofType: 'photo', ...payload })).toThrow();
+  });
+  test('accepts zero coordinates', () => {
+    expect(() => validateProofPayload({ proofType: 'photo', photoUrl: 'proof', latitude: 0, longitude: 0 })).not.toThrow();
+  });
 });
