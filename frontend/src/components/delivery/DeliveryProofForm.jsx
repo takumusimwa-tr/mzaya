@@ -1,4 +1,5 @@
-import { useState } from 'react'
+import { useState, useRef } from 'react'
+import ImageUpload from '../ImageUpload'
 import { buildDeliveryProofPayload } from '../../api/deliveryProofPayload'
 
 const OPTIONS = [
@@ -17,28 +18,37 @@ export default function DeliveryProofForm({
   const [assetUrl, setAssetUrl] = useState('')
   const [error, setError] = useState('')
   const [notes, setNotes] = useState('')
+  const lock = useRef(false)
+  function uploaded(url) {
+    try {
+      const base = new URL(import.meta.env.VITE_API_URL || 'http://localhost:5000/api', window.location.origin)
+      setAssetUrl(new URL(url, base.origin).href)
+    } catch { setAssetUrl(''); setError('Invalid upload reference.') }
+  }
 
   async function submit(event) {
     event.preventDefault()
-    if (submitting) return
+    if (submitting || lock.current) return
+    lock.current = true
     setError('')
     try {
       await onSubmit?.(buildDeliveryProofPayload({ proofType, recipientName, assetUrl, notes }))
     } catch (err) {
       setError(err.response?.status === 409 ? 'Delivery already recorded with different evidence. Refresh the order before retrying.' : err.response ? 'Unable to complete delivery. Check the order and try again.' : err.message || 'Unable to complete delivery.')
-    }
+    } finally { lock.current = false }
   }
 
   return (
     <form onSubmit={submit} className="space-y-5">
       {error && <p role="alert" className="text-sm text-[var(--mzaya-error)]">{error}</p>}
+      <fieldset disabled={submitting} className="space-y-5">
       <div>
         <label className="text-sm font-semibold text-slate-900">
           Proof method
         </label>
         <select
           value={proofType}
-          onChange={(event) => setProofType(event.target.value)}
+          onChange={(event) => { setProofType(event.target.value); setAssetUrl('') }}
           className="mt-2 w-full rounded-xl border border-slate-300 bg-white px-3 py-3"
         >
           {OPTIONS.map((option) => (
@@ -70,6 +80,7 @@ export default function DeliveryProofForm({
           <label className="text-sm font-semibold text-slate-900">
             Uploaded file URL
           </label>
+          {proofType === 'photo' && <ImageUpload currentUrl={assetUrl} onUploaded={uploaded} label="Take / upload proof" />}
           <input
             required
             type="url"
@@ -95,6 +106,7 @@ export default function DeliveryProofForm({
         />
       </div>
 
+      </fieldset>
       <div className="grid grid-cols-2 gap-3">
         <button
           type="button"

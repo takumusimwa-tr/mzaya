@@ -4,7 +4,11 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import api from '../../api/api'
 import LoadingScreen from '../../components/ui/LoadingScreen'
 import Badge from '../../components/ui/Badge'
-import ImageUpload from '../../components/ImageUpload'
+import DeliveryProofForm from '../../components/delivery/DeliveryProofForm'
+import RecordedDeliveryTimeline from '../../components/delivery/RecordedDeliveryTimeline'
+import DeliveryEvidenceSummary from '../../components/delivery/DeliveryEvidenceSummary'
+import useDeliveryProof from '../../hooks/useDeliveryProof'
+import { deliveryProofAPI } from '../../api/deliveryProof'
 import OrderChat from '../../components/OrderChat'
 import useRiderTracking from '../../hooks/useRiderTracking'
 import Icon from '../../components/ui/Icon'
@@ -19,7 +23,8 @@ export default function RiderDelivery() {
   const { id }        = useParams()
   const navigate      = useNavigate()
   const queryClient   = useQueryClient()
-  const [proofUrl, setProofUrl] = useState(null)
+  const [showProof, setShowProof] = useState(false)
+  const completion = useDeliveryProof(id)
   const [showChat, setShowChat] = useState(false)
 
   const { data, isLoading } = useQuery({
@@ -28,13 +33,33 @@ export default function RiderDelivery() {
     refetchInterval: 10000,
   })
 
+  const history = useQuery({
+    queryKey: ['delivery-timeline', id],
+    queryFn: ({ signal }) => deliveryProofAPI.timeline(id, signal).then(r => r.data.events),
+    enabled: !!data,
+    refetchInterval: 10000,
+  })
+  const evidence = useQuery({
+    queryKey: ['delivery-proof', id],
+    queryFn: ({ signal }) => deliveryProofAPI.read(id, signal).then(r => r.data.proof),
+    enabled: data?.status === 'delivered',
+  })
+  async function complete(payload) {
+    const result = await completion.submit(payload)
+    queryClient.setQueryData(['rider-order', id], old => old ? { ...old, status: result.order.status } : old)
+    queryClient.setQueryData(['delivery-proof', id], result.proof)
+    setShowProof(false)
+    for (const key of [['rider-order', id], ['rider-orders'], ['delivery-timeline', id], ['delivery-proof', id]]) {
+      void queryClient.invalidateQueries({ queryKey: key })
+    }
+  }
   const updateStatus = useMutation({
     mutationFn: (status) => api.patch(`/orders/${id}/status`,
-      status === 'delivered' ? { status, delivery_proof_url: proofUrl } : { status }),
-    onSuccess: (_, status) => {
+      { status }),
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['rider-order', id] })
       queryClient.invalidateQueries({ queryKey: ['rider-orders'] })
-      if (status === 'delivered') navigate('/rider')
+      queryClient.invalidateQueries({ queryKey: ['delivery-timeline', id] })
     },
   })
 
@@ -159,25 +184,21 @@ export default function RiderDelivery() {
         </button>
       </div>
 
+      <div className="px-4 mt-4 space-y-4">
+        {history.isError ? <p role="alert" className="text-sm">Delivery history unavailable. <button onClick={() => history.refetch()}>Retry</button></p> : history.isPending ? <p>Loading delivery history…</p> : <RecordedDeliveryTimeline events={history.data} />}
+        {order.status === 'delivered' && (evidence.isError ? <p role="alert">Evidence unavailable. <button onClick={() => evidence.refetch()}>Retry</button></p> : evidence.isPending ? <p>Loading evidence…</p> : <DeliveryEvidenceSummary proof={evidence.data} />)}
+        {showProof && order.status === 'en_route' && <section className="mzaya-surface p-5">
+          <h2 className="mb-4 font-semibold">Confirm handover</h2>
+          <DeliveryProofForm key={id} submitting={completion.submitting} onSubmit={complete} onCancel={() => setShowProof(false)} />
+        </section>}
+        {updateStatus.isError && <p role="alert">Unable to update status. Please retry.</p>}
+      </div>
       {/* Action button */}
-      {nextStep && (
+      {nextStep && !showProof && (
         <div className="fixed bottom-16 left-1/2 -translate-x-1/2 w-full max-w-md px-4 pb-4 bg-gradient-to-t from-white via-white to-transparent pt-4">
-          {/* Proof-of-delivery photo required at the final step */}
-          {nextStep.next === 'delivered' && (
-            <div className="mb-3 bg-white rounded-2xl p-3 border border-gray-100 shadow-sm">
-              <p className="text-xs font-bold text-gray-700 mb-2"><Icon name="camera" size={13} className="inline" /> Delivery proof photo</p>
-              <ImageUpload
-                currentUrl={proofUrl}
-                onUploaded={(url) => setProofUrl(url)}
-                label="Take / upload proof"
-                shape="square"
-              />
-              {!proofUrl && <p className="text-[11px] text-gray-400 mt-2">Required: snap the package at the drop-off.</p>}
-            </div>
-          )}
           <button
-            onClick={() => updateStatus.mutate(nextStep.next)}
-            disabled={updateStatus.isPending || (nextStep.next === 'delivered' && !proofUrl)}
+            onClick={() => nextStep.next === 'delivered' ? setShowProof(true) : updateStatus.mutate(nextStep.next)}
+            disabled={updateStatus.isPending || showProof || completion.submitting}
             className={`w-full ${nextStep.color} text-white py-4 rounded-2xl text-sm font-bold active:scale-95 transition-all disabled:opacity-50`}
           >
             {updateStatus.isPending ? 'Updating...' : nextStep.label}
