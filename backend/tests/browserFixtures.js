@@ -2,6 +2,7 @@ const { makeCity, makeUser, makeVendor, makeMenuItem, makeRider } = require('./s
 
 async function seedBrowserFixtures() {
   const city = await makeCity();
+  let catalog;
   const accounts = {};
   for (const role of ['customer', 'rider', 'vendor', 'admin']) {
     const user = await makeUser(role, { city_id: city.id });
@@ -9,9 +10,10 @@ async function seedBrowserFixtures() {
     if (role === 'rider') await makeRider(user, city);
     if (role === 'vendor') {
       const { branch } = await makeVendor(user, city);
-      await makeMenuItem(branch);
+      const item = await makeMenuItem(branch);
+      catalog = { branchId: branch.id, itemId: item.id, itemName: item.name };
     }
   }
-  return { accounts, city: { id: city.id, slug: city.slug } };
+  return { accounts, catalog, city: { id: city.id, slug: city.slug } };
 }
 module.exports = { seedBrowserFixtures };
