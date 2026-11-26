@@ -1,3 +1,4 @@
+const jwt = require('jsonwebtoken');
 const { makeCity, makeUser, makeVendor, makeMenuItem, makeRider } = require('./setup');
 
 async function seedWorld() {
@@ -22,6 +23,8 @@ async function seedBrowserFixtures() {
   const resilience = await seedWorld();
   const paymentRecovery = await seedWorld();
   const deliveryRecovery = await seedWorld();
-  return { ...delivery, checkout, resilience, paymentRecovery, deliveryRecovery };
+  const authRecovery = await seedWorld();
+  const expiredToken = jwt.sign({ id: authRecovery.accounts.customer.id, role: 'customer', phone: authRecovery.accounts.customer.phone }, process.env.JWT_SECRET, { expiresIn: -60 });
+  return { ...delivery, checkout, resilience, paymentRecovery, deliveryRecovery, authRecovery: { ...authRecovery, expiredToken } };
 }
 module.exports = { seedBrowserFixtures };
