@@ -12,6 +12,7 @@ import useLocation from '../../hooks/useLocation'
 import LoadingState from '../../components/common/LoadingState'
 import ErrorState from '../../components/common/ErrorState'
 import Icon from '../../components/ui/Icon'
+import { MzayaWordmark } from '../../components/brand/MzayaLockup'
 import Money from '../../components/ui/Money'
 import imageUrl from '../../utils/imageUrl'
 import { useFavoriteIds } from '../../hooks/useFavorites'
@@ -153,7 +154,8 @@ export default function HomePage() {
     <main className="min-h-screen bg-white pb-36" style={{ color: T.ink }}>
       {/* ── Top bar: where am I, who am I, what's in my bag ─────────────────── */}
       <header className="sticky top-0 z-40 bg-white/95 backdrop-blur" style={{ paddingTop: 'max(env(safe-area-inset-top), 12px)' }}>
-        <div className="flex h-14 items-center justify-between px-4">
+        <div className="flex h-14 items-center justify-between gap-3 px-4 md:px-8">
+          <MzayaWordmark className="hidden md:block shrink-0" />
           <button type="button" onClick={() => setCitySheet(true)}
             className="flex min-h-[44px] items-center gap-1.5 rounded-full pr-2 text-left active:opacity-70"
             aria-label="Change delivery city">
@@ -174,7 +176,7 @@ export default function HomePage() {
         </div>
 
         {/* Search is a doorway, not a field: it opens a dedicated screen. */}
-        <div className="px-4 pb-3">
+        <div className="px-4 pb-3 md:px-8">
           <button type="button" onClick={() => setSearchOpen(true)}
             className="flex h-11 w-full items-center gap-2.5 rounded-full px-4 text-left active:opacity-80"
             style={{ background: T.fill }}>
@@ -188,7 +190,7 @@ export default function HomePage() {
       </header>
 
       {/* ── Category strip — Mzaya's own icons ───────────────────────────────── */}
-      <nav aria-label="Categories" className="flex gap-1 overflow-x-auto px-3 pb-1 pt-1 no-scrollbar">
+      <nav aria-label="Categories" className="flex gap-1 overflow-x-auto px-3 pb-1 pt-1 no-scrollbar md:gap-5 md:px-8">
         {CATEGORIES.map((c) => {
           const active = c.id === category
           return (
@@ -225,7 +227,7 @@ export default function HomePage() {
           {!productsError && (productsLoading || products.length > 0) && (
             <section className="pt-7">
               <SectionHeader title={copy.popular} />
-              <div className="grid grid-cols-2 gap-3 px-4 sm:grid-cols-3">
+              <div className="grid grid-cols-2 gap-3 px-4 sm:grid-cols-3 md:gap-5 md:px-8 lg:grid-cols-4 xl:grid-cols-5">
                 {productsLoading
                   ? [0, 1, 2, 3].map((k) => <div key={k} className="aspect-[0.76] animate-pulse rounded-[20px]" style={{ background: T.fill }} />)
                   : products.slice(0, 6).map((p) => <DiscoveryProductCard key={`${p.branch_id}-${p.item_id}`} product={p} category={category} onClick={() => openProduct(p)} />)}
@@ -238,7 +240,7 @@ export default function HomePage() {
             {brandsError ? (
               <div className="px-4"><ErrorState title="Couldn’t load vendors" description="Check your connection and try again." onRetry={() => refetchBrands()} /></div>
             ) : brandsLoading ? (
-              <div className="grid grid-cols-2 gap-3 px-4">{[0, 1, 2, 3].map((k) => <div key={k} className="h-56 animate-pulse rounded-[22px]" style={{ background: T.fill }} />)}</div>
+              <div className="grid grid-cols-2 gap-3 px-4 sm:grid-cols-3 md:gap-5 md:px-8 lg:grid-cols-4 xl:grid-cols-5">{[0, 1, 2, 3].map((k) => <div key={k} className="h-56 animate-pulse rounded-[22px]" style={{ background: T.fill }} />)}</div>
             ) : brands.length === 0 ? (
               <div className="mx-4 rounded-[24px] border border-[#E7EEE9] bg-[#F8FAF8] px-5 py-8 text-center">
                 <img src={emptyProducts} alt="" aria-hidden="true" className="mx-auto w-36 select-none" draggable="false" />
@@ -246,7 +248,7 @@ export default function HomePage() {
                 <p className="mx-auto mt-2 max-w-xs text-[13px] leading-relaxed" style={{ color: T.ink2 }}>We’re welcoming {category === 'food' ? 'restaurants' : category === 'grocery' ? 'grocery vendors' : 'hardware vendors'} in {selectedCity?.name || 'your city'}. Real vendors and their products will appear here as they join.</p>
               </div>
             ) : (
-              <ul className="grid grid-cols-2 gap-3 px-4 sm:grid-cols-3">
+              <ul className="grid grid-cols-2 gap-3 px-4 sm:grid-cols-3 md:gap-5 md:px-8 lg:grid-cols-4 xl:grid-cols-5">
                 {brands.map((b) => <DiscoveryVendorCard key={b.id} brand={b} onClick={() => openStore(b)} favorite={isFavorite(b.id)} onFavorite={() => toggle(b.id)} />)}
               </ul>
             )}
@@ -315,8 +317,8 @@ function HeaderIcon({ label, onClick, children }) {
 
 function SectionHeader({ title, count }) {
   return (
-    <div className="mb-3 flex items-baseline justify-between px-4">
-      <h2 className="text-[19px] font-extrabold tracking-[-0.02em]">{title}</h2>
+    <div className="mb-3 flex items-baseline justify-between px-4 md:px-8">
+      <h2 className="text-[19px] font-extrabold tracking-[-0.02em] md:text-2xl">{title}</h2>
       {count > 0 && <span className="text-[13px] font-medium" style={{ color: T.ink3 }}>{count}</span>}
     </div>
   )
@@ -430,14 +432,14 @@ function SearchScreen({ placeholder, initial, products, onClose, onSearch }) {
   return (
     <div className="fixed inset-0 z-[70] flex flex-col bg-white" role="dialog" aria-label="Search">
       <form onSubmit={(e) => { e.preventDefault(); onSearch(value) }}
-        className="flex items-center gap-2 px-3 pb-3" style={{ paddingTop: 'max(env(safe-area-inset-top), 12px)' }}>
+        className="mx-auto flex w-full max-w-3xl items-center gap-2 px-3 pb-3" style={{ paddingTop: 'max(env(safe-area-inset-top), 12px)' }}>
         <button type="button" onClick={onClose} aria-label="Close search" className="flex h-11 w-11 items-center justify-center rounded-full active:bg-black/5">
           <ArrowLeft size={22} strokeWidth={2} />
         </button>
         <label className="flex h-11 flex-1 items-center gap-2.5 rounded-full px-4" style={{ background: T.fill }}>
           <Search size={18} strokeWidth={2.2} />
           <input ref={inputRef} value={value} onChange={(e) => setValue(e.target.value)} placeholder={placeholder}
-            enterKeyHint="search" className="h-full flex-1 bg-transparent text-[15px] outline-none placeholder:text-[#8C9692]" />
+            enterKeyHint="search" className="h-full min-w-0 flex-1 bg-transparent text-[15px] outline-none placeholder:text-[#8C9692]" />
           {value && (
             <button type="button" onClick={() => setValue('')} aria-label="Clear" className="flex h-6 w-6 items-center justify-center rounded-full" style={{ background: '#DDE2DF' }}>
               <X size={13} strokeWidth={2.6} />
@@ -446,7 +448,7 @@ function SearchScreen({ placeholder, initial, products, onClose, onSearch }) {
         </label>
       </form>
 
-      <div className="flex-1 overflow-y-auto pb-10">
+      <div className="mx-auto w-full max-w-3xl flex-1 overflow-y-auto pb-10">
         {recents.length > 0 && (
           <section className="pt-2">
             <div className="flex items-baseline justify-between px-4 pb-1">

@@ -217,9 +217,10 @@ function AppShell() {
     )
   }
 
-  // Phone-width shell for customer / rider / auth / admin.
+  // Widen discovery only; other customer routes retain their validated shell.
+  const wideDiscovery = token && role === 'customer' && location.pathname === '/home'
   return (
-    <div className="min-h-screen bg-gray-50 max-w-md mx-auto">
+    <div className={`min-h-screen bg-gray-50 mx-auto w-full ${wideDiscovery ? 'max-w-[1280px]' : 'max-w-md'}`}>
       <Suspense fallback={<LoadingScreen message="Loading..." />}>
         <Routes>
           <Route path="/welcome"  element={<GuestRoute><OnboardingPage /></GuestRoute>} />

@@ -45,23 +45,23 @@ export default function PromotionalCarousel({ campaigns = [], onNavigate }) {
   const move = (direction) => setIndex((current) => (current + direction + slides.length) % slides.length)
 
   return (
-    <section className="px-4 pt-5" aria-label="Featured promotions">
+    <section className="px-4 pt-5 md:px-8" aria-label="Featured promotions">
       <div className="relative overflow-hidden rounded-2xl bg-[#E7F3EE]">
-        <div className="flex min-h-[176px] items-stretch">
-          <div className="relative z-10 flex min-w-0 flex-1 flex-col justify-center py-5 pl-5 pr-2">
+        <div className="flex min-h-[176px] items-stretch md:min-h-[220px] lg:min-h-[260px]">
+          <div className="relative z-10 flex min-w-0 flex-1 flex-col justify-center py-5 pl-5 pr-2 md:py-8 md:pl-10">
             <div className="mb-1 flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-[0.1em] text-[#086C55]">
               {sponsored && <Megaphone size={13} aria-hidden="true" />}
               {sponsored ? 'Sponsored' : slide.eyebrow}
             </div>
-            <h2 className="text-[20px] font-extrabold leading-tight tracking-tight text-[#052A25]">{slide.title}</h2>
-            {slide.description && <p className="mt-1.5 text-[12px] leading-relaxed text-[#46665C]">{slide.description}</p>}
+            <h2 className="text-[20px] font-extrabold leading-tight md:text-3xl lg:text-4xl tracking-tight text-[#052A25]">{slide.title}</h2>
+            {slide.description && <p className="mt-1.5 max-w-lg text-[12px] leading-relaxed text-[#46665C] md:text-base">{slide.description}</p>}
             <button type="button" onClick={visit}
               className="mt-3 w-fit rounded-full bg-[#086C55] px-4 py-2 text-[12px] font-bold text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#052A25]">
               {slide.cta || 'Explore'}
             </button>
           </div>
           {slide.image && <img src={slide.image} alt="" aria-hidden="true" loading="lazy"
-            className="w-[40%] max-w-[180px] shrink-0 object-cover object-center" />}
+            className="w-[40%] max-w-[180px] shrink-0 object-cover object-center md:max-w-[360px] md:object-contain" />}
         </div>
         {slides.length > 1 && <div className="absolute bottom-2 right-2 z-20 flex gap-1">
           <button type="button" onClick={() => move(-1)} aria-label="Previous promotion" className="rounded-full bg-white/90 p-1.5 text-[#052A25]"><ChevronLeft size={16}/></button>
