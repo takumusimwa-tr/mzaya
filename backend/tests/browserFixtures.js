@@ -19,6 +19,7 @@ async function seedWorld() {
 async function seedBrowserFixtures() {
   const delivery = await seedWorld();
   const checkout = await seedWorld();
-  return { ...delivery, checkout };
+  const resilience = await seedWorld();
+  return { ...delivery, checkout, resilience };
 }
 module.exports = { seedBrowserFixtures };
