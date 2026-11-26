@@ -1,6 +1,17 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
+import { resetSocket } from '../realtime/socket';
+import useCartStore from './useCartStore';
+import useActiveBranch from './useActiveBranch';
+
+function clearPersonalState() {
+  resetSocket();
+  useCartStore.getState().clearCart();
+  useActiveBranch.getState().clear();
+  localStorage.removeItem('mzaya_recent_searches');
+}
+
 const SESSION_KEYS = ['mzaya_token', 'mzaya_user', 'mzaya_auth'];
 
 function persistSession(user, token) {
@@ -19,6 +30,7 @@ const useAuthStore = create(
       token: null,
 
       setAuth: (user, token) => {
+        if (get().user && (get().user.id !== user.id || get().user.role !== user.role)) clearPersonalState();
         persistSession(user, token);
         set({ user, token });
       },
@@ -27,11 +39,13 @@ const useAuthStore = create(
       // reissues a token after a phone/profile change.
       updateSession: (user, token = get().token) => {
         if (!user || !token) return;
+        if (get().user && (get().user.id !== user.id || get().user.role !== user.role)) clearPersonalState();
         persistSession(user, token);
         set({ user, token });
       },
 
       logout: () => {
+        clearPersonalState();
         clearPersistedSession();
 
         if ('serviceWorker' in navigator) {

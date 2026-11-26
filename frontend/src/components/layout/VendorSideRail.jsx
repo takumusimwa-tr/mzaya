@@ -51,6 +51,7 @@ import {
   UtensilsCrossed,
 } from 'lucide-react'
 import api, { vendorAPI } from '../../api/api'
+import useSignOut from '../../hooks/useSignOut'
 import useAuthStore from '../../store/useAuthStore'
 import useActiveBranch from '../../store/useActiveBranch'
 import imageUrl from '../../utils/imageUrl'
@@ -67,7 +68,7 @@ const TABS = [
 
 export default function VendorSideRail() {
   const navigate = useNavigate()
-  const logout = useAuthStore((state) => state.logout)
+  const handleLogout = useSignOut()
   const user = useAuthStore((state) => state.user)
   const branchId = useActiveBranch((state) => state.branchId)
   const setBranch = useActiveBranch((state) => state.setBranch)
@@ -89,11 +90,6 @@ export default function VendorSideRail() {
 
   const activeBranch =
     branches.find((branch) => branch.id === branchId) ?? branches[0]
-
-  const handleLogout = () => {
-    logout?.()
-    navigate('/welcome', { replace: true })
-  }
 
   return (
     <aside

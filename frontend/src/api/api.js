@@ -1,5 +1,5 @@
 import axios from 'axios';
-import useAuthStore, { clearPersistedSession } from '../store/useAuthStore';
+import useAuthStore from '../store/useAuthStore';
 
 const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
@@ -12,6 +12,7 @@ const api = axios.create({
 // ─── Attach token to every request ───────────────────────────────────────────
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem('mzaya_token');
+  config.mzayaSessionToken = token;
   if (token) config.headers.Authorization = `Bearer ${token}`;
   return config;
 });
@@ -21,11 +22,18 @@ api.interceptors.request.use((config) => {
 // this, the persisted store can rehydrate a stale token after the interceptor
 // removed only the legacy token/user keys.
 api.interceptors.response.use(
-  (res) => res,
+  (res) => {
+    if (res.config.mzayaSessionToken !== localStorage.getItem('mzaya_token')) {
+      return Promise.reject(new axios.CanceledError('Session changed'));
+    }
+    return res;
+  },
   (err) => {
-    if (err.response?.status === 401) {
-      clearPersistedSession();
-      useAuthStore.setState({ user: null, token: null });
+    if (err.config && err.config.mzayaSessionToken !== localStorage.getItem('mzaya_token')) {
+      return Promise.reject(new axios.CanceledError('Session changed'));
+    }
+    if (err.response?.status === 401 && err.config?.mzayaSessionToken) {
+      useAuthStore.getState().logout();
 
       if (window.location.pathname !== '/login') {
         window.location.replace('/login');

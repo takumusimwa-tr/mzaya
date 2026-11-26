@@ -1,0 +1,1 @@
+Extract at repository root. Provider extraction preserves identity keys and cleanup. Address locator targets actual button containing exact visible label; route assertions added. Run lint, build, guarded browser suite. Live validation pending.
