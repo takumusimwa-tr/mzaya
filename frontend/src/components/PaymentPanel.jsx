@@ -26,6 +26,7 @@ export default function PaymentPanel({ order, onPaid }) {
   const [message, setMessage] = useState('')
   const [error, setError]     = useState('')
   const pollTimer = useRef(null)
+  const submissionLock = useRef(false)
 
   // One key per payment intent. Regenerated when the customer changes method or
   // number — that's a genuinely different intent and deserves a fresh attempt.
@@ -54,6 +55,7 @@ export default function PaymentPanel({ order, onPaid }) {
           onPaid?.()
         } else if (data.status === 'failed') {
           clearInterval(pollTimer.current)
+          submissionLock.current = false
           setStage('failed')
           setError('Payment failed or was cancelled.')
         }
@@ -64,10 +66,11 @@ export default function PaymentPanel({ order, onPaid }) {
   }
 
   const pay = async () => {
-    if (['pushing', 'polling', 'redirecting'].includes(stage)) return
+    if (submissionLock.current || ['pushing', 'polling', 'redirecting', 'paid'].includes(stage)) return
     setError('')
     if (isMobile && !phone.trim()) { setError('Enter your mobile money number'); return }
 
+    submissionLock.current = true
     setStage(isMobile ? 'pushing' : 'redirecting')
     try {
       const { data } = await paymentAPI.initiate(order.id, {
@@ -97,6 +100,7 @@ export default function PaymentPanel({ order, onPaid }) {
       )
       startPolling()
     } catch (err) {
+      submissionLock.current = false
       setStage('failed')
       setError(err.response?.data?.error || 'Could not start payment')
     }
@@ -140,7 +144,7 @@ export default function PaymentPanel({ order, onPaid }) {
           {/* Method picker */}
           <div className="flex flex-col gap-2 mb-3">
             {METHODS.map((m) => (
-              <button key={m.id} type="button" onClick={() => setMethod(m.id)}
+              <button key={m.id} type="button" disabled={stage === 'pushing'} onClick={() => setMethod(m.id)}
                 className="flex items-center justify-between p-3 rounded-xl border text-left transition-all"
                 style={method === m.id ? { borderColor: '#00A651', background: '#EDFAF3' } : { borderColor: '#E5E7EB' }}>
                 <div>
@@ -157,7 +161,7 @@ export default function PaymentPanel({ order, onPaid }) {
 
           {isMobile && (
             <div className="mb-3">
-              <input type="tel" value={phone} onChange={(e) => setPhone(e.target.value)}
+              <input type="tel" disabled={stage === 'pushing'} value={phone} onChange={(e) => setPhone(e.target.value)}
                 placeholder="07X XXX XXXX"
                 className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm outline-none focus:border-green-500" />
             </div>
